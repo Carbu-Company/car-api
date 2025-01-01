@@ -1,6 +1,6 @@
 /**
  * @swagger
- * api/popbill/v1/registIssue:
+ * /api/popbill/v1/registIssue:
  *   post:
  *     summary: "현금영수증 - 즉시발행"
  *     description: "Popbill API를 이용해 현금영수증을 발행합니다."
