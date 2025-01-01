@@ -1,11 +1,12 @@
-const popbill = require('../../config/popbill');
+const { CashbillService } = require('../../config/popbill');
 
 class CashbillController {
   static async registIssue(req, res) {
     try {
       const { CorpNum, Cashbill, Memo, UserID, EmailSubject } = req.body;
 
-      popbill.CashbillService.registIssue(
+      // Cashbill 발행
+      CashbillService.registIssue(
               CorpNum,
               Cashbill,
               Memo,
