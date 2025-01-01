@@ -1,5 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
+// Swagger 설정
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -14,4 +16,21 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-module.exports = swaggerSpec;
+// Basic Authentication 미들웨어
+const basicAuth = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth) {
+    res.set('WWW-Authenticate', 'Basic realm="Swagger UI"');
+    return res.status(401).send('Authentication required.');
+  }
+
+  const [username, password] = Buffer.from(auth.split(' ')[1], 'base64').toString().split(':');
+  if (username === 'admin' && password === 'qwe123') {
+    return next();
+  }
+
+  res.set('WWW-Authenticate', 'Basic realm="Swagger UI"');
+  return res.status(401).send('Invalid credentials.');
+};
+
+module.exports = { swaggerSpec, basicAuth };
