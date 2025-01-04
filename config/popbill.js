@@ -15,5 +15,7 @@ popbill.config({
 
 // CashbillService 생성
 const CashbillService = new popbill.CashbillService();
+const TaxinvoiceService = new popbill.TaxinvoiceService();
+const EasyFinBankService = new popbill.EasyFinBankService();
 
-module.exports = { popbill, CashbillService };
+module.exports = { popbill, CashbillService, TaxinvoiceService, EasyFinBankService };
