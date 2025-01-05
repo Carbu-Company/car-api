@@ -382,7 +382,7 @@
  *               CorpNum:
  *                 type: string
  *                 description: 팝빌회원 사업자번호 ('-' 제외, 10자리)
- *                 example: "1234567890"
+ *                 example: "1448122074"
  *               KeyType:
  *                 type: string
  *                 description: 세금계산서 유형 (SELL 매출, BUY 매입, TRUSTEE 위수탁)
@@ -400,7 +400,7 @@
  *               UserID:
  *                 type: string
  *                 description: 팝빌회원 아이디
- *                 example: "popuser123"
+ *                 example: "winexsoft"
  *     responses:
  *       200:
  *         description: 세금계산서 발행 취소 성공
