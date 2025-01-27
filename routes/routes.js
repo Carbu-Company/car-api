@@ -1,5 +1,6 @@
 const express = require('express');
 const carController = require('../controllers/carController');
+const loginController = require('../controllers/loginController')
 const CashbillController = require('../controllers/popbill/cashbillController')
 const TaxinvoiceController = require('../controllers/popbill/taxinvoiceController')
 const EasyFinBankController = require('../controllers/popbill/easyFinBankController')
@@ -7,6 +8,7 @@ const KakaoController = require('../controllers/popbill/kakaoController')
 const router = express.Router();
 
 router.get('/cars', carController.getCars); // GET /cars
+router.post('/login', loginController.loginController); // GET /cars
 
 /* 현금영수증 */
 router.post('/popbill/v1/cashbill/registIssue', CashbillController.registIssue)
