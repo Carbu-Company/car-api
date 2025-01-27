@@ -9,7 +9,7 @@ const app = express();
 
 // CORS 설정
 const corsOptions = {
-  origin: "http://localhost:3000", // 허용할 클라이언트 도메인
+  origin: ["http://localhost:3000", "http://carbu.infoedu.co.kr"], // 허용할 클라이언트 도메인 추가
   credentials: true, // 쿠키를 포함한 요청 허용
 };
 app.use(cors(corsOptions));
@@ -18,7 +18,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // 쿠키 파싱 미들웨어 추가
-app.use(cookieParser()); // 여기에 추가
+app.use(cookieParser());
 
 // Swagger 설정
 app.use(
