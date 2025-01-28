@@ -28,6 +28,7 @@ exports.loginController = async (req, res, next) => {
         httpOnly: true, // 클라이언트 JS에서 접근 불가
         secure: true,
         maxAge: 3600000, // 쿠키 만료 시간: 1시간 (밀리초)
+        sameSite: "None", // 크로스 도메인 요청 허용
         path: "/", // 모든 경로에서 쿠키 사용 가능
       });
 
