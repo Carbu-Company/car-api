@@ -12,16 +12,18 @@ const whitelist = ["http://115.68.193.63:3000", "http://carbu.infoedu.co.kr", "h
 
 // CORS 설정
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      // whitelist에 포함된 경우 또는 origin이 없는 경우 (ex. Postman 요청)
+  origin: (origin, callback) => {
+    if (!origin || whitelist.includes(origin)) {
+      // 허용된 도메인이거나 origin이 없는 경우 (ex. Postman 요청)
       callback(null, true);
     } else {
-      callback(new Error("Not Allowed Origin!"));
+      console.error(`CORS 에러: 허용되지 않은 Origin - ${origin}`);
+      callback(new Error("Not Allowed Origin"));
     }
   },
   credentials: true, // 쿠키를 포함한 요청 허용
 };
+
 app.use(cors(corsOptions));
 
 // JSON 요청 파싱
