@@ -25,10 +25,11 @@ exports.loginController = async (req, res, next) => {
 
       // 쿠키 설정
       res.cookie("authToken", token, {
-        httpOnly: true, // 클라이언트 JS에서 접근 불가
-        secure: false,
-        maxAge: 3600 * 1000, // 쿠키 만료 시간: 1시간 (밀리초 단위)
-        path: "/", // 모든 경로에서 쿠키 사용 가능
+        httpOnly: true, // 클라이언트 JS 접근 금지
+        secure: process.env.NODE_ENV === "production", // 배포 환경에서만 true
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발 환경에서는 lax
+        maxAge: 3600 * 1000, // 1시간
+        path: "/", // 모든 경로에서 유효
       });
 
       // 성공 응답: 토큰 포함
