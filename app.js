@@ -7,9 +7,19 @@ const { swaggerSpec, basicAuth } = require("./swagger");
 
 const app = express();
 
+// 허용할 도메인 배열
+const whitelist = ["http://localhost:3000", "http://carbu.infoedu.co.kr"];
+
 // CORS 설정
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://carbu.infoedu.co.kr"], // 허용할 클라이언트 도메인 추가
+  origin: function (origin, callback) {
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      // whitelist에 포함된 경우 또는 origin이 없는 경우 (ex. Postman 요청)
+      callback(null, true);
+    } else {
+      callback(new Error("Not Allowed Origin!"));
+    }
+  },
   credentials: true, // 쿠키를 포함한 요청 허용
 };
 app.use(cors(corsOptions));
