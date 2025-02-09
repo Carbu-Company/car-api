@@ -10,7 +10,6 @@ const router = express.Router();
 
 router.get('/cars', carController.getCars); // GET /cars
 router.post('/login', loginController.loginController); // GET /cars
-router.get('/verify', verifyController.verifyAuth); // GET /cars
 
 /* 현금영수증 */
 router.post('/popbill/v1/cashbill/registIssue', CashbillController.registIssue)

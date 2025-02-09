@@ -2,8 +2,8 @@ const popbill = require('popbill');
 
 // Popbill 설정
 popbill.config({
-  LinkID: 'WINEX',
-  SecretKey: '8yoJ8CNqjR+6yGi40m8oYStb2ohgqazAX4EdXvLign4=',
+  LinkID: 'AIBIZCOKR',
+  SecretKey: '5H7KtOtKlIZC3KJR495egMgEYNDe0oAciZeGbYdnU2I=',
   IsTest: true,
   IPRestrictOnOff: true,
   UseStaticIP: false,
