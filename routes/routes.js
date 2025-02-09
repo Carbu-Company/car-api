@@ -1,7 +1,6 @@
 const express = require('express');
 const carController = require('../controllers/carController');
 const loginController = require('../controllers/loginController')
-const verifyController = require('../controllers/verifyController')
 const CashbillController = require('../controllers/popbill/cashbillController')
 const TaxinvoiceController = require('../controllers/popbill/taxinvoiceController')
 const EasyFinBankController = require('../controllers/popbill/easyFinBankController')
