@@ -8,7 +8,7 @@ const { swaggerSpec, basicAuth } = require("./swagger");
 const app = express();
 
 // 허용할 도메인 배열
-const whitelist = ["http://115.68.193.63:3000", "http://carbu.infoedu.co.kr", "http://localhost:3000", "http://carbu-api.infoedu.co.kr];
+const whitelist = ["http://115.68.193.63:3000", "http://carbu.infoedu.co.kr", "http://localhost:3000", "http://carbu-api.infoedu.co.kr"]
 
 // CORS 설정
 const corsOptions = {
