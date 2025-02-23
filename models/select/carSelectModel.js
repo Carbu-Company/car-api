@@ -68,7 +68,7 @@ exports.getCars = async ({ carAgent }) => {
 };
 
 // 관리키 조회
-exports.getMgKey = async ({ carAgent }) => {
+exports.getMgtKey = async ({ carAgent }) => {
   try {
     const request = pool.request();
     request.input("carAgent", sql.VarChar, carAgent);
