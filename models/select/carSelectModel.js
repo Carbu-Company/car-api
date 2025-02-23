@@ -84,7 +84,7 @@ exports.getMgtKey = async ({ carAgent }) => {
     `;
 
     const result = await request.query(query);
-    return result.recordset[0].mgtkey;
+    return result.recordset.mgtkey;
   } catch (err) {
     console.error("Error fetching management key:", err);
     throw err;
