@@ -13,7 +13,7 @@ exports.insertCashBill = async ({
     request.input("mgtKey", sql.VarChar, mgtKey);
     request.input("franchiseCorpName", sql.VarChar, franchiseCorpName);
     request.input("cashBillRegDate", sql.VarChar, cashBillRegDate);
-    request.input("totalAmount", sql.VarChar, totalAmount);
+    request.input("totalAmount", sql.Decimal, totalAmount);
 
     const query1 = `
       INSERT INTO CJB_CASHBILL (MgtKey, FranchiseCorpName, CashBillRegDate, TotalAmount)
