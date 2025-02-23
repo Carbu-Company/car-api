@@ -15,7 +15,7 @@ exports.getCars = async (req, res, next) => {
 exports.getMgKey = async (req, res, next) => {
   try {
     const { carAgent } = req.query;
-    const mgtKey = await carSelectModel.getMGTKey({ carAgent });
+    const mgtKey = await carSelectModel.getMgKey({ carAgent });
     res.status(200).json(mgtKey);
   } catch (err) {
     next(err);
