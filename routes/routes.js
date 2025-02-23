@@ -10,7 +10,7 @@ const router = express.Router();
 /* DB SQL 조회 */
 router.get("/cars", carController.getCars);
 router.post("/login", loginController.loginController);
-router.get("/getMgKey", carController.getMgKey);
+router.get("/getMgtKey", carController.getMgtKey);
 router.post("/insertCashBill", carController.insertCashBill);
 
 /* 현금영수증 */

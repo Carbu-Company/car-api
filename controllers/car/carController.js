@@ -12,10 +12,10 @@ exports.getCars = async (req, res, next) => {
 };
 
 // 제시 직접 등록 키 조회
-exports.getMgKey = async (req, res, next) => {
+exports.getMgtKey = async (req, res, next) => {
   try {
     const { carAgent } = req.query;
-    const mgtKey = await carSelectModel.getMgKey({ carAgent });
+    const mgtKey = await carSelectModel.getMgtKey({ carAgent });
     res.status(200).json(mgtKey);
   } catch (err) {
     next(err);
