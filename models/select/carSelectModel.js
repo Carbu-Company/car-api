@@ -68,7 +68,7 @@ exports.getCars = async ({ carAgent }) => {
 };
 
 // 관리키 조회
-exports.getMgtKey = async ({ carAgent }) => {
+exports.getMgKey = async ({ carAgent }) => {
   try {
     const request = pool.request();
     request.input("carAgent", sql.VarChar, carAgent);
@@ -84,7 +84,7 @@ exports.getMgtKey = async ({ carAgent }) => {
     `;
 
     const result = await request.query(query);
-    return result.recordset.mgtkey;
+    return result.recordset;
   } catch (err) {
     console.error("Error fetching management key:", err);
     throw err;
