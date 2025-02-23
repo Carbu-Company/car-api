@@ -8,10 +8,16 @@ const KakaoController = require("../controllers/popbill/kakaoController");
 const router = express.Router();
 
 /* DB SQL 조회 */
+// 제시 차량 조회
 router.get("/cars", carController.getCars);
+// 로그인
 router.post("/login", loginController.loginController);
+// 관리키 조회
 router.get("/getMgtKey", carController.getMgtKey);
+// 제시 등록
 router.post("/insertCashBill", carController.insertCashBill);
+// 현금영수증 사전 데이터 조회
+router.get("/getCashBillPreData", carController.getCashBillPreData);
 
 /* 현금영수증 */
 router.post("/popbill/v1/cashbill/registIssue", CashbillController.registIssue);

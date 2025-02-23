@@ -90,3 +90,68 @@ exports.getMgtKey = async ({ carAgent }) => {
     throw err;
   }
 };
+
+// 현금영수증 사전 데이터 조회
+exports.getCashBillPreData = async () => {
+  try {
+    const request = pool.request();
+    const query = `
+      SELECT *
+      FROM   (SELECT ROW_NUMBER()
+                     OVER(
+                       ORDER BY COST_REGDATE DESC, COST_YEARMONTH DESC, COST_DATE DESC ) AS RNUM,
+                   COST_SEQ,
+                   COST_YEARMONTH,
+                   DBO.SMJ_FN_DATEFMT('D', COST_DATE) AS COST_DATE,
+                   COST_CODENAME,
+                   COST_REALAMT,
+                   DBO.SMJ_FN_GETCDNAME('06', COST_WAY) AS COST_WAY,
+                   DBO.SMJ_FN_GETCDNAME('07', COST_RECEIPT) AS COST_RECEIPTNAME,
+                   CASE COST_TAXGUBN
+                     WHEN '0' THEN '미공제'
+                     WHEN '1' THEN '공제'
+                     ELSE ''
+                   END AS COST_TAXGUBN,
+                   DBO.SMJ_FN_DATEFMT('D', COST_TAXDATE) AS COST_TAXDATE,
+                   COST_DESC,
+                   DBO.SMJ_FN_DATEFMT('D', COST_REGDATE) AS COST_REGDATE,
+                   COST_CAR_NO,
+                   CASE COST_EMPID
+                     WHEN '000000000' THEN '타딜러'
+                     ELSE EMPKNAME
+                   END AS EMPNAME,
+                   CASE CASHBILL_YN
+                     WHEN 'Y' THEN '발행'
+                     WHEN 'N' THEN '미발행'
+                     ELSE ''
+                   END AS CASHBILL_YNNAME,
+                   COST_CODE,
+                   COST_CARID,
+                   COST_RECEIPT,
+                   CAR_NAME,
+                   SELL_OWNER,
+                   SELL_TELNO,
+                   REPLACE(COST_RECEIPT_NO, '-', '') AS COST_RECEIPT_NO_RE,
+                   COST_AUTO,
+                   DBO.SMJ_FN_VAT_SUP(COST_REALAMT) AS SUP,
+                   DBO.SMJ_FN_VAT_AMT(COST_REALAMT) AS VAT
+            FROM   SMJ_COST A
+                   LEFT OUTER JOIN SMJ_MAINLIST B ON CAR_REGID = COST_CARID
+                   LEFT OUTER JOIN SMJ_SOLDLIST D ON CAR_REGID = SELL_CAR_REGID
+                   LEFT OUTER JOIN SMJ_USER C ON A.COST_EMPID = C.EMPID
+            WHERE  COST_KIND = '1'
+                   AND COST_DELGUBN = '0'
+                   AND COST_AGENT = '00002'
+                   AND COST_RECEIPT = '004'
+                   AND CASHBILL_YN = 'N'
+                   AND COST_REALAMT > 0
+                   AND CASHBILL_VIEW = 'Y') AS V
+      WHERE  RNUM BETWEEN 1 AND 50;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching cash bill pre data:", err);
+    throw err;
+  }
+};

@@ -33,10 +33,18 @@ exports.insertCashBill = async (req, res, next) => {
       cashBillRegDate,
       totalAmount,
     });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    res
-      .status(200)
-      .json({ success: true, message: "Cash bill inserted successfully" });
+// 현금영수증 사전 데이터 조회
+exports.getCashBillPreData = async (req, res, next) => {
+  try {
+    const cashBillPreData = await carSelectModel.getCashBillPreData();
+
+    res.status(200).json(cashBillPreData);
   } catch (err) {
     next(err);
   }
