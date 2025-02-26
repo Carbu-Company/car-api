@@ -16,12 +16,12 @@ exports.insertCashBill = async ({
     request.input("totalAmount", sql.Decimal, totalAmount);
 
     const query1 = `
-      INSERT INTO CJB_CASHBILL (MgtKey, FranchiseCorpName, CashBillRegDate, TotalAmount)
+      INSERT INTO CJB_CASHBILL2 (MgtKey, FranchiseCorpName, CashBillRegDate, TotalAmount)
       VALUES (@mgtKey, @franchiseCorpName, @cashBillRegDate, @totalAmount);
     `;
 
     const query2 = `
-      INSERT INTO CJB_CASHBILL_LOG (MgtKey, CashBillRegDate)
+      INSERT INTO CJB_CASHBILL_LOG2 (MgtKey, CashBillRegDate)
       VALUES (@mgtKey, @cashBillRegDate);
     `;
 
