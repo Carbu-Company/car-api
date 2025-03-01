@@ -1,10 +1,18 @@
 const carSelectModel = require("../../models/select/carSelectModel");
 const carInsertModel = require("../../models/insert/carInsertModel");
 // 제시 차량 조회
-exports.getCars = async (req, res, next) => {
+exports.SuggestSelectData = async (req, res, next) => {
   try {
-    const { carAgent } = req.query;
-    const cars = await carSelectModel.getCars({ carAgent });
+    const { carAgent, carNo, carName, buyOwner, empName, customerName } =
+      req.body;
+    const cars = await carSelectModel.SuggestSelectData({
+      carAgent,
+      carNo,
+      carName,
+      buyOwner,
+      empName,
+      customerName,
+    });
     res.status(200).json(cars);
   } catch (err) {
     next(err);

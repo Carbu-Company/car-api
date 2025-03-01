@@ -9,7 +9,7 @@ const router = express.Router();
 
 /* DB SQL 조회 */
 // 제시 차량 조회
-router.get("/cars", carController.getCars);
+router.get("/cars", carController.SuggestSelectData);
 // 로그인
 router.post("/login", loginController.loginController);
 // 관리키 조회
