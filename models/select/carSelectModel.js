@@ -82,6 +82,8 @@ exports.SuggestSelectData = async ({
                 ${customerName ? "AND BUY_OWNER LIKE @CUSTOMER_NAME" : ""}
         ) a;
     `;
+    console.log(query);
+
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
