@@ -56,7 +56,6 @@ exports.getCashBillPreData = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  e;
 };
 
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
