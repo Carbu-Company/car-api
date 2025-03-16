@@ -180,3 +180,35 @@ exports.getCashBillPreData = async () => {
     throw err;
   }
 };
+
+exports.getCashBillAmount = async ({ costSeq }) => {
+  try {
+    const request = pool.request();
+    request.input("COST_SEQ", sql.VarChar, costSeq);
+    const query = `
+    SELECT COST_CODENAME,
+               COST_REALAMT,
+               SELL_OWNER,
+               SELL_TELNO,
+               DBO.SMJ_FN_VAT_SUP(COST_REALAMT)
+               AS
+                      SUP,
+               DBO.SMJ_FN_VAT_AMT(COST_REALAMT)
+               AS
+                      VAT
+        FROM   SMJ_COST A
+               LEFT OUTER JOIN SMJ_MAINLIST B
+                            ON CAR_REGID = COST_CARID
+               LEFT OUTER JOIN SMJ_SOLDLIST D
+                            ON CAR_REGID = SELL_CAR_REGID
+               LEFT OUTER JOIN SMJ_USER C
+                            ON A.COST_EMPID = C.EMPID
+        WHERE  COST_SEQ = @COST_SEQ;	
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching cash bill amount:", err);
+    throw err;
+  }
+};

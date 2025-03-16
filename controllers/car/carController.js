@@ -56,4 +56,18 @@ exports.getCashBillPreData = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+  e;
+};
+
+// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+exports.getCashBillAmount = async (req, res, next) => {
+  try {
+    const { costSeq } = req.query;
+    const cashBillAmount = await carSelectModel.getCashBillAmount({
+      costSeq,
+    });
+    res.status(200).json(cashBillAmount);
+  } catch (err) {
+    next(err);
+  }
 };
