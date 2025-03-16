@@ -206,7 +206,7 @@ exports.getCashBillAmount = async ({ costSeq }) => {
         WHERE  COST_SEQ = @COST_SEQ;	
     `;
     const result = await request.query(query);
-    return result.recordset;
+    return result.recordset[0];
   } catch (err) {
     console.error("Error fetching cash bill amount:", err);
     throw err;
