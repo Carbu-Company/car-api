@@ -1,42 +1,31 @@
-const { MgtKeyType } = require('popbill');
-const { TaxinvoiceService } = require('../../config/popbill');
+const { FaxService } = require('../../config/popbill');
 
-class TaxinvoiceController {
+class FaxServiceController {
   // 즉시 발행
-  static async registIssue(req, res) {
+  static async checkSenderNumber(req, res) {
     try {
       const {
         CorpNum,
-        Taxinvoice,
-        writeSpecification = false, // 기본값 false
-        forceIssue = false, // 기본값 false
-        memo = '',
-        emailSubject = '',
-        dealInvoiceMgtKey = '',
+        SenderNumber,
         UserID,
       } = req.body;
 
       // TaxinvoiceService.registIssue 호출
-      TaxinvoiceService.registIssue(
+      FaxService.checkSenderNumber(
               CorpNum,
-              Taxinvoice,
-              writeSpecification,
-              forceIssue,
-              memo,
-              emailSubject,
-              dealInvoiceMgtKey,
+              SenderNumber,
               UserID,
               (result) => {
                 res.status(200).json({
                   success: true,
-                  message: '세금계산서 즉시 발행 성공',
+                  message: '발신번호 등록여부 성공',
                   data: result,
                 });
               },
               (error) => {
                 res.status(500).json({
                   success: false,
-                  message: '세금계산서 즉시 발행 실패',
+                  message: '발신번호 등록여부 실패',
                   error: {
                     code: error.code,
                     message: error.message,
@@ -53,58 +42,55 @@ class TaxinvoiceController {
     }
   }
 
-  // 발행 취소
-  static async cancelIssue(req, res) {
-    try {
-      const { CorpNum, KeyType, MgtKey, Memo = '', UserID } = req.body;
-
-      // TaxinvoiceService.cancelIssue 호출
-      TaxinvoiceService.cancelIssue(
-              CorpNum,
-              KeyType,
-              MgtKey,
-              Memo,
-              UserID,
-              (result) => {
-                res.status(200).json({
-                  success: true,
-                  message: '세금계산서 발행 취소 성공',
-                  data: result,
-                });
-              },
-              (error) => {
-                res.status(500).json({
-                  success: false,
-                  message: '세금계산서 발행 취소 실패',
-                  error: {
-                    code: error.code,
-                    message: error.message,
-                  },
-                });
-              }
-      );
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: '서버 오류 발생',
-        error: err.message,
-      });
-    }
-  }
-
-  // 인증서 등록 팝업 URL 조회
-  static async getTaxCertURL(req, res) {
+  // 발신번호 관리 팝업 URL 조회
+  static async getSenderNumberMgtURL(req, res) {
     try {
       const { CorpNum, UserID } = req.body;
 
-      // TaxinvoiceService.getTaxCertURL 호출
-      TaxinvoiceService.getTaxCertURL(
+      // FaxService.getSenderNumberMgtURL 호출
+      FaxService.getSenderNumberMgtURL (
               CorpNum,
               UserID,
               (result) => {
                 res.status(200).json({
                   success: true,
-                  message: '인증서 등록 팝업 URL 성공',
+                  message: '발신번호 관리 팝업 URL 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '발신번호 관리 팝업 URL 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+  // 발신번호 목록 조회
+  static async getSenderNumberList(req, res) {
+    try {
+      const { CorpNum, UserID } = req.body;
+
+      // FaxService.getSenderNumberList 호출
+      FaxService.getSenderNumberList(
+              CorpNum,
+              UserID,
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '발신번호 목록 조회 성공',
                   data: result,
                 });
               },
@@ -129,28 +115,33 @@ class TaxinvoiceController {
   }
 
   
-  // 발행 취소
-  static async getPrintURL(req, res) {
+  // FAX 발송
+  static async sendFAX(req, res) {
     try {
-      const { CorpNum, MgtKeyType, MgtKey, UserID } = req.body;
+      const { CorpNum, Sender, Receiver, ReceiverName, FilePaths, SenderName, Title, RequestNum, UserID } = req.body;
 
-      // TaxinvoiceService.getPrintURL 호출
-      TaxinvoiceService.getPrintURL(
+      // FaxService.sendFAX 호출
+      FaxService.sendFax(
               CorpNum,
-              MgtKeyType,
-              MgtKey,
+              Sender,
+              Receiver,
+              ReceiverName,
+              FilePaths,
+              SenderName,
+              Title,
+              RequestNum,
               UserID,
               (result) => {
                 res.status(200).json({
                   success: true,
-                  message: '세금계산서 인쇄 팝업 URL 성공',
+                  message: 'FAX 발송 성공',
                   data: result,
                 });
               },
               (error) => {
                 res.status(500).json({
                   success: false,
-                  message: '세금계산서 인쇄 팝업 URL 실패',
+                  message: 'FAX 발송 실패',
                   error: {
                     code: error.code,
                     message: error.message,
@@ -168,4 +159,4 @@ class TaxinvoiceController {
   }
 }
 
-module.exports = TaxinvoiceController;
+module.exports = FaxServiceController;

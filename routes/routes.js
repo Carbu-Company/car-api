@@ -5,6 +5,9 @@ const CashbillController = require("../controllers/popbill/cashbillController");
 const TaxinvoiceController = require("../controllers/popbill/taxinvoiceController");
 const EasyFinBankController = require("../controllers/popbill/easyFinBankController");
 const KakaoController = require("../controllers/popbill/kakaoController");
+const BizInfoCheckController = require("../controllers/popbill/bizInfoCheckController");
+const FaxServiceController = require("../controllers/popbill/faxServiceController");
+
 const router = express.Router();
 
 /* DB SQL 조회 */
@@ -24,11 +27,9 @@ router.get("/getCashBillAmount", carController.getCashBillAmount);
 
 /* 현금영수증 */
 router.post("/popbill/v1/cashbill/registIssue", CashbillController.registIssue);
-router.post(
-  "/popbill/v1/cashbill/revokeRegistIssue",
-  CashbillController.revokeRegistIssue
-);
+router.post("/popbill/v1/cashbill/revokeRegistIssue",  CashbillController.revokeRegistIssue);
 router.post("/popbill/v1/cashbill/getInfo", CashbillController.getInfo);
+router.post("/popbill/v1/cashbill/getPrintURL", CashbillController.getPrintURL);
 
 /* 전자세금계산서 */
 router.post(
@@ -37,7 +38,15 @@ router.post(
 );
 router.post(
   "/popbill/v1/taxinvoice/cancelIssue",
-  TaxinvoiceController.registIssue
+  TaxinvoiceController.cancelIssue
+);
+router.post(
+  "/popbill/v1/taxinvoice/getTaxCertURL",
+  TaxinvoiceController.getTaxCertURL
+);
+router.post(
+  "/popbill/v1/taxinvoice/getPrintURL",
+  TaxinvoiceController.getPrintURL
 );
 
 /* 계좌 조회 */
@@ -57,6 +66,10 @@ router.post(
   "/popbill/v1/easyfinbank/requestJob",
   EasyFinBankController.requestJob
 );
+router.post(
+  "/popbill/v1/easyfinbank/listBankAccount",
+  EasyFinBankController.listBankAccount
+);
 
 /* 카톡 */
 router.post(
@@ -73,5 +86,28 @@ router.post(
 );
 router.post("/popbill/v1/kakao/sendATS_one", KakaoController.sendATS_one);
 router.post("/popbill/v1/kakao/sendATS_multi", KakaoController.sendATS_multi);
+
+/* 연동회원 */
+router.post("/popbill/v1/bizinfo/joinMember", BizInfoCheckController.JoinMember);
+router.post("/popbill/v1/bizinfo/quitMember", BizInfoCheckController.QuitMember);
+router.post("/popbill/v1/bizinfo/getCorpInfo", BizInfoCheckController.GetCorpInfo);
+
+/* FAX */
+router.post(
+  "/popbill/v1/faxService/checkSenderNumber",
+  FaxServiceController.checkSenderNumber
+);
+router.post(
+  "/popbill/v1/faxService/getSenderNumberMgtURL",
+  FaxServiceController.getSenderNumberMgtURL
+);
+router.post(
+  "/popbill/v1/faxService/getSenderNumberList",
+  FaxServiceController.getSenderNumberList
+);
+router.post(
+  "/popbill/v1/faxService/sendFAX",
+  FaxServiceController.sendFAX
+);
 
 module.exports = router;

@@ -102,6 +102,7 @@ class CashbillController {
       });
     }
   }
+
   static async getInfo(req, res) {
     try {
       const { CorpNum, MgtKey, UserID } = req.body;
@@ -145,6 +146,55 @@ class CashbillController {
       });
     }
   }
+
+  
+  static async getPrintURL(req, res) {
+    try {
+      const { CorpNum, MgtKey, UserID } = req.body;
+
+      console.log(CorpNum, MgtKey, UserID);
+
+      // 필수 파라미터 확인
+      if (!CorpNum || !MgtKey) {
+        return res.status(400).json({
+          success: false,
+          message: '필수 파라미터(CorpNum, MgtKey)가 누락되었습니다.',
+        });
+      }
+
+      // 팝빌 API 호출
+      CashbillService.getPrintURL(
+              CorpNum,
+              MgtKey,
+              UserID || '', // UserID는 선택적이므로 기본값으로 빈 문자열 전달
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '현금영수증 인쇄 팝업 URL 확인 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '현금영수증 인쇄 팝업 URL 확인 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+  
 }
 
 

@@ -163,6 +163,41 @@ class EasyFinBankController {
       });
     }
   }
+
+  // 계좌정보 목록 조회
+  static async listBankAccount (req, res) {
+    try {
+      const { CorpNum, UserID } = req.body;
+
+      EasyFinBankService.listBankAccount (
+              CorpNum,
+              UserID,
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '계좌정보 목록 조회 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '계좌정보 목록 조회 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
 }
 
 module.exports = EasyFinBankController;
