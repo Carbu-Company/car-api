@@ -26,6 +26,6 @@ const MessageService = new popbill.MessageService();  // 메시지
 const HTTaxinvoiceService = new popbill.HTTaxinvoiceService();  // 전자세금계산서 홈텍
 const HTCashbillService = new popbill.HTCashbillService();  // 현금영수증 홈텍
 const FaxService = new popbill.FaxService();  // FAX
-const BaseService = new popbill.BaseService();  // 기본
+//const BaseService = new popbill.BaseService();  // 기본
 
-module.exports = { popbill, CashbillService, TaxinvoiceService, BaseService, EasyFinBankService, KakaoService, BizInfoCheckService, AccountCheckService, ClosedownService, FaxService,MessageService, HTTaxinvoiceService, HTCashbillService };
+module.exports = { popbill, CashbillService, TaxinvoiceService, EasyFinBankService, KakaoService, BizInfoCheckService, AccountCheckService, ClosedownService, FaxService,MessageService, HTTaxinvoiceService, HTCashbillService };

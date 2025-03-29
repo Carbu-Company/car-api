@@ -1,5 +1,6 @@
 const carSelectModel = require("../../models/select/carSelectModel");
 const carInsertModel = require("../../models/insert/carInsertModel");
+
 // 제시 차량 조회
 exports.SuggestSelectData = async (req, res, next) => {
   try {
@@ -58,6 +59,18 @@ exports.getCashBillPreData = async (req, res, next) => {
   }
 };
 
+// 차량 판매
+exports.getSellPreData = async (req, res, next) => {
+  try {
+    const sellPreData = await carSelectModel.getSellPreData();
+
+    res.status(200).json(sellPreData);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 exports.getCashBillAmount = async (req, res, next) => {
   try {
@@ -70,3 +83,5 @@ exports.getCashBillAmount = async (req, res, next) => {
     next(err);
   }
 };
+
+

@@ -22,6 +22,10 @@ router.post("/insertCashBill", carController.insertCashBill);
 // 현금영수증 사전 데이터 조회
 router.get("/getCashBillPreData", carController.getCashBillPreData);
 
+// 판매
+router.get("/getSellPreData", carController.getSellPreData);
+
+
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 router.get("/getCashBillAmount", carController.getCashBillAmount);
 
