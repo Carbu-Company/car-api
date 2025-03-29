@@ -15,7 +15,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "~1.9.1",
     "mssql": "^11.0.1",
-    "popbill": "^1.60.5",
+    "popbill": "^1.60.6",
     "pug": "2.0.0-beta11",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"

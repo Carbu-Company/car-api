@@ -181,6 +181,79 @@ exports.getCashBillPreData = async () => {
   }
 };
 
+// 판매
+exports.getSellPreData = async () => {
+  try {
+    const request = pool.request();
+    const query = `
+        SELECT *
+        FROM   (SELECT ROW_NUMBER()
+                        OVER(
+                          ORDER BY SELL_DATE DESC, SELL_REGDATE DESC) AS RNUM,
+                      SELL_CAR_REGID,
+                      DBO.SMJ_FN_DATEFMT('H', CAR_BUYDATE)            AS CAR_BUYDATE,
+                      CASE CAR_GUBN
+                        WHEN '0' THEN '상사'
+                        WHEN '1' THEN '고객'
+                        ELSE ''
+                      END                                             AS CAR_GUBNNAME,
+                      CAR_NO,
+                      CAR_NAME,
+                      BUY_NOTIAMT,
+                      SELL_NOTIAMT,
+                      SELL_NOTIAMT - BUY_NOTIAMT                      AS COL1,
+                      SELL_OWNER,
+                      EMPKNAME,
+                      DATEDIFF(DAY, CAR_BUYDATE, SELL_DATE) + 1       AS ISDAY,
+                      CAR_LOANSUM,
+                      CASE CAR_LOANCNT
+                        WHEN '0' THEN ''
+                        ELSE CONVERT(VARCHAR(10), CAR_LOANCNT) + '건'
+                      END                                             AS CAR_LOANCNT,
+                      SELL_TOTAL_FEE,
+                      SELL_REAL_FEE,
+                      SELL_TOTAL_FEE - SELL_REAL_FEE                  AS COL2,
+                      DBO.SMJ_FN_DATEFMT('H', SELL_DATE)              AS SELL_DATE,
+                      CAR_GUBN,
+                      CASE SELL_ADJ_DATE
+                        WHEN '' THEN '정산대기'
+                        ELSE SELL_ADJ_DATE
+                      END                                             AS
+                      SELL_TAXENDCHECKNAME,
+                      CASE
+                        WHEN CAR_EMPID <> SELL_EMPID THEN ' (알선)'
+                        ELSE ''
+                      END                                             ALSON,
+                      CASE B.SELLFEEGUBN
+                        WHEN '0' THEN '(별도)'
+                        WHEN '1' THEN '(포함)'
+                        ELSE ''
+                      END                                             AS
+                      SELLFEEGUBNNAME,
+                      SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2
+                      + SELL_BOHEOMAMT_3                              AS SELL_BOHEOMAMT
+                      ,
+                      BUY_TAX15
+                FROM   SMJ_MAINLIST A
+                      LEFT OUTER JOIN SMJ_SOLDLIST B
+                                    ON A.CAR_REGID = B.SELL_CAR_REGID
+                      LEFT OUTER JOIN SMJ_USER C
+                                    ON A.CAR_EMPID = C.EMPID
+                WHERE  CAR_AGENT = '00002'
+                      AND A.CAR_DELGUBN = '0'
+                      AND CAR_STATUS IN ( '002', '003' )) AS V
+        WHERE  RNUM BETWEEN 1 AND 10 	   
+        ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching sell pre data:", err);
+    throw err;
+  }
+};
+
+// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 exports.getCashBillAmount = async ({ costSeq }) => {
   try {
     const request = pool.request();

@@ -22,12 +22,19 @@ router.post("/insertCashBill", carController.insertCashBill);
 // 현금영수증 사전 데이터 조회
 router.get("/getCashBillPreData", carController.getCashBillPreData);
 
+// 판매
+router.get("/getSellPreData", carController.getSellPreData);
+
+
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 router.get("/getCashBillAmount", carController.getCashBillAmount);
 
 /* 현금영수증 */
 router.post("/popbill/v1/cashbill/registIssue", CashbillController.registIssue);
-router.post("/popbill/v1/cashbill/revokeRegistIssue",  CashbillController.revokeRegistIssue);
+router.post(
+  "/popbill/v1/cashbill/revokeRegistIssue",
+  CashbillController.revokeRegistIssue
+);
 router.post("/popbill/v1/cashbill/getInfo", CashbillController.getInfo);
 router.post("/popbill/v1/cashbill/getPrintURL", CashbillController.getPrintURL);
 
@@ -88,9 +95,18 @@ router.post("/popbill/v1/kakao/sendATS_one", KakaoController.sendATS_one);
 router.post("/popbill/v1/kakao/sendATS_multi", KakaoController.sendATS_multi);
 
 /* 연동회원 */
-router.post("/popbill/v1/bizinfo/joinMember", BizInfoCheckController.JoinMember);
-router.post("/popbill/v1/bizinfo/quitMember", BizInfoCheckController.QuitMember);
-router.post("/popbill/v1/bizinfo/getCorpInfo", BizInfoCheckController.GetCorpInfo);
+router.post(
+  "/popbill/v1/bizinfo/joinMember",
+  BizInfoCheckController.JoinMember
+);
+router.post(
+  "/popbill/v1/bizinfo/quitMember",
+  BizInfoCheckController.QuitMember
+);
+router.post(
+  "/popbill/v1/bizinfo/getCorpInfo",
+  BizInfoCheckController.GetCorpInfo
+);
 
 /* FAX */
 router.post(
@@ -105,9 +121,6 @@ router.post(
   "/popbill/v1/faxService/getSenderNumberList",
   FaxServiceController.getSenderNumberList
 );
-router.post(
-  "/popbill/v1/faxService/sendFAX",
-  FaxServiceController.sendFAX
-);
+router.post("/popbill/v1/faxService/sendFAX", FaxServiceController.sendFAX);
 
 module.exports = router;
