@@ -36,14 +36,8 @@ router.get("/getCashBillPreData", carController.getCashBillPreData);
 // 판매
 router.get("/getSellPreData", carController.getSellPreData);
 
-<<<<<<< HEAD
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// POP 팝빌 연동 API
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-=======
 // 딜러 조회
 router.get("/getDealerList", carController.getDealerList);
->>>>>>> 0ca933ce497c6911e2637b02b042a28839674b52
 
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 router.get("/getCashBillAmount", carController.getCashBillAmount);
