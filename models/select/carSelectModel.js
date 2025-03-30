@@ -285,3 +285,33 @@ exports.getCashBillAmount = async ({ costSeq }) => {
     throw err;
   }
 };
+
+// 딜러 조회
+exports.getDealerList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT EMPID,
+                     EMPKNAME,
+                     EMPTELNO1,
+                     CASE
+                       WHEN EMPEDATE IS NULL THEN ''
+                       ELSE '[퇴사]'
+                     END AS EMPEDATE1
+                  FROM   SMJ_USER
+                  WHERE  AGENT = @CAR_AGENT
+                         AND SANGSA_CODE > 0
+                         AND EMPEDATE IS NULL
+                         AND EMPGRADE <> '4'
+                  ORDER  BY EMPKNAME,
+                            DEALER_CODE,
+                            EMPEDATE;    
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching dealer list:", err);
+    throw err;
+  }
+};
