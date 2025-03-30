@@ -70,7 +70,6 @@ exports.getSellPreData = async (req, res, next) => {
   }
 };
 
-
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 exports.getCashBillAmount = async (req, res, next) => {
   try {
@@ -84,4 +83,13 @@ exports.getCashBillAmount = async (req, res, next) => {
   }
 };
 
-
+// 딜러 조회
+exports.getDealerList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.query;
+    const dealerList = await carSelectModel.getDealerList({ carAgent });
+    res.status(200).json(dealerList);
+  } catch (err) {
+    next(err);
+  }
+};
