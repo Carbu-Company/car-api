@@ -1,159 +1,31 @@
-const { EasyFinBankService } = require('../../config/popbill');
+const { HTTaxinvoiceService } = require('../../config/popbill');
 
-class EasyFinBankController {
-  // 계좌 등록
-  static async registBankAccount(req, res) {
-    try {
-      const { CorpNum, BankAccountInfo, UserID } = req.body;
-
-      console.log(CorpNum, BankAccountInfo, UserID);
-
-      EasyFinBankService.registBankAccount(
-              CorpNum,
-              BankAccountInfo,
-              UserID,
-              (result) => {
-                res.status(200).json({
-                  success: true,
-                  message: '계좌 등록 성공',
-                  data: result,
-                });
-              },
-              (error) => {
-                res.status(500).json({
-                  success: false,
-                  message: '계좌 등록 실패',
-                  error: {
-                    code: error.code,
-                    message: error.message,
-                  },
-                });
-              }
-      );
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: '서버 오류 발생',
-        error: err.message,
-      });
-    }
-  }
-
-  // 계좌 정보 수정
-  static async updateBankAccount(req, res) {
-    try {
-      const { CorpNum, BankCode, AccountNumber, UpdateEasyFinBankAccountForm, UserID } = req.body;
-
-      console.log(CorpNum, BankCode, AccountNumber, UpdateEasyFinBankAccountForm, UserID);
-
-      EasyFinBankService.updateBankAccount(
-              CorpNum,
-              BankCode,
-              AccountNumber,
-              UpdateEasyFinBankAccountForm,
-              UserID,
-              (result) => {
-                res.status(200).json({
-                  success: true,
-                  message: '계좌 정보 수정 성공',
-                  data: result,
-                });
-              },
-              (error) => {
-                res.status(500).json({
-                  success: false,
-                  message: '계좌 정보 수정 실패',
-                  error: {
-                    code: error.code,
-                    message: error.message,
-                  },
-                });
-              }
-      );
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: '서버 오류 발생',
-        error: err.message,
-      });
-    }
-  }
-
-  // 거래 내역 조회
-  static async search(req, res) {
-    try {
-      const {
-        CorpNum,
-        JobID,
-        TradeType = [],
-        SearchString = '',
-        Page = 1,
-        PerPage = 500,
-        Order = 'D',
-        UserID,
-      } = req.body;
-
-      console.log(CorpNum, JobID, TradeType, SearchString, Page, PerPage, Order, UserID);
-
-      EasyFinBankService.search(
-              CorpNum,
-              JobID,
-              TradeType,
-              SearchString,
-              Page,
-              PerPage,
-              Order,
-              UserID,
-              (result) => {
-                res.status(200).json({
-                  success: true,
-                  message: '거래 내역 조회 성공',
-                  data: result,
-                });
-              },
-              (error) => {
-                res.status(500).json({
-                  success: false,
-                  message: '거래 내역 조회 실패',
-                  error: {
-                    code: error.code,
-                    message: error.message,
-                  },
-                });
-              }
-      );
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: '서버 오류 발생',
-        error: err.message,
-      });
-    }
-  }
-
-  // 계좌 거래내역 수집 요청
+class HtTaxinvoiceController {
   static async requestJob(req, res) {
     try {
-      const { CorpNum, BankCode, AccountNumber, SDate, EDate, UserID } = req.body;
+      const { CorpNum, Type, DType, SDate, EDate, UserID } = req.body;
 
-      EasyFinBankService.requestJob(
+      console.log(CorpNum, Type, DType, SDate, EDate, UserID);
+
+      // 작업 요청
+      HTTaxinvoiceService.requestJob(
               CorpNum,
-              BankCode,
-              AccountNumber,
+              Type,
+              DType,
               SDate,
               EDate,
               UserID,
               (result) => {
                 res.status(200).json({
                   success: true,
-                  message: '거래내역 수집 요청 성공',
+                  message: '수집 요청 성공',
                   data: result,
                 });
               },
               (error) => {
                 res.status(500).json({
                   success: false,
-                  message: '거래내역 수집 요청 실패',
+                  message: '수집 요청 실패',
                   error: {
                     code: error.code,
                     message: error.message,
@@ -170,25 +42,122 @@ class EasyFinBankController {
     }
   }
 
-  // 계좌정보 목록 조회
-  static async listBankAccount (req, res) {
+  static async GetJobState (req, res) {
     try {
-      const { CorpNum, UserID } = req.body;
+      const {
+        CorpNum,
+        JobID,
+        UserID
+      } = req.body;
 
-      EasyFinBankService.listBankAccount (
+      // RevokeRegistIssue 호출
+      HTTaxinvoiceService.GetJobState(
+              CorpNum || '',
+              JobID || '',
+              UserID || '',
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '수집 상태 조회 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '수집 상태 조회 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+  static async Search (req, res) {
+    try {
+      const { CorpNum, JobID, TaxRegID, Order, serID } = req.body;
+
+      // 필수 파라미터 확인
+      if (!CorpNum || !JobID) {
+        return res.status(400).json({
+          success: false,
+          message: '필수 파라미터(CorpNum, JobID)가 누락되었습니다.',
+        });
+      }
+
+      // 팝빌 API 호출
+      HTTaxinvoiceService.Search(
               CorpNum,
+              JobID,
+              TaxRegID,
+              Order,
+              serID,
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '수집 결과 조회 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '수집 결과 조회 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+  static async GetPopUpURL  (req, res) {
+    try {
+      const { CorpNum, NTSConfirmNum, UserID } = req.body;
+
+      console.log(CorpNum, NTSConfirmNum, UserID);
+
+      // 필수 파라미터 확인
+      if (!CorpNum || !NTSConfirmNum) {
+        return res.status(400).json({
+          success: false,
+          message: '필수 파라미터(CorpNum, NTSConfirmNum)가 누락되었습니다.',
+        });
+      }
+
+      // 팝빌 API 호출
+      HTTaxinvoiceService.GetPopUpURL(
+              CorpNum,
+              NTSConfirmNum,
               UserID,
               (result) => {
                 res.status(200).json({
                   success: true,
-                  message: '계좌정보 목록 조회 성공',
+                  message: '전자세금계산서 보기 팝업 URL 확인 성공',
                   data: result,
                 });
               },
               (error) => {
                 res.status(500).json({
                   success: false,
-                  message: '계좌정보 목록 조회 실패',
+                  message: '전자세금계산서 보기 팝업 URL 확인 실패',
                   error: {
                     code: error.code,
                     message: error.message,
@@ -204,6 +173,56 @@ class EasyFinBankController {
       });
     }
   }
+
+  
+  static async GetTaxinvoice (req, res) {
+    try {
+      const { CorpNum, NTSConfirmNum, UserID } = req.body;
+
+      console.log(CorpNum, NTSConfirmNum, UserID);
+
+      // 필수 파라미터 확인
+      if (!CorpNum || !NTSConfirmNum) {
+        return res.status(400).json({
+          success: false,
+          message: '필수 파라미터(CorpNum, NTSConfirmNum)가 누락되었습니다.',
+        });
+      }
+
+      // 팝빌 API 호출
+      HTTaxinvoiceService.GetTaxinvoice(
+              CorpNum,
+              NTSConfirmNum,
+              UserID,
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '수집 상세 확인 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '수집 상세 확인 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+  
 }
 
-module.exports = EasyFinBankController;
+
+module.exports = HtTaxinvoiceController;

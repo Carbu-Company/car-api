@@ -58,6 +58,8 @@ class TaxinvoiceController {
     try {
       const { CorpNum, KeyType, MgtKey, Memo = '', UserID } = req.body;
 
+      console.log(CorpNum, KeyType, MgtKey, Memo, UserID);
+
       // TaxinvoiceService.cancelIssue 호출
       TaxinvoiceService.cancelIssue(
               CorpNum,
@@ -129,15 +131,17 @@ class TaxinvoiceController {
   }
 
   
-  // 발행 취소
+  // 세금계산서 인쇄 팝업 URL 조회
   static async getPrintURL(req, res) {
     try {
-      const { CorpNum, MgtKeyType, MgtKey, UserID } = req.body;
+      const { CorpNum,  KeyType, MgtKey, UserID } = req.body; 
+
+      console.log(CorpNum, KeyType, MgtKey, UserID);
 
       // TaxinvoiceService.getPrintURL 호출
       TaxinvoiceService.getPrintURL(
               CorpNum,
-              MgtKeyType,
+              KeyType,
               MgtKey,
               UserID,
               (result) => {
@@ -166,6 +170,9 @@ class TaxinvoiceController {
       });
     }
   }
+
+
 }
+
 
 module.exports = TaxinvoiceController;

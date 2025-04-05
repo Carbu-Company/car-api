@@ -7,7 +7,7 @@ const EasyFinBankController = require("../controllers/popbill/easyFinBankControl
 const KakaoController = require("../controllers/popbill/kakaoController");
 const BizInfoCheckController = require("../controllers/popbill/bizInfoCheckController");
 const FaxServiceController = require("../controllers/popbill/faxServiceController");
-
+const HtTaxinvoiceController = require("../controllers/popbill/htTaxinvoiceController");
 const router = express.Router();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,9 +20,19 @@ router.get("/getMgtKey", carController.getMgtKey);
 // 로그인
 router.post("/login", loginController.loginController);
 
+// 공통코드 조회
+router.get("/getCDList", carController.getCDList);
+
+// 딜러 조회
+router.get("/getDealerList", carController.getDealerList);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DB SQL 조회 (공통)
+// DB SQL 조회 (업무)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//***************************************************************************************** */
+// 제시 
+//***************************************************************************************** */
 
 // 제시 차량 조회
 router.post("/cars", carController.SuggestSelectData);
@@ -30,17 +40,45 @@ router.post("/cars", carController.SuggestSelectData);
 // 제시 등록
 router.post("/insertCashBill", carController.insertCashBill);
 
-// 현금영수증 사전 데이터 조회
-router.get("/getCashBillPreData", carController.getCashBillPreData);
+//***************************************************************************************** */
+// 매입 매도비 
+//***************************************************************************************** */
+
+// 매입 매도비 목록 조회
+router.post("/getBuySellFeeList", carController.getBuySellFeeList);
+
+//***************************************************************************************** */
+// 현금영수증 
+//***************************************************************************************** */
+
+// 현금영수증 목록 데이터 조회
+router.get("/getCashBillList", carController.getCashBillList);
+
+// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+router.get("/getCashBillAmount", carController.getCashBillAmount);
+
+//***************************************************************************************** */
+// 시제(계좌) 
+//***************************************************************************************** */
+
+// 시재 관리
+router.get("/getAssetList", carController.getAssetList);
+
+// 계좌정보 조회
+router.get("/getAccountInfo", carController.getAccountInfo);
+
+//***************************************************************************************** */
+// 차량 판매 
+//***************************************************************************************** */
 
 // 판매
 router.get("/getSellPreData", carController.getSellPreData);
 
-// 딜러 조회
-router.get("/getDealerList", carController.getDealerList);
 
-// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
-router.get("/getCashBillAmount", carController.getCashBillAmount);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// POP 팝빌 연동 API
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* 현금영수증 */
 router.post("/popbill/v1/cashbill/registIssue", CashbillController.registIssue);
@@ -69,6 +107,7 @@ router.post(
   TaxinvoiceController.getPrintURL
 );
 
+
 /* 계좌 조회 */
 router.post(
   "/popbill/v1/easyfinbank/registBankAccount",
@@ -79,8 +118,8 @@ router.post(
   EasyFinBankController.updateBankAccount
 );
 router.post(
-  "/popbill/v1/easyfinbank/getTransactionHistory",
-  EasyFinBankController.getTransactionHistory
+  "/popbill/v1/easyfinbank/search",
+  EasyFinBankController.search
 );
 router.post(
   "/popbill/v1/easyfinbank/requestJob",
@@ -135,5 +174,29 @@ router.post(
   FaxServiceController.getSenderNumberList
 );
 router.post("/popbill/v1/faxService/sendFAX", FaxServiceController.sendFAX);
+
+
+/* 홈텍스 수집 */
+router.post(
+  "/popbill/v1/htTaxinvoice/requestJob",
+  HtTaxinvoiceController.requestJob
+);
+router.post(
+  "/popbill/v1/htTaxinvoice/GetJobState",
+  HtTaxinvoiceController.GetJobState
+);
+router.post(
+  "/popbill/v1/htTaxinvoice/Search",
+  HtTaxinvoiceController.Search
+);
+router.post(
+  "/popbill/v1/htTaxinvoice/GetPopUpURL",
+  HtTaxinvoiceController.GetPopUpURL
+);
+router.post(
+  "/popbill/v1/htTaxinvoice/GetTaxinvoice",
+  HtTaxinvoiceController.GetTaxinvoice
+);
+
 
 module.exports = router;

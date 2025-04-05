@@ -118,7 +118,7 @@ class FaxServiceController {
   // FAX 발송
   static async sendFAX(req, res) {
     try {
-      const { CorpNum, Sender, Receiver, ReceiverName, FilePaths, SenderName, Title, RequestNum, UserID } = req.body;
+      const { CorpNum, Sender, Receiver, ReceiverName, FilePaths, SenderName, AdsYN, Title, RequestNum, UserID } = req.body;
 
       // FaxService.sendFAX 호출
       FaxService.sendFax(
@@ -128,6 +128,7 @@ class FaxServiceController {
               ReceiverName,
               FilePaths,
               SenderName,
+              AdsYN,
               Title,
               RequestNum,
               UserID,

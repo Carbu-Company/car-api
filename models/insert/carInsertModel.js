@@ -1,6 +1,42 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
+// 계좌정보 등록
+exports.insertAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, accountName }) => {
+  try {
+    const request = pool.request();
+
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("BANKCODE", sql.VarChar, bankCode);
+    request.input("ACCOUNTNUMBER", sql.VarChar, accountNumber);
+    request.input("MEMO", sql.VarChar, memo);
+    request.input("ACCOUNTNAME", sql.VarChar, accountName);
+
+    const query = `INSERT INTO SMJ_AGENT_BANK
+                              (AGENT,
+                              BANKCODE,
+                              ACCOUNTNUMBER,
+                              USECHECK,
+                              MEMO,
+                              REGDATE,
+                              ACCOUNTNAME)
+                  VALUES      ( @CAR_AGENT, 
+                                @BANKCODE,
+                                @ACCOUNTNUMBER,
+                                'Y',  
+                                @MEMO,
+                                GETDATE(),
+                                @ACCOUNTNAME) ;
+                                ;`;
+
+    await request.query(query);
+  } catch (err) {
+    console.error("Error inserting account info:", err);
+    throw err;  
+  }
+};
+
+
 // 제시 직접 등록
 exports.insertCashBill = async ({
   mgtKey,
