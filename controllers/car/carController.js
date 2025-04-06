@@ -11,8 +11,22 @@ exports.getBuySellFeeList = async (req, res, next) => {
   try {
     const { carAgent } = req.body;
 
+    console.log(req.body);
+
     const buySellFeeList = await carSelectModel.getBuySellFeeList({ carAgent });
     res.status(200).json(buySellFeeList);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 매입 매도비 합계 조회
+exports.getBuySellFeeSum = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+
+    const buySellFeeSum = await carSelectModel.getBuySellFeeSum({ carAgent });
+    res.status(200).json(buySellFeeSum);
   } catch (err) {
     next(err);
   }

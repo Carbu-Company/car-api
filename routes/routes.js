@@ -47,6 +47,9 @@ router.post("/insertCashBill", carController.insertCashBill);
 // 매입 매도비 목록 조회
 router.post("/getBuySellFeeList", carController.getBuySellFeeList);
 
+// 매입 매도비 합계 조회
+router.post("/getBuySellFeeSum", carController.getBuySellFeeSum);
+
 //***************************************************************************************** */
 // 현금영수증 
 //***************************************************************************************** */

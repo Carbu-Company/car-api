@@ -67,10 +67,43 @@ exports.getBuySellFeeList = async ({ carAgent }) => {
                     WHERE 1 = 1 --RNUM BETWEEN 1 AND 10
                     ;`;
 
+
+    console.log(query);
+
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
     console.error("Error fetching buy sell fee list:", err);
+    throw err;
+  }
+};
+
+// 매입 매도비 합계
+exports.getBuySellFeeSum = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT SUM(BUY_TOTAL_FEE) AS BUY_TOTAL_FEE,
+                          SUM(BUY_REAL_FEE) AS BUY_REAL_FEE,
+                          SUM(BUY_TOTAL_FEE) - SUM(BUY_REAL_FEE) AS BUY_DIFF_FEE,
+                          SUM(SELL_TOTAL_FEE) AS SELL_TOTAL_FEE,
+                          SUM(SELL_REAL_FEE) AS SELL_REAL_FEE,
+                          SUM(SELL_TOTAL_FEE) - SUM(SELL_REAL_FEE) AS SELL_DIFF_FEE,
+                          SUM(BUY_TOTAL_FEE) + SUM(SELL_TOTAL_FEE) AS TOTAL_FEE,
+                          SUM(BUY_REAL_FEE) + SUM(SELL_REAL_FEE) AS REAL_FEE,
+                          (SUM(BUY_TOTAL_FEE) - SUM(BUY_REAL_FEE)) + (SUM(SELL_TOTAL_FEE) - SUM(SELL_REAL_FEE)) AS DIFF_FEE
+                    FROM  SMJ_MAINLIST A,
+                          SMJ_SOLDLIST B
+                    WHERE A.CAR_REGID = B.SELL_CAR_REGID
+                      AND A.CAR_DELGUBN = '0'
+                      AND CAR_STATUS <> '004'
+                      AND CAR_AGENT = @CAR_AGENT ;`; 
+
+    const result = await request.query(query);
+    return result.recordset[0]; 
+  } catch (err) {
+    console.error("Error fetching buy sell fee sum:", err);
     throw err;
   }
 };
