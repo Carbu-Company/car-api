@@ -11,7 +11,6 @@ exports.getBuySellFeeList = async ({ carAgent, carNo }) => {
     const request = pool.request();
 
     request.input("CAR_AGENT", sql.VarChar, carAgent);
-    request.input("CAR_NO", sql.VarChar, carNo);
 
     const query = `SELECT *
                     FROM (
@@ -64,7 +63,6 @@ exports.getBuySellFeeList = async ({ carAgent, carNo }) => {
                         WHERE A.CAR_DELGUBN = '0'
                             AND CAR_STATUS <> '004'
                             AND CAR_AGENT = @CAR_AGENT
-                            AND A.CAR_NO LIKE @CAR_NO
                     ) AS V
                     WHERE 1 = 1 --RNUM BETWEEN 1 AND 10
                     ;`;

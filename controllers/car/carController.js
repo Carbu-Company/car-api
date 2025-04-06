@@ -9,11 +9,11 @@ const carUpdateModel = require("../../models/update/carUpdateModel");
 // 매입 매도비 목록 조회
 exports.getBuySellFeeList = async (req, res, next) => {
   try {
-    const { carAgent, carNo = null } = req.body;
+    const { carAgent } = req.body;
 
     console.log(req.body);
 
-    const buySellFeeList = await carSelectModel.getBuySellFeeList({ carAgent, carNo });
+    const buySellFeeList = await carSelectModel.getBuySellFeeList({ carAgent });
     res.status(200).json(buySellFeeList);
   } catch (err) {
     next(err);
