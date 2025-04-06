@@ -16,8 +16,7 @@ const whitelist = [
   "http://115.68.193.63:3000",
   "http://carbu.infoedu.co.kr",
   "http://localhost:3000",
-  "http://carbu-api.infoedu.co.kr",
-  "http://carbu-fo.infoedu.co.kr",
+  "http://carbu-fo.infoedu.co.kr"
 ];
 
 // CORS 설정
@@ -33,9 +32,14 @@ const corsOptions = {
     }
   },
   credentials: true, // 쿠키를 포함한 요청 허용
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // OPTIONS 메소드 추가
+  allowedHeaders: ['Content-Type', 'Authorization'] // 허용할 헤더 추가
 };
 
 app.use(cors(corsOptions));
+
+// preflight 요청 처리
+app.options('*', cors(corsOptions));
 
 // JSON 요청 파싱
 app.use(express.json());
