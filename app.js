@@ -17,6 +17,7 @@ const whitelist = [
   "http://carbu.infoedu.co.kr",
   "http://localhost:3000",
   "http://carbu-api.infoedu.co.kr",
+  "http://carbu-fo.infoedu.co.kr",
 ];
 
 // CORS 설정
