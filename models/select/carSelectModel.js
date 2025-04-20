@@ -259,7 +259,7 @@ exports.getAssetList = async ({ carAgent, accountNumber, startDate, endDate }) =
     request.input("START_DATE", sql.VarChar, startDate);
     request.input("END_DATE", sql.VarChar, endDate);
 
-    const query = ` SELECT *
+    let query = ` SELECT *
                       FROM   (SELECT ROW_NUMBER()
                                       OVER(
                                         ORDER BY TID DESC)    AS RNUM,
@@ -282,6 +282,30 @@ exports.getAssetList = async ({ carAgent, accountNumber, startDate, endDate }) =
                                     AND CONVERT (DATE, TRDATE) <= @END_DATE) AS V
                       WHERE  1 = 1 --RNUM BETWEEN 1 AND 30 
                       ;`;
+
+                      query = `SELECT *
+                                FROM   (SELECT ROW_NUMBER()
+                                                OVER(
+                                                  ORDER BY TID DESC)    AS RNUM,
+                                              TID,
+                                              BANKCODE,
+                                              ACCOUNTNUMBER,
+                                              DBO.SMJ_FN_DATETIME(TRDT) AS TRDT,
+                                              ACCIN,
+                                              ACCOUT,
+                                              BALANCE,
+                                              REMARK1,
+                                              CARNO,
+                                              ACKIND,
+                                              DEALER,
+                                              MEMO
+                                        FROM   SMJ_AGENT_BANK_SEARCH
+                                        WHERE  1 = 1 -- AGENT = '00518'
+                                              --AND ACCOUNTNUMBER LIKE '%04850103804051%'
+                                              AND CONVERT (DATE, TRDATE) >= '2020-01-26'
+                                              AND CONVERT (DATE, TRDATE) <= '2025-01-26') AS V
+                                WHERE  RNUM BETWEEN 1 AND 30 ;`;
+
 
     const result = await request.query(query);
     return result.recordset;
@@ -796,108 +820,6 @@ exports.getCompanyProfitList = async ({ carAgent }) => {
     return result.recordset;
   } catch (err) {
     console.error("Error fetching company profit list:", err);
-    throw err;
-  }
-};
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 현금영수증
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 현금영수증 목록 데이터 조회
-exports.getCashBillList = async ({ carAgent }) => {
-  try {
-    const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
-    const query = `
-      SELECT *
-      FROM   (SELECT ROW_NUMBER()
-                     OVER(
-                       ORDER BY COST_REGDATE DESC, COST_YEARMONTH DESC, COST_DATE DESC ) AS RNUM,
-                   COST_SEQ,
-                   COST_YEARMONTH,
-                   DBO.SMJ_FN_DATEFMT('D', COST_DATE) AS COST_DATE,
-                   COST_CODENAME,
-                   COST_REALAMT,
-                   DBO.SMJ_FN_GETCDNAME('06', COST_WAY) AS COST_WAY,
-                   DBO.SMJ_FN_GETCDNAME('07', COST_RECEIPT) AS COST_RECEIPTNAME,
-                   CASE COST_TAXGUBN
-                     WHEN '0' THEN '미공제'
-                     WHEN '1' THEN '공제'
-                     ELSE ''
-                   END AS COST_TAXGUBN,
-                   DBO.SMJ_FN_DATEFMT('D', COST_TAXDATE) AS COST_TAXDATE,
-                   COST_DESC,
-                   DBO.SMJ_FN_DATEFMT('D', COST_REGDATE) AS COST_REGDATE,
-                   COST_CAR_NO,
-                   CASE COST_EMPID
-                     WHEN '000000000' THEN '타딜러'
-                     ELSE EMPKNAME
-                   END AS EMPNAME,
-                   CASE CASHBILL_YN
-                     WHEN 'Y' THEN '발행'
-                     WHEN 'N' THEN '미발행'
-                     ELSE ''
-                   END AS CASHBILL_YNNAME,
-                   COST_CODE,
-                   COST_CARID,
-                   COST_RECEIPT,
-                   CAR_NAME,
-                   SELL_OWNER,
-                   SELL_TELNO,
-                   REPLACE(COST_RECEIPT_NO, '-', '') AS COST_RECEIPT_NO_RE,
-                   COST_AUTO,
-                   DBO.SMJ_FN_VAT_SUP(COST_REALAMT) AS SUP,
-                   DBO.SMJ_FN_VAT_AMT(COST_REALAMT) AS VAT
-            FROM   SMJ_COST A
-                   LEFT OUTER JOIN SMJ_MAINLIST B ON CAR_REGID = COST_CARID
-                   LEFT OUTER JOIN SMJ_SOLDLIST D ON CAR_REGID = SELL_CAR_REGID
-                   LEFT OUTER JOIN SMJ_USER C ON A.COST_EMPID = C.EMPID
-            WHERE  COST_KIND = '1'
-                   AND COST_DELGUBN = '0' 
-                   AND COST_AGENT = @CAR_AGENT
-                   AND COST_RECEIPT = '004'
-                   AND CASHBILL_YN = 'N'
-                   AND COST_REALAMT > 0
-                   AND CASHBILL_VIEW = 'Y') AS V
-      WHERE  1 = 1 --RNUM BETWEEN 1 AND 50
-      ;
-    `;
-    const result = await request.query(query);
-    return result.recordset;
-  } catch (err) {
-    console.error("Error fetching cash bill pre data:", err);
-    throw err;
-  }
-};
-
-
-// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
-exports.getCashBillAmount = async ({ costSeq }) => {
-  try {
-    const request = pool.request();
-    request.input("COST_SEQ", sql.VarChar, costSeq);
-    const query = `
-    SELECT COST_CODENAME,
-               COST_REALAMT,
-               SELL_OWNER,
-               SELL_TELNO,
-               DBO.SMJ_FN_VAT_SUP(COST_REALAMT) AS SUP,
-               DBO.SMJ_FN_VAT_AMT(COST_REALAMT) AS VAT
-        FROM   SMJ_COST A
-               LEFT OUTER JOIN SMJ_MAINLIST B
-                            ON CAR_REGID = COST_CARID
-               LEFT OUTER JOIN SMJ_SOLDLIST D
-                            ON CAR_REGID = SELL_CAR_REGID
-               LEFT OUTER JOIN SMJ_USER C
-                            ON A.COST_EMPID = C.EMPID
-        WHERE  COST_SEQ = @COST_SEQ;	
-    `;
-    const result = await request.query(query);
-    return result.recordset[0];
-  } catch (err) {
-    console.error("Error fetching cash bill amount:", err);
     throw err;
   }
 };
@@ -1730,7 +1652,7 @@ exports.getSystemOverallDealerSumList = async ({ carAgent }) => {
                               FROM   SMJ_USER A
                                     LEFT OUTER JOIN SMJ_MAINLIST B
                                                   ON A.EMPID = B.CAR_EMPID
-                                                    AND CAR_BUYDATE >= '2025-01-01 00:00:00'
+                                                    AND CAR_BUYDATE >= '2020-01-01 00:00:00'
                                                     AND CAR_BUYDATE <= '2025-01-26 23:59:59'
                                                     AND CAR_DELGUBN = '0'
                                                     AND CAR_STATUS = '001'
@@ -2066,3 +1988,767 @@ exports.getSystemMonthlyList = async ({ carAgent }) => {
     throw err;
   }
 };
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 운영현황 - 예상부가세  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 예상부가세 매출 현황 목록 조회
+exports.getSystemVatSalesList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT Count(cost_seq) AS CNT,
+                          Sum(cost_realamt / 10000) AS RT,
+                          Sum(Floor(Round(cost_realamt / 10000 / 1.1, 0))) AS SP,
+                          Sum(cost_realamt / 10000 - ( Floor(Round(cost_realamt / 10000 / 1.1, 0))
+                                                      )) AS VT
+                    FROM   smj_cost
+                    WHERE  1 = 1 --cost_kind = '1'
+                          AND cost_delgubn = '0'
+                          --AND cost_agent = '00511'
+                          AND cost_taxdate BETWEEN '2024-04-01 00:00:00' AND '2025-04-18 23:59:59';
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching system vat sales list:", err);
+    throw err;
+  }
+};
+
+
+// 예상부가세 매입 현황 목록 조회
+exports.getSystemVatPurchaseList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT Count(cost_seq) AS CNT,
+                          Sum(cost_realamt / 10000) AS RT,
+                          Sum(sup / 10000)          AS SP,
+                          Sum(vat / 10000)          AS VT
+                    FROM   (SELECT cost_seq,
+                                  cost_realamt,
+                                  CASE cost_taxrate
+                                    WHEN '0' THEN cost_realamt
+                                    WHEN '1' THEN Floor(Round(cost_realamt / 1.1, 0))
+                                    WHEN '2' THEN Floor(Round(cost_realamt / 1.1, 0))
+                                    ELSE '0'
+                                  END sup,
+                                  CASE cost_taxrate
+                                    WHEN '0' THEN '0'
+                                    WHEN '1' THEN cost_realamt - ( Floor(Round(cost_realamt / 1.1,
+                                                                          0)) )
+                                    WHEN '2' THEN cost_realamt - ( Floor(Round(cost_realamt / 1.1,
+                                                                          0)) )
+                                    ELSE '0'
+                                  END vat
+                            FROM   smj_cost
+                            WHERE cost_kind = '0'
+                                  AND cost_delgubn = '0'
+                                  -- AND cost_agent = '00002'
+                                  AND cost_taxdate BETWEEN '2024-04-01 00:00:00' AND
+                                                            '2025-04-18 23:59:59'
+                          ) tbl 
+                    ;
+
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching system vat purchase list:", err);
+    throw err;
+  }
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 현금영수증
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 현금영수증 목록 데이터 조회
+exports.getCashBillList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    const query = `
+      SELECT *
+      FROM   (SELECT ROW_NUMBER()
+                     OVER(
+                       ORDER BY COST_REGDATE DESC, COST_YEARMONTH DESC, COST_DATE DESC ) AS RNUM,
+                   COST_SEQ,
+                   COST_YEARMONTH,
+                   DBO.SMJ_FN_DATEFMT('D', COST_DATE) AS COST_DATE,
+                   COST_CODENAME,
+                   COST_REALAMT,
+                   DBO.SMJ_FN_GETCDNAME('06', COST_WAY) AS COST_WAY,
+                   DBO.SMJ_FN_GETCDNAME('07', COST_RECEIPT) AS COST_RECEIPTNAME,
+                   CASE COST_TAXGUBN
+                     WHEN '0' THEN '미공제'
+                     WHEN '1' THEN '공제'
+                     ELSE ''
+                   END AS COST_TAXGUBN,
+                   DBO.SMJ_FN_DATEFMT('D', COST_TAXDATE) AS COST_TAXDATE,
+                   COST_DESC,
+                   DBO.SMJ_FN_DATEFMT('D', COST_REGDATE) AS COST_REGDATE,
+                   COST_CAR_NO,
+                   CASE COST_EMPID
+                     WHEN '000000000' THEN '타딜러'
+                     ELSE EMPKNAME
+                   END AS EMPNAME,
+                   CASE CASHBILL_YN
+                     WHEN 'Y' THEN '발행'
+                     WHEN 'N' THEN '미발행'
+                     ELSE ''
+                   END AS CASHBILL_YNNAME,
+                   COST_CODE,
+                   COST_CARID,
+                   COST_RECEIPT,
+                   CAR_NAME,
+                   SELL_OWNER,
+                   SELL_TELNO,
+                   REPLACE(COST_RECEIPT_NO, '-', '') AS COST_RECEIPT_NO_RE,
+                   COST_AUTO,
+                   DBO.SMJ_FN_VAT_SUP(COST_REALAMT) AS SUP,
+                   DBO.SMJ_FN_VAT_AMT(COST_REALAMT) AS VAT
+            FROM   SMJ_COST A
+                   LEFT OUTER JOIN SMJ_MAINLIST B ON CAR_REGID = COST_CARID
+                   LEFT OUTER JOIN SMJ_SOLDLIST D ON CAR_REGID = SELL_CAR_REGID
+                   LEFT OUTER JOIN SMJ_USER C ON A.COST_EMPID = C.EMPID
+            WHERE  COST_KIND = '1'
+                   AND COST_DELGUBN = '0' 
+                   AND COST_AGENT = @CAR_AGENT
+                   AND COST_RECEIPT = '004'
+                   AND CASHBILL_YN = 'N'
+                   AND COST_REALAMT > 0
+                   AND CASHBILL_VIEW = 'Y') AS V
+      WHERE  1 = 1 --RNUM BETWEEN 1 AND 50
+      ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching cash bill pre data:", err);
+    throw err;
+  }
+};
+
+
+// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+exports.getCashBillAmount = async ({ costSeq }) => {
+  try {
+    const request = pool.request();
+    request.input("COST_SEQ", sql.VarChar, costSeq);
+    const query = `
+    SELECT COST_CODENAME,
+               COST_REALAMT,
+               SELL_OWNER,
+               SELL_TELNO,
+               DBO.SMJ_FN_VAT_SUP(COST_REALAMT) AS SUP,
+               DBO.SMJ_FN_VAT_AMT(COST_REALAMT) AS VAT
+        FROM   SMJ_COST A
+               LEFT OUTER JOIN SMJ_MAINLIST B
+                            ON CAR_REGID = COST_CARID
+               LEFT OUTER JOIN SMJ_SOLDLIST D
+                            ON CAR_REGID = SELL_CAR_REGID
+               LEFT OUTER JOIN SMJ_USER C
+                            ON A.COST_EMPID = C.EMPID
+        WHERE  COST_SEQ = @COST_SEQ;	
+    `;
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching cash bill amount:", err);
+    throw err;
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 현금영수증 발행리스트
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 현금영수증 발행리스트 조회
+exports.getReceiptIssueList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    // 발행 변수
+    const issuedate = new Date();
+
+    const query = `SELECT *
+                    FROM   (SELECT ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY TAXREGDATE DESC)       AS RNUM,
+                                  MGTKEY,
+                                  WRITEDATE,
+                                  INVOICEECORPNAME,
+                                  INVOICEECORPNUM,
+                                  TOTALAMOUNT,
+                                  CASE TAXEMP
+                                    WHEN '000000000' THEN '타딜러'
+                                    WHEN '999999999' THEN '타딜러'
+                                    ELSE DBO.SMJ_FN_EMPNAME(TAXEMP)
+                                  END                                 EMPNAME,
+                                  COST_CODENAME,
+                                  ITEMNAME,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXREGDATE) TAXREGDATE,
+                                  SUPPLYCOSTTOTAL,
+                                  TAXTOTAL,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXDELDATE) TAXDELDATE,
+                                  INVOICEETEL1,
+                                  CARREGID,
+                                  COSTSEQ,
+                                  COSTCODE
+                            FROM   SMJ_TAXBILL A,
+                                  SMJ_COST B
+                            WHERE  A.COSTSEQ = B.COST_SEQ
+                                  AND COST_KIND = '1'
+                                  AND COST_RECEIPT = '001'
+                                  --AND A.AGENT = '00002'
+                                  ) AS V
+                    WHERE  RNUM BETWEEN 1 AND 10;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching receipt issue list:", err);
+    throw err;
+  }
+};  
+
+// 현금영수증 발행리스트 합계 
+exports.getReceiptIssueSummary = async ({ carAgent }) => {  
+  try { 
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);  
+
+    const query = `SELECT 0 GUBUN,
+                          G1,
+                          G2,
+                          G3,
+                          G4,
+                          J1,
+                          J2,
+                          J3,
+                          J4,
+                          G1 + J1,
+                          G2 + J2,
+                          G3 + J3,
+                          G4 + J4
+                    FROM   (SELECT COUNT(MGTKEY)               AS G1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0) AS G2,
+                                  ISNULL(SUM(SUPPLYCOST), 0)  AS G3,
+                                  ISNULL(SUM(TAX), 0)         AS G4
+                            FROM   SMJ_CASHBILL
+                            WHERE  1= 1 --AND  AGENT = ?
+                                  AND TRADETYPE = '승인거래'
+                                  AND TRADEUSAGE = '소득공제용'
+                                  AND IDENTITYNUM <> '0100001234'
+                                  AND CASHDELDATE IS NULL) AS A,
+                          (SELECT COUNT(MGTKEY)               AS J1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0) AS J2,
+                                  ISNULL(SUM(SUPPLYCOST), 0)  AS J3,
+                                  ISNULL(SUM(TAX), 0)         AS J4
+                            FROM   SMJ_CASHBILL
+                            WHERE 1= 1 --AND   AGENT = ?
+                                  AND TRADETYPE = '승인거래'
+                                  AND TRADEUSAGE = '지출증빙용'
+                                  AND IDENTITYNUM <> '0100001234'
+                                  AND CASHDELDATE IS NULL) AS B
+                    UNION ALL
+                    SELECT 1 GUBUN,
+                          G1,
+                          G2,
+                          G3,
+                          G4,
+                          J1,
+                          J2,
+                          J3,
+                          J4,
+                          G1 + J1,
+                          G2 + J2,
+                          G3 + J3,
+                          G4 + J4
+                    FROM   (SELECT COUNT(MGTKEY)               AS G1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0) AS G2,
+                                  ISNULL(SUM(SUPPLYCOST), 0)  AS G3,
+                                  ISNULL(SUM(TAX), 0)         AS G4
+                            FROM   SMJ_CASHBILL
+                            WHERE  1= 1 --AND  AGENT = ?
+                                  AND TRADETYPE = '승인거래'
+                                  AND TRADEUSAGE = '소득공제용'
+                                  AND IDENTITYNUM = '0100001234'
+                                  AND CASHDELDATE IS NULL) AS A,
+                          (SELECT COUNT(MGTKEY)               AS J1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0) AS J2,
+                                  ISNULL(SUM(SUPPLYCOST), 0)  AS J3,
+                                  ISNULL(SUM(TAX), 0)         AS J4
+                            FROM   SMJ_CASHBILL
+                            WHERE  1= 1 --AND  AGENT = ?
+                                  AND TRADETYPE = '승인거래'
+                                  AND TRADEUSAGE = '지출증빙용'
+                                  AND IDENTITYNUM = '0100001234'
+                                  AND CASHDELDATE IS NULL) AS B ;
+    `;  
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching receipt issue list:", err);
+    throw err;
+  }
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 전자세금계산서 발행
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 전자세금계산서 목록 데이터 조회
+exports.getTaxInvoiceList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    const query = `SELECT *
+                    FROM   (SELECT ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY TAXREGDATE DESC)       AS RNUM,
+                                  MGTKEY,
+                                  WRITEDATE,
+                                  INVOICEECORPNAME,
+                                  INVOICEECORPNUM,
+                                  TOTALAMOUNT,
+                                  CASE TAXEMP
+                                    WHEN '000000000' THEN '타딜러'
+                                    WHEN '999999999' THEN '타딜러'
+                                    ELSE DBO.SMJ_FN_EMPNAME(TAXEMP)
+                                  END                                 EMPNAME,
+                                  COST_CODENAME,
+                                  ITEMNAME,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXREGDATE) TAXREGDATE,
+                                  SUPPLYCOSTTOTAL,
+                                  TAXTOTAL,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXDELDATE) TAXDELDATE,
+                                  INVOICEETEL1,
+                                  CARREGID,
+                                  COSTSEQ,
+                                  COSTCODE
+                            FROM   SMJ_TAXBILL A,
+                                  SMJ_COST B
+                            WHERE  A.COSTSEQ = B.COST_SEQ
+                                  AND COST_KIND = '1'
+                                  AND COST_RECEIPT = '001'
+                                  AND A.AGENT = '00511'
+                                  ) AS V
+                    WHERE  RNUM BETWEEN 1 AND 10 
+                    ;
+    `;  
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching tax invoice list:", err);
+    throw err;
+  }
+};
+
+
+// 전자세금계산서 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+exports.getTaxInvoiceAmount = async ({ eInvoiceSeq }) => {
+  try {
+    const request = pool.request();
+    request.input("E_INVOICE_SEQ", sql.VarChar, eInvoiceSeq);
+    const query = `SELECT G1,
+                        G2,
+                        G3,
+                        G4,
+                        J1,
+                        J2,
+                        J3,
+                        J4,
+                        G1 + J1,
+                        G2 + J2,
+                        G3 + J3,
+                        G4 + J4
+                  FROM   (SELECT COUNT(MGTKEY)                   AS G1,
+                                ISNULL(SUM(TOTALAMOUNT), 0)     AS G2,
+                                ISNULL(SUM(SUPPLYCOSTTOTAL), 0) AS G3,
+                                ISNULL(SUM(TAXTOTAL), 0)        AS G4
+                          FROM   SMJ_TAXBILL
+                          WHERE  AGENT =  '00002'
+                                AND TAXDELDATE IS NULL) AS A,
+                        (SELECT COUNT(MGTKEY)                   AS J1,
+                                ISNULL(SUM(TOTALAMOUNT), 0)     AS J2,
+                                ISNULL(SUM(SUPPLYCOSTTOTAL), 0) AS J3,
+                                ISNULL(SUM(TAXTOTAL), 0)        AS J4
+                          FROM   SMJ_TAXBILL
+                          WHERE  AGENT =  '00002'
+                                AND TAXDELDATE IS NOT NULL) AS B ;
+    `;
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching tax invoice amount:", err);
+    throw err;
+  }
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 전자세금계산서 발행리스트
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 세금계산서 발행리스트 조회
+exports.getTaxIssueList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    // 발행 변수
+    const issuedate = new Date();
+
+    const query = `SELECT *
+                    FROM   (SELECT ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY TAXREGDATE DESC)       AS RNUM,
+                                  MGTKEY,
+                                  WRITEDATE,
+                                  INVOICEECORPNAME,
+                                  INVOICEECORPNUM,
+                                  TOTALAMOUNT,
+                                  CASE TAXEMP
+                                    WHEN '000000000' THEN '타딜러'
+                                    WHEN '999999999' THEN '타딜러'
+                                    ELSE DBO.SMJ_FN_EMPNAME(TAXEMP)
+                                  END                                 EMPNAME,
+                                  COST_CODENAME,
+                                  ITEMNAME,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXREGDATE) TAXREGDATE,
+                                  SUPPLYCOSTTOTAL,
+                                  TAXTOTAL,
+                                  DBO.SMJ_FN_DATEFMT('D', TAXDELDATE) TAXDELDATE,
+                                  INVOICEETEL1,
+                                  CARREGID,
+                                  COSTSEQ,
+                                  COSTCODE
+                            FROM   SMJ_TAXBILL A,
+                                  SMJ_COST B
+                            WHERE  A.COSTSEQ = B.COST_SEQ
+                                  AND COST_KIND = '1'
+                                  AND COST_RECEIPT = '001'
+                                  --AND A.AGENT = '00002'
+                                  ) AS V
+                    WHERE  RNUM BETWEEN 1 AND 10;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching tax invoice issue list:", err);
+    throw err;
+  }
+};  
+
+// 세금계산서 발행리스트 합계 
+exports.getTaxIssueSummary = async ({ carAgent }) => {  
+  try { 
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);  
+
+    const query = `SELECT G1,
+                          G2,
+                          G3,
+                          G4,
+                          J1,
+                          J2,
+                          J3,
+                          J4,
+                          G1 + J1,
+                          G2 + J2,
+                          G3 + J3,
+                          G4 + J4
+                    FROM   (SELECT COUNT(MGTKEY)                  AS G1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0)     AS G2,
+                                  ISNULL(SUM(SUPPLYCOSTTOTAL), 0) AS G3,
+                                  ISNULL(SUM(TAXTOTAL), 0)        AS G4
+                            FROM   SMJ_TAXBILL
+                            WHERE  AGENT =  '00002'
+                                  AND TAXDELDATE IS NULL) AS A,
+                          (SELECT COUNT(MGTKEY)                   AS J1,
+                                  ISNULL(SUM(TOTALAMOUNT), 0)     AS J2,
+                                  ISNULL(SUM(SUPPLYCOSTTOTAL), 0) AS J3,
+                                  ISNULL(SUM(TAXTOTAL), 0)        AS J4
+                            FROM   SMJ_TAXBILL
+                            WHERE  AGENT =  '00002'
+                                  AND TAXDELDATE IS NOT NULL) AS B 
+    `;  
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching tax invoice issue list:", err);
+    throw err;
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 환경 설정
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 상사정보관리 조회
+exports.getCompanyInfo = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT COMNAME,
+                          DBO.SMJ_FN_DATEFMT('D', REGDATE) AS REGDATE,
+                          ENDDATE,
+                          EMPKNAME,
+                          AG_TEL,
+                          AG_FAX,
+                          AG_ZIP,
+                          AG_ADDR1,
+                          AG_ADDR2,
+                          BRNO,
+                          AG_BUY_TAX15,
+                          AG_VAT_1PRO,
+                          AG_FEE_BACK,
+                          AG_AUTH_TEL,
+                          AG_SMS_ADJ_D,
+                          AG_SMS_ADJ_A
+                    FROM   SMJ_AGENT A,
+                          SMJ_USER B
+                    WHERE  A.AGENT = B.AGENT
+                          AND EMPGRADE = '9'
+                          AND A.AGENT = @CAR_AGENT`;
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching company info:", err);
+    throw err;
+  }
+};
+
+
+// 상사 조합 딜러 관리
+exports.getCompanySangsaDealer = async ({ sangsaCode }) => {
+  try {
+    const request = pool.request();
+    request.input("DL_SANGSA_CODE", sql.VarChar, sangsaCode);
+
+    const query = `SELECT DL_SEQNO,
+                          DL_CODE,
+                          DL_NAME,
+                          DL_SANGSA_CODE,
+                          DL_NO,
+                          DL_SNO,
+                          DL_INDATE,
+                          DL_OUTDATE,
+                          DL_TELNO,
+                          DL_ZIP,
+                          DL_ADDR1,
+                          DL_ADDR2,
+                          DL_REG_DATETIME,
+                          DL_FLAG,
+                          DL_INSERT_DATETIME
+                    FROM   KU_DEALER
+                    WHERE  DL_SANGSA_CODE = 301442
+                          AND DL_FLAG = '' 
+                    ORDER BY DL_NAME
+                    ;   `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching company sangsa dealer:", err);
+    throw err;
+  }
+};
+
+
+// 상사딜러관리
+exports.getCompanyDealer = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT *
+                    FROM   (SELECT ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY EMPEDATE, EMPKNAME, DEALER_CODE, EMPGRADE DESC,
+                                    EMPKNAME )
+                                          AS RNUM,
+                                  EMPID,
+                                  EMPKNAME,
+                                  EMPTELNO1,
+                                  EMPEMAIL,
+                                  CONVERT(VARCHAR, EMPSDATE, 23)
+                                          AS EMPSDATE,
+                                  CASE CONVERT(VARCHAR, EMPEDATE, 23)
+                                    WHEN '1900-01-01' THEN ''
+                                    ELSE CONVERT(VARCHAR, EMPEDATE, 23)
+                                  END
+                                          EDNM,
+                                  EMPPHOTO,
+                                  CASE EMPGRADE
+                                    WHEN '0' THEN '딜러'
+                                    WHEN '1' THEN '사무장'
+                                    WHEN '9' THEN '대표'
+                                    ELSE ''
+                                  END
+                                          EMPGRADENAME,
+                                  CASE EMPTAXGUBN
+                                    WHEN '0' THEN '원천징수대상자'
+                                    WHEN '1' THEN '사업자등록'
+                                    ELSE ''
+                                  END
+                                          EMPTAXGUBNNAME,
+                                  CASE
+                                    WHEN LEN(EMPADDR1) > 15 THEN SUBSTRING(EMPADDR1, 1, 15)
+                                    ELSE EMPADDR1
+                                  END
+                                          ADDR1,
+                                  EMPGRADE,
+                                  SANGSA_CODE,
+                                  DEALER_CODE,
+                                  EMPSNO
+                            FROM   SMJ_USER
+                            WHERE  1 = 1 --AGENT = '00518'
+                                  AND SANGSA_CODE > 0
+                                  AND EMPGRADE IN ( '0', '9' )) AS V
+                                        WHERE  RNUM BETWEEN 1 AND 100 
+                    ;   `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching company dealer:", err);
+    throw err;
+  }
+};
+
+// 매입비 설정
+exports.getPurchaseCost = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT CNFG_FEE_SEQ,
+                          CNFG_FEE_NO,
+                          CNFG_FEE_TITLE,
+                          CNFG_FEE_COND,
+                          CNFG_FEE_RATE,
+                          CNFG_FEE_AMT
+                    FROM   SMJ_FEECONFIG
+                    WHERE  CNFG_FEE_KIND = '1'
+                          AND CNFG_FEE_AGENT = '00511' 
+                    ;
+`;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching purchase cost:", err);
+    throw err;
+  }
+};
+
+// 매도비 설정 합계
+exports.getSellCostSummary = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT CNFG_FEE_SEQ,
+                          CNFG_FEE_NO,
+                          CNFG_FEE_TITLE,
+                          CNFG_FEE_COND,
+                          CNFG_FEE_RATE,
+                          CNFG_FEE_AMT
+                    FROM   SMJ_FEECONFIG
+                    WHERE  CNFG_FEE_KIND = '1'
+                          AND CNFG_FEE_AGENT = '00511' 
+                    ;`;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching sell cost:", err);
+    throw err;
+  }
+};
+
+
+// 상사지출항목설정
+exports.getCompanyExpense = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT INDEXCD,
+                          CODE1,
+                          CODE2,
+                          NAME,
+                          CASE ISUSE
+                            WHEN 'Y' THEN '사용'
+                            ELSE '미사용'
+                          END AS ISUSE,
+                          NAME2,
+                          SORTNO
+                    FROM   SMJ_CODE
+                    WHERE  INDEXCD = 80
+                          AND CODE1 != '###'
+                          AND AGENT = '00002'
+                    ORDER  BY SORTNO ASC,
+                              NAME ;`;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching company expense:", err);
+    throw err;
+  }
+};
+
+// 상사수입항목설정
+exports.getCompanyIncome = async ({ carAgent }) => {  
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT INDEXCD,
+                          CODE1,
+                          CODE2,
+                          NAME,
+                          CASE ISUSE
+                            WHEN 'Y' THEN '사용'
+                            ELSE '미사용'
+                          END AS ISUSE,
+                          NAME2,
+                          SORTNO
+                    FROM   SMJ_CODE
+                    WHERE  INDEXCD = 81
+                          AND CODE1 != '###'
+                          AND AGENT = '00002'
+                    ORDER  BY SORTNO ASC,
+                              NAME ;
+                          `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching company income:", err);
+    throw err;
+  }
+};    
+
+
+
+
+
+
+

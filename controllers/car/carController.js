@@ -105,14 +105,32 @@ exports.getAccountInfo = async (req, res, next) => {
 // 시재(계좌입출금내역) 관리
 exports.getAssetList = async (req, res, next) => {
   try {
-    const { carAgent } = req.query;
+    const { carAgent, accountNumber, startDate, endDate } = req.body;
 
-    const assetList = await carSelectModel.getAssetList({ carAgent });
+    const assetList = await carSelectModel.getAssetList({ carAgent, accountNumber, startDate, endDate });
     res.status(200).json(assetList);
   } catch (err) {
     next(err);
   }
 };
+
+// 시재 합계 조회
+exports.getAssetSum = async (req, res, next) => {
+  try {
+    const { carAgent, accountNumber, startDate, endDate } = req.body;
+
+    const assetSum = await carSelectModel.getAssetSum({ carAgent, accountNumber, startDate, endDate });
+    res.status(200).json(assetSum);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 환경 설정
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -426,13 +444,43 @@ exports.getSystemMonthlyList = async (req, res, next) => {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 현금영수증
+// 운영현황 - 예상부가세  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 현금영수증 목록 조회
+// 예상부가세 매출 현황 목록 조회
+exports.getSystemVatSalesList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+
+    const systemVatSalesList = await carSelectModel.getSystemVatSalesList({ carAgent });
+    res.status(200).json(systemVatSalesList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 예상부가세 매입 현황 목록 조회
+exports.getSystemVatPurchaseList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;  
+
+    const systemVatPurchaseList = await carSelectModel.getSystemVatPurchaseList({ carAgent });
+    res.status(200).json(systemVatPurchaseList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 현금영수증 발행
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 현금영수증 발행 목록 조회
 exports.getCashBillList = async (req, res, next) => {
   try {
-    const cashBillList = await carSelectModel.getCashBillList();
+    const { carAgent } = req.body;
+    const cashBillList = await carSelectModel.getCashBillList({ carAgent });
 
     res.status(200).json(cashBillList);
   } catch (err) {
@@ -441,7 +489,7 @@ exports.getCashBillList = async (req, res, next) => {
 };
 
 
-// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+// 현금영수증 발행 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 exports.getCashBillAmount = async (req, res, next) => {
   try {
     const { costSeq } = req.query;
@@ -449,6 +497,99 @@ exports.getCashBillAmount = async (req, res, next) => {
       costSeq,
     });
     res.status(200).json(cashBillAmount);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 현금영수증 발행 리스트 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 현금영수증 발행 리스트 조회
+exports.getReceiptIssueList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const receiptIssueList = await carSelectModel.getReceiptIssueList({ carAgent });
+
+    res.status(200).json(receiptIssueList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 현금영수증 발행 리스트 합계 조회
+exports.getReceiptIssueSummary = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const receiptIssueSummary = await carSelectModel.getReceiptIssueSummary({ carAgent });
+
+    res.status(200).json(receiptIssueSummary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 전자세금계산서 발행 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 전자세금계산서 발행 목록 조회
+exports.getTaxInvoiceList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const taxInvoiceList = await carSelectModel.getTaxInvoiceList({ carAgent });
+
+    res.status(200).json(taxInvoiceList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 전자세금계산서 발행 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+exports.getTaxInvoiceAmount = async (req, res, next) => {
+  try {
+    const { eInvoiceSeq } = req.query;
+    const taxInvoiceAmount = await carSelectModel.getTaxInvoiceAmount({
+      eInvoiceSeq,
+    });
+    res.status(200).json(taxInvoiceAmount);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 전자세금계산서 발행 리스트 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 전자세금계산서 발행 리스트 조회
+exports.getTaxIssueList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const taxIssueList = await carSelectModel.getTaxIssueList({ carAgent });
+
+    res.status(200).json(taxIssueList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 전자세금계산서 발행 리스트 합계 조회
+exports.getTaxIssueSummary = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const taxIssueSummary = await carSelectModel.getTaxIssueSummary({ carAgent });
+
+    res.status(200).json(taxIssueSummary);
   } catch (err) {
     next(err);
   }
@@ -483,6 +624,95 @@ exports.getSellSum = async (req, res, next) => {
     next(err);
   }
 };
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 환경설정
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 상사 정보 관리
+exports.getCompanyInfo = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const companyInfo = await carSelectModel.getCompanyInfo({ carAgent });
+    res.status(200).json(companyInfo);
+  } catch (err) { 
+    next(err);
+  }
+};  
+
+
+
+// 상사 조합 딜러 관리
+exports.getCompanySangsaDealer = async (req, res, next) => {
+  try {
+    const { sangsaCode } = req.body;
+    const companySangsaDealer = await carSelectModel.getCompanySangsaDealer({ sangsaCode });
+    res.status(200).json(companySangsaDealer);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 상사 딜러 관리
+exports.getCompanyDealer = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const companyDealer = await carSelectModel.getCompanyDealer({ carAgent });
+    res.status(200).json(companyDealer);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 매입비 설정 조회
+exports.getPurchaseCost = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const purchaseCost = await carSelectModel.getPurchaseCost({ carAgent });
+    res.status(200).json(purchaseCost);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 매도비 설정 합계 조회
+exports.getSellCostSummary = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const sellCostSummary = await carSelectModel.getSellCostSummary({ carAgent });  
+    res.status(200).json(sellCostSummary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 상사지출항목설정 조회  
+exports.getCompanyExpense = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const companyExpense = await carSelectModel.getCompanyExpense({ carAgent });
+    res.status(200).json(companyExpense);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 상사수입항목설정 조회
+exports.getCompanyIncome = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+    const companyIncome = await carSelectModel.getCompanyIncome({ carAgent });  
+    res.status(200).json(companyIncome);
+  } catch (err) {
+    next(err);
+  }
+};  
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

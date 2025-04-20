@@ -153,7 +153,6 @@ router.post("/getSystemOverallFinanceList", carController.getSystemOverallFinanc
 router.post("/getSystemOverallSellList", carController.getSystemOverallSellList);
 
 
-
 //***************************************************************************************** */
 // 운영현황 - 월별 현황  
 //***************************************************************************************** */
@@ -163,25 +162,98 @@ router.post("/getSystemMonthlyList", carController.getSystemMonthlyList);
 
 
 //***************************************************************************************** */
-// 현금영수증 
+// 운영현황 - 예상부가세  
 //***************************************************************************************** */
 
-// 현금영수증 목록 데이터 조회
+// 예상부가세 매출 현황 목록 조회
+router.post("/getSystemVatSalesList", carController.getSystemVatSalesList);
+
+// 예상부가세 매입 현황 목록 조회
+router.post("/getSystemVatPurchaseList", carController.getSystemVatPurchaseList);
+
+
+//***************************************************************************************** */
+// 현금영수증 발행
+//***************************************************************************************** */
+
+// 현금영수증 발행 목록 데이터 조회
 router.get("/getCashBillList", carController.getCashBillList);
 
 // 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
 router.get("/getCashBillAmount", carController.getCashBillAmount);
+
+
+//***************************************************************************************** */
+// 현금영수증 발행 리스트 조회
+//***************************************************************************************** */
+
+// 현금영수증 발행 대상 목록 데이터 조회
+router.post("/getReceiptIssueList", carController.getReceiptIssueList);
+
+// 현금영수증 발행 합계 조회
+router.post("/getReceiptIssueSummary", carController.getReceiptIssueSummary);
+
+
+//***************************************************************************************** */
+// 전자세금계산서 발행 
+//***************************************************************************************** */
+
+// 전자세금계산서 발행 대상 목록 데이터 조회
+router.post("/getTaxInvoiceList", carController.getTaxInvoiceList);
+
+// 전자세금계산서 발행 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
+router.post("/getTaxInvoiceAmount", carController.getTaxInvoiceAmount);
+
+
+
+
+//***************************************************************************************** */
+// 전자세금계산서 발행 리스트 조회
+//***************************************************************************************** */
+
+// 전자세금계산서 발행 대상 목록 데이터 조회
+router.post("/getTaxIssueList", carController.getTaxIssueList);
+
+// 전자세금계산서 발행 합계 조회
+router.post("/getTaxIssueSummary", carController.getTaxIssueSummary);
+
+
 
 //***************************************************************************************** */
 // 시제(계좌) 
 //***************************************************************************************** */
 
 // 시재 관리
-router.get("/getAssetList", carController.getAssetList);
+router.post("/getAssetList", carController.getAssetList);
 
 // 계좌정보 조회
 router.get("/getAccountInfo", carController.getAccountInfo);
 
+
+//***************************************************************************************** */
+// 환경 설정
+//***************************************************************************************** */
+
+// 상사정보관리 조회
+router.post("/getCompanyInfo", carController.getCompanyInfo);
+
+// 상사딜러관리 조회
+router.post("/getCompanyDealer", carController.getCompanyDealer);
+
+// 상사 조합 딜러 관리
+router.post("/getCompanySangsaDealer", carController.getCompanySangsaDealer);  
+
+// 매입비 설정 조회
+router.post("/getPurchaseCost", carController.getPurchaseCost);
+
+// 매도비 설정 합계 조회
+router.post("/getSellCostSummary", carController.getSellCostSummary);
+
+// 상사지출항목설정 조회
+router.post("/getCompanyExpense", carController.getCompanyExpense);
+
+// 상사수입항목설정 조회
+router.post("/getCompanyIncome", carController.getCompanyIncome);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // POP 팝빌 연동 API
