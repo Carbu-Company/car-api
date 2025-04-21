@@ -2124,7 +2124,7 @@ exports.getCashBillList = async ({ carAgent }) => {
                    LEFT OUTER JOIN SMJ_USER C ON A.COST_EMPID = C.EMPID
             WHERE  COST_KIND = '1'
                    AND COST_DELGUBN = '0' 
-                   AND COST_AGENT = @CAR_AGENT
+                   AND COST_AGENT = '00002'
                    AND COST_RECEIPT = '004'
                    AND CASHBILL_YN = 'N'
                    AND COST_REALAMT > 0
