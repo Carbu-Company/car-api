@@ -114,7 +114,53 @@ class FaxServiceController {
     }
   }
 
-  
+
+  // FAX 발송
+  static async sendOneFAX(req, res) {
+    try {
+      const { CorpNum, Sender, Receiver, ReceiverName, FilePaths, ReserveDT, SenderName, AdsYN, Title, RequestNum, UserID } = req.body;
+
+      // FaxService.sendFAX 호출
+      FaxService.sendFax(
+              CorpNum,
+              Sender,
+              Receiver,
+              ReceiverName,
+              FilePaths,
+              ReserveDT,
+              SenderName,
+              AdsYN,
+              Title,
+              RequestNum,
+              UserID,
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: 'FAX 발송 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: 'FAX 발송 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
+
   // FAX 발송
   static async sendFAX(req, res) {
     try {

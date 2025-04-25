@@ -1,6 +1,33 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
+
+
+// 시스템 사용 요청 등록
+exports.insertSystemUseRequest = async ({ systemUseRequest }) => {
+  try {
+    const request = pool.request(); 
+
+    request.input("SYSTEM_USE_REQUEST", sql.VarChar, systemUseRequest);
+
+
+
+
+
+
+
+    const query = `INSERT INTO SMJ_SYSTEM_USE_REQUEST (SYSTEM_USE_REQUEST) VALUES (@SYSTEM_USE_REQUEST);`;
+
+    await request.query(query);
+  } catch (err) {
+    console.error("Error inserting system use request:", err);  
+    throw err;
+  }
+};
+
+
+
+
 // 계좌정보 등록
 exports.insertAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, accountName }) => {
   try {

@@ -1,6 +1,35 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 시스템 사용 요청 조회
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 시스템 사용 요청 조회
+exports.getSystemUseRequest = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);  
+
+    const query = `SELECT DBO.SMJ_FN_MK_AGENT(),
+                          CONVERT(VARCHAR(10), DATEADD(DAY, 3650, GETDATE()), 21),
+                          COUNT(*)
+                     FROM SMJ_USER
+                    WHERE LOGINID = 'SS';
+                    `;  
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching system use request:", err);
+    throw err;
+  }
+};
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 매입 매도비 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

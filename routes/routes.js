@@ -352,7 +352,7 @@ router.post(
   "/popbill/v1/faxService/getSenderNumberList",
   FaxServiceController.getSenderNumberList
 );
-router.post("/popbill/v1/faxService/sendFAX", FaxServiceController.sendFAX);
+router.post("/popbill/v1/faxService/sendOneFAX", FaxServiceController.sendOneFAX);
 
 
 /* 홈텍스 수집 */
