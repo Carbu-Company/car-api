@@ -2,6 +2,154 @@ const carSelectModel = require("../../models/select/carSelectModel");
 const carInsertModel = require("../../models/insert/carInsertModel");
 const carUpdateModel = require("../../models/update/carUpdateModel");
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 사용 요청 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 사용 요청 등록
+exports.insertUserRequest = async (req, res, next) => {
+  try {
+    const { agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt } = req.body;
+
+    await carInsertModel.insertUserRequest({ agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 시스템 사용 요청 조회
+exports.getSystemUseRequest = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+
+    const systemUseRequest = await carSelectModel.getSystemUseRequest({ carAgent });  
+    res.status(200).json(systemUseRequest);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 인증번호 조회
+exports.getPhoneAuthNumber = async (req, res, next) => {
+  try {
+    const { representativePhone } = req.body;  
+
+    console.log(req.body);  
+
+    const authNumber = await carSelectModel.getPhoneAuthNumber({ representativePhone });
+
+    // 인증번호 등록
+    await carInsertModel.insertPhoneAuthNumber({ representativePhone, authNumber });
+    res.status(200).json({ success: true, authNumber: authNumber });
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 인증번호 확인 조회
+exports.checkPhoneAuthNumber = async (req, res, next) => {
+  try {
+    const { representativePhone, authNumber } = req.body; 
+
+    const checkPhoneAuthNumber = await carSelectModel.checkPhoneAuthNumber({ representativePhone, authNumber });
+
+    if (checkPhoneAuthNumber === authNumber) {
+      res.status(200).json({ success: true });
+    } else {
+      res.status(200).json({ success: false });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 제시
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 제시 차량 조회
+exports.getSuggestList = async (req, res, next) => {
+  try {
+    const { carAgent, carNo, carName, buyOwner, empName, customerName } =
+      req.body;
+
+    console.log(req.body);
+
+    const cars = await carSelectModel.getSuggestList({
+      carAgent,
+      carNo,
+      carName,
+      buyOwner,
+      empName,
+      customerName,
+    });
+    res.status(200).json(cars);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 제시 등록
+exports.insertSuggest = async (req, res, next) => {
+  try {
+    const suggestData = req.body;
+    
+    // 추후 구현 필요
+    await carInsertModel.insertSuggest(suggestData);
+    
+    res.status(200).json({ success: true, message: "제시 등록 기능이 곧 구현될 예정입니다." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 제시 차량 합계 조회
+exports.getSuggestSummary = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+
+    const cars = await carSelectModel.getSuggestSummary({ carAgent });
+    res.status(200).json(cars);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 제시 차량 상세 조회
+exports.getSuggestDetail = async (req, res, next) => {
+  try {
+    const { car_regid } = req.query; 
+
+    const suggestDetail = await carSelectModel.getSuggestDetail({ car_regid });
+    res.status(200).json(suggestDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 제시 직접 등록
+exports.insertCashBill = async (req, res, next) => {
+  try {
+    const { mgtKey, franchiseCorpName, cashBillRegDate, totalAmount } =
+      req.body;
+    await carInsertModel.insertCashBill({
+      mgtKey,
+      franchiseCorpName,
+      cashBillRegDate,
+      totalAmount,
+    });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 매입 매도비
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +180,118 @@ exports.getBuySellFeeSum = async (req, res, next) => {
   }
 };
 
+// 매입 매도비 상세
+exports.getBuySellFeeDetail = async (req, res, next) => {
+  try {
+    const { car_regid } = req.query; 
+
+    const buySellFeeDetail = await carSelectModel.getBuySellFeeDetail({ car_regid });
+    res.status(200).json(buySellFeeDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매입비 항목 관리 (제시-매입정보)
+exports.getBuyInfoList = async (req, res, next) => {
+  try {
+    const { fee_car_regid } = req.query;
+
+    const buyInfoList = await carSelectModel.getBuyInfoList({ fee_car_regid });
+    res.status(200).json(buyInfoList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매입비 항목 관리 (제시-매입정보)
+exports.getBuyFeeList = async (req, res, next) => {
+  try {
+    const { fee_car_regid } = req.query;
+
+    const buyFeeList = await carSelectModel.getBuyFeeList({ fee_car_regid });
+    res.status(200).json(buyFeeList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매입비 항목 등록
+exports.insertBuyFee = async (req, res, next) => {
+  try {
+    const { fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc } = req.body;  
+
+    console.log(req.body);
+
+    await carInsertModel.insertBuyFee({ fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매입비 항목 수정
+exports.updateBuyFee = async (req, res, next) => {
+  try {
+    const { fee_seqno, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc } = req.body;  
+
+    await carUpdateModel.updateBuyFee({ fee_seqno, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매도비 항목 관리 (제시-매도정보)
+exports.getSellInfoList = async (req, res, next) => {
+  try {
+    const { fee_car_regid } = req.query;
+
+    const sellInfoList = await carSelectModel.getSellInfoList({ fee_car_regid });
+    res.status(200).json(sellInfoList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매도비 항목 관리 (제시-매도정보)
+exports.getSellFeeList = async (req, res, next) => {
+  try {
+    const { fee_car_regid } = req.query;
+
+    const sellFeeList = await carSelectModel.getSellFeeList({ fee_car_regid });
+    res.status(200).json(sellFeeList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매도비 항목 등록
+exports.insertSellFee = async (req, res, next) => {
+  try {
+    const { fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc } = req.body; 
+
+    await carInsertModel.insertSellFee({ fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매도비 항목 수정
+exports.updateSellFee = async (req, res, next) => {
+  try {
+    const { fee_seqno, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc } = req.body;
+
+    await carUpdateModel.updateSellFee({ fee_seqno, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 상품화비
@@ -61,6 +321,32 @@ exports.getGoodsFeeSum = async (req, res, next) => {
   }
 };
 
+// 상품화비 상세 조회
+exports.getGoodsFeeDetail = async (req, res, next) => {
+  try {
+    const { goods_regid } = req.query;
+
+    const goodsFeeDetail = await carSelectModel.getGoodsFeeDetail({ goods_regid });
+    res.status(200).json(goodsFeeDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+//  상품화비 상세 리스트 조회
+exports.getGoodsFeeDetailList = async (req, res, next) => {
+  try {
+    const { goods_regid, goods_agent } = req.query;
+
+    const goodsFeeDetailList = await carSelectModel.getGoodsFeeDetailList({ goods_regid, goods_agent });
+    res.status(200).json(goodsFeeDetailList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+  
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 시제(계좌)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,62 +417,6 @@ exports.getAssetSum = async (req, res, next) => {
 // 환경 설정
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 제시
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 제시 차량 조회
-exports.getSuggestList = async (req, res, next) => {
-  try {
-    const { carAgent, carNo, carName, buyOwner, empName, customerName } =
-      req.body;
-
-    console.log(req.body);
-
-    const cars = await carSelectModel.getSuggestList({
-      carAgent,
-      carNo,
-      carName,
-      buyOwner,
-      empName,
-      customerName,
-    });
-    res.status(200).json(cars);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// 제시 차량 합계 조회
-exports.getSuggestSummary = async (req, res, next) => {
-  try {
-    const { carAgent } = req.body;
-
-    const cars = await carSelectModel.getSuggestSummary({ carAgent });
-    res.status(200).json(cars);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// 제시 직접 등록
-exports.insertCashBill = async (req, res, next) => {
-  try {
-    const { mgtKey, franchiseCorpName, cashBillRegDate, totalAmount } =
-      req.body;
-    await carInsertModel.insertCashBill({
-      mgtKey,
-      franchiseCorpName,
-      cashBillRegDate,
-      totalAmount,
-    });
-    res.status(200).json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 // 재고금융

@@ -26,6 +26,23 @@ router.get("/getCDList", carController.getCDList);
 // 딜러 조회
 router.get("/getDealerList", carController.getDealerList);
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 사용 요청 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 사용 요청 등록
+router.post("/insertUserRequest", carController.insertUserRequest); 
+
+// 시스템 사용 요청 조회
+router.get("/getSystemUseRequest", carController.getSystemUseRequest); 
+
+// 인증번호 조회
+router.post("/getPhoneAuthNumber", carController.getPhoneAuthNumber);
+
+// 인증번호 확인 조회
+router.post("/checkPhoneAuthNumber", carController.checkPhoneAuthNumber);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DB SQL 조회 (업무)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,8 +57,11 @@ router.post("/getSuggestList", carController.getSuggestList);
 // 제시 차량 합계 조회
 router.post("/getSuggestSummary", carController.getSuggestSummary);
 
+// 제시 차량 상세 조회
+router.get("/getSuggestDetail", carController.getSuggestDetail);    
+
 // 제시 등록
-router.post("/insertCashBill", carController.insertCashBill);
+router.post("/insertSuggest", carController.insertSuggest);
 
 //***************************************************************************************** */
 // 매입 매도비 
@@ -53,6 +73,33 @@ router.post("/getBuySellFeeList", carController.getBuySellFeeList);
 // 매입 매도비 합계 조회
 router.post("/getBuySellFeeSum", carController.getBuySellFeeSum);
 
+// 매입 매도비 상세
+router.get("/getBuySellFeeDetail", carController.getBuySellFeeDetail);    
+
+// 매입비 항목 관리 (제시-매입정보)
+router.get("/getBuyInfoList", carController.getBuyInfoList);
+
+// 매입비 항목 관리 (제시-매입정보)
+router.get("/getBuyFeeList", carController.getBuyFeeList);
+
+// 매입비 항목 등록
+router.post("/insertBuyFee", carController.insertBuyFee);
+
+// 매입비 항목 수정
+router.post("/updateBuyFee", carController.updateBuyFee);
+
+// 매도비 항목 관리 (제시-매도정보)
+router.get("/getSellInfoList", carController.getSellInfoList);
+
+// 매도비 항목 관리 (제시-매도정보)
+router.get("/getSellFeeList", carController.getSellFeeList);
+
+// 매도비 항목 등록
+router.post("/insertSellFee", carController.insertSellFee);
+
+// 매도비 항목 수정
+router.post("/updateSellFee", carController.updateSellFee);
+
 //***************************************************************************************** */
 // 상품화비 
 //***************************************************************************************** */
@@ -63,6 +110,11 @@ router.post("/getGoodsFeeList", carController.getGoodsFeeList);
 // 상품화비 합계 조회
 router.post("/getGoodsFeeSum", carController.getGoodsFeeSum);
 
+// 상품화비 상세 조회
+router.get("/getGoodsFeeDetail", carController.getGoodsFeeDetail);
+
+// 상품화비 상세 리스트 조회
+router.get("/getGoodsFeeDetailList", carController.getGoodsFeeDetailList);
 
 //***************************************************************************************** */
 // 재고금융 
