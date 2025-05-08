@@ -247,3 +247,61 @@ exports.insertSellFee = async ({ fee_car_regid, fee_kind, fee_agent, fee_no, fee
     throw err;
   }
 };
+
+
+// 상품화비 등록 선처리
+exports.insertGoodsFeePre = async ({ goods_regid, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang }) => {
+  try {
+    const request = pool.request();
+
+    // 기존 상품화비 삭제 
+    const query1 = `DELETE FROM SMJ_GOODS WHERE GOODS_REGID = @GOODS_REGID`;
+
+    // 상사지출도 삭제
+    const query2 = `UPDATE SMJ_COST SET COST_DELGUBN ='1' 
+                     WHERE COST_AGENT = @GOODS_AGENT 
+                       AND COST_CARID = @GOODS_REGID 
+                       AND COST_KIND = '0' 
+                       AND COST_CODE = '002' `;
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+  } catch (err) {
+    console.error("Error inserting goods fee pre:", err);
+    throw err;
+  }
+};
+
+
+// 상품화비 등록
+exports.insertGoodsExpense = async ({ goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang }) => {
+  try {
+    const request = pool.request();
+
+    request.input("GOODS_REGID", sql.VarChar, goods_regid);
+    request.input("GOODS_AGENT", sql.VarChar, goods_agent);
+    request.input("GOODS_EMPID", sql.VarChar, goods_empid);
+    request.input("GOODS_REGDATE", sql.VarChar, goods_regdate);
+    request.input("GOODS_CODE", sql.VarChar, goods_code);
+    request.input("GOODS_CODENAME", sql.VarChar, goods_codename);
+    request.input("GOODS_SENDAMT", sql.Decimal, goods_sendamt);
+    request.input("GOODS_SENDDATE", sql.VarChar, goods_senddate);
+    request.input("GOODS_WAY", sql.VarChar, goods_way);
+    request.input("GOODS_RECEIPT", sql.VarChar, goods_receipt);
+    request.input("GOODS_TAXGUBN", sql.VarChar, goods_taxgubn);
+    request.input("GOODS_TAXDATE", sql.VarChar, goods_taxdate);
+    request.input("GOODS_DESC", sql.VarChar, goods_desc);
+    request.input("GOODS_DEALSANG", sql.VarChar, goods_dealsang);
+
+    const query = `INSERT INTO SMJ_GOODSFEE ( GOODS_AGENT, GOODS_EMPID, GOODS_REGID, GOODS_REGDATE,
+                          GOODS_CODE, GOODS_CODENAME, GOODS_SENDAMT, GOODS_SENDDATE, GOODS_WAY, GOODS_RECEIPT, GOODS_TAXGUBN, GOODS_TAXDATE, GOODS_DESC, GOODS_DEALSANG )
+                  VALUES (@GOODS_AGENT, @GOODS_EMPID, @GOODS_REGID, @GOODS_REGDATE,
+                          @GOODS_CODE, @GOODS_CODENAME, @GOODS_SENDAMT, @GOODS_SENDDATE, @GOODS_WAY, @GOODS_RECEIPT, @GOODS_TAXGUBN, @GOODS_TAXDATE, @GOODS_DESC, @GOODS_DEALSANG);`;
+
+    await request.query(query);
+
+  } catch (err) {
+    console.error("Error inserting goods fee:", err);
+    throw err;
+  }
+};
+

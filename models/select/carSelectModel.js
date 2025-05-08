@@ -603,11 +603,10 @@ exports.getGoodsFeeDetail = async ({ goods_regid }) => {
 };
 
 // 상품화비 상세 리스트 조회
-exports.getGoodsFeeDetailList = async ({ goods_regid, goods_agent }) => {
+exports.getGoodsFeeDetailList = async ({ goods_regid }) => {
   try {
     const request = pool.request();
     request.input("GOODS_REGID", sql.VarChar, goods_regid); 
-    request.input("GOODS_AGENT", sql.VarChar, goods_agent); 
 
     const query = `SELECT GOODS_SEQ,
                           DBO.SMJ_FN_DATEFMT('D', GOODS_REGDATE)  AS GOODS_REGDATE,
@@ -629,14 +628,43 @@ exports.getGoodsFeeDetailList = async ({ goods_regid, goods_agent }) => {
                             ELSE ''
                           END AS GOODS_DEALSANG
                     FROM   SMJ_GOODSFEE
-                    WHERE  GOODS_AGENT = @GOODS_AGENT
-                          AND GOODS_REGID = @GOODS_REGID
+                    WHERE  GOODS_REGID = @GOODS_REGID
                     ORDER  BY GOODS_SENDDATE DESC ;`;
 
     const result = await request.query(query);
     return result.recordset;  
   } catch (err) {
     console.error("Error fetching goods fee detail list:", err);
+    throw err;
+  }
+};
+
+
+// 상품화비용 지출 내역
+exports.getGoodsFeeExpenseList = async ({ goods_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("GOODS_REGID", sql.VarChar, goods_regid); 
+
+    const query = `SELECT GOODS_SEQ,
+                          GOODS_CODE,
+                          GOODS_CODENAME,
+                          GOODS_SENDAMT,
+                          DBO.SMJ_FN_DATEFMT('D', GOODS_SENDDATE) AS GOODS_SENDDATE,
+                          GOODS_WAY,
+                          GOODS_RECEIPT,
+                          GOODS_TAXGUBN,
+                          DBO.SMJ_FN_DATEFMT('D', GOODS_TAXDATE)  AS GOODS_TAXDATE,
+                          GOODS_DESC,
+                          GOODS_DEALSANG
+                     FROM SMJ_GOODSFEE
+                    WHERE GOODS_REGID = @GOODS_REGID
+                    ORDER BY GOODS_SENDDATE ;`;
+
+    const result = await request.query(query);
+    return result.recordset;  
+  } catch (err) {
+    console.error("Error fetching goods fee expense list:", err);
     throw err;
   }
 };
@@ -1338,6 +1366,215 @@ exports.getCompanyProfitList = async ({ carAgent }) => {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 재고금융
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 재고금융 목록 조회
+exports.getFinanceList = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    const query = `SELECT *
+                    FROM   (SELECT ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY CPT_END, B.REGDATE DESC, CPTSDATE DESC ) AS RNUM,
+                                  CPTSEQNO,
+                                  REGID AS CAR_REGID,
+                                  DBO.SMJ_FN_EMPNAME(CAR_EMPID)                         EMPNAME,
+                                  DBO.SMJ_FN_DATEFMT('D', B.REGDATE)                    REGDATE,
+                                  CASE CPTGUBN
+                                    WHEN '001' THEN '신규'
+                                    WHEN '002' THEN '갱신'
+                                    WHEN '003' THEN '연장'
+                                    ELSE ''
+                                  END                                                   AS CPTGUBN,
+                                  DBO.SMJ_FN_GETCDNAME('05', CPTCOMPANY)                AS CPTCOMPANYNAME,
+                                  CPTAMT / 10000                                        AS CPTAMT,
+                                  CPTCMPRATE,
+                                  CPTDEALRATE,
+                                  CPTPERIOD,
+                                  DBO.SMJ_FN_DATEFMT('H', CPTSDATE)                     AS CPTSDATE,
+                                  DBO.SMJ_FN_DATEFMT('H', CPTPAYDATE)                   AS CPTPAYDATE,
+                                  FEE_DEAL_TOT,
+                                  FEE_DEAL_REAL,
+                                  CPTDESC,
+                                  CAR_NO,
+                                  CAR_NAME,
+                                  BUY_OWNER,
+                                  CPT_END,
+                                  CASE CPT_END
+                                    WHEN '0' THEN '진행중'
+                                    WHEN '1' THEN '종료'
+                                    ELSE ''
+                                  END                                                   AS CPT_END2,
+                                  FEE_DEAL_TOT - FEE_DEAL_REAL                          AS MINAP,
+                                  BUY_NOTIAMT,
+                                  CASE CAR_STATUS
+                                    WHEN '001' THEN '제시'
+                                    ELSE '매도'
+                                  END                                                   AS STATUS,
+                                  CPTCOMPANY,
+                                  FEE_HAEJI_SUM
+                            FROM  SMJ_MAINLIST A,
+                                  SMJ_CAPITAL_LIST B
+                            WHERE  A.CAR_REGID = B.REGID
+                                  AND A.CAR_AGENT = @CAR_AGENT
+                                  AND A.CAR_DELGUBN = '0') AS V
+                    WHERE  RNUM BETWEEN 1 AND 10 
+                    ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching finance list:", err);
+    throw err;
+  }
+};
+
+// 재고금융 합계 조회
+exports.getFinanceSum = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    const query = `SELECT '0' GUBUN, 
+                          SUM(CPTAMT) CPTAMT,
+                          SUM(FEE_COMP_SUM) FEE_COMP_SUM,
+                          SUM(FEE_DEAL_TOT) FEE_DEAL_TOT,
+                          SUM(FEE_DEAL_REAL) FEE_DEAL_REAL,
+                          SUM(FEE_DEAL_TOT) - SUM(FEE_DEAL_REAL) FEE_DEAL_DIFF,
+                          SUM(BUY_NOTIAMT) BUY_NOTIAMT,
+                          COUNT(CPTSEQNO) CNT
+                    FROM   SMJ_MAINLIST A,
+                          SMJ_CAPITAL_LIST B
+                    WHERE  A.CAR_REGID = B.REGID
+                          AND A.CAR_AGENT = '00002'
+                          AND A.CAR_DELGUBN = '0'
+                          AND B.CPT_END = '0' 
+                    UNION ALL
+                    SELECT '1' GUBUN, 
+                          SUM(CPTAMT) CPTAMT,
+                          SUM(FEE_COMP_SUM) FEE_COMP_SUM,
+                          SUM(FEE_DEAL_TOT) FEE_DEAL_TOT,
+                          SUM(FEE_DEAL_REAL) FEE_DEAL_REAL,
+                          SUM(FEE_DEAL_TOT) - SUM(FEE_DEAL_REAL) FEE_DEAL_DIFF,
+                          SUM(BUY_NOTIAMT) BUY_NOTIAMT,
+                          COUNT(CPTSEQNO) CNT
+                    FROM   SMJ_MAINLIST A,
+                          SMJ_CAPITAL_LIST B
+                    WHERE  A.CAR_REGID = B.REGID
+                          AND A.CAR_AGENT = '00511'
+                          AND A.CAR_DELGUBN = '0'
+                          AND B.CPT_END = '1' 
+                    ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching finance sum:", err);
+    throw err;
+  }
+};
+
+// 재고금융 상세 조회
+exports.getFinanceDetail = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT DBO.SMJ_FN_EMPNAME(CAR_EMPID) AS EMPNAME,
+                          CAR_NO,
+                          CAR_EMPID,
+                          CAR_REGID,
+                          BUY_NOTIAMT,
+                          DBO.SMJ_FN_DATEFMT('D', CAR_BUYDATE) AS CAR_BUYDATE,
+                          DBO.SMJ_FN_DATEFMT('D', Getdate())   AS CURDATE,
+                          CAR_NAME,
+                          DBO.SMJ_FN_GETCDNAME('02', CAR_KIND) AS CAR_KINDNAME
+                    FROM   SMJ_MAINLIST
+                    WHERE  CAR_REGID = @CAR_REGID ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching finance detail:", err);
+    throw err;
+  }
+};
+
+
+// 재고금융 차량 상세 조회
+exports.getFinanceDetailCarInfo = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT CPTSEQNO,
+                          A.CAR_REGID,
+                          A.CAR_EMPID,
+                          CASE CPTGUBN
+                            WHEN '001' THEN '신규대출'
+                            WHEN '002' THEN '갱신(재)대출'
+                            WHEN '003' THEN '연장처리'
+                            ELSE ''
+                          END                                    AS CPTGUBN,
+                          DBO.SMJ_FN_GETCDNAME('05', CPTCOMPANY) AS CPTCOMPANY,
+                          CPTAMT,
+                          CPTCMPRATE,
+                          CPTDEALRATE,
+                          CPTPERIOD,
+                          DBO.SMJ_FN_DATEFMT('D', CPTSDATE) AS CPTSDATE,
+                          DBO.SMJ_FN_DATEFMT('D', CPTPAYDATE) AS CPTPAYDATE,
+                          B.REGDATE,
+                          DBO.SMJ_FN_EMPNAME(A.CAR_EMPID) AS EMPNAME,
+                          CAR_NO,
+                          CPT_END,
+                          FEE_HAEJI_SUM
+                    FROM  SMJ_MAINLIST A
+                          LEFT OUTER JOIN SMJ_CAPITAL_LIST B
+                            ON A.CAR_REGID = B.REGID
+                   WHERE A.CAR_REGID = @CAR_REGID ;`;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching finance detail:", err);
+    throw err;
+  }
+};
+
+// 재고금융 상세 목록 조회
+exports.getFinanceDetailList = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+    //request.input("CPTSEQNO", sql.VarChar, cptseqno);
+
+    const query = `SELECT CPTDTLSEQNO,
+                          CPTDTLCHASU,
+                          CPTDTLMNY,
+                          DBO.SMJ_FN_DATEFMT('D', CPTDTLPAYDATE) AS CPTDTLPAYDATE,
+                          CPTDTLMNYDEAL,
+                          CPTDTLREALMNYDEAL,
+                          DBO.SMJ_FN_DATEFMT('D', CPTDTLDEALDATE) AS CPTDTLDEALDATE,
+                          CPTDTLDESC,
+                          CPTDAYCNT,
+                          CONVERT(INT, ( CPTAMT * ( CONVERT(FLOAT, CPTCMPRATE) / 100 ) ) / 365) AS CPTDTLMNYDEAL,
+                          CONVERT(INT, ( CPTAMT * ( CONVERT(FLOAT, CPTDEALRATE) / 100 ) ) / 365) AS CPTDTLREALMNYDEAL
+                    FROM   SMJ_CAPITAL_LIST A,
+                          SMJ_CAPITAL_DETAIL B
+                    WHERE  A.CPTSEQNO = B.CPTSEQNO
+                          AND A.REGID = @CAR_REGID ;
+    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching finance detail list:", err);
+    throw err;
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 판매
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1464,119 +1701,304 @@ exports.getSellSum = async ({ carAgent }) => {
   }
 };
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 재고금융
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 재고금융 목록 조회
-exports.getFinanceList = async ({ carAgent }) => {
+// 매도비 조회
+exports.getSellFee = async ({ sell_car_regid }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
-    const query = `SELECT *
-                    FROM   (SELECT ROW_NUMBER()
-                                    OVER(
-                                      ORDER BY CPT_END, B.REGDATE DESC, CPTSDATE DESC ) AS RNUM,
-                                  CPTSEQNO,
-                                  REGID,
-                                  DBO.SMJ_FN_EMPNAME(CAR_EMPID)                         EMPNAME,
-                                  DBO.SMJ_FN_DATEFMT('D', B.REGDATE)                    REGDATE,
-                                  CASE CPTGUBN
-                                    WHEN '001' THEN '신규'
-                                    WHEN '002' THEN '갱신'
-                                    WHEN '003' THEN '연장'
-                                    ELSE ''
-                                  END                                                   AS CPTGUBN,
-                                  DBO.SMJ_FN_GETCDNAME('05', CPTCOMPANY)
-                                  CPTCOMPANYNAME,
-                                  CPTAMT / 10000                                        AS CPTAMT,
-                                  CPTCMPRATE,
-                                  CPTDEALRATE,
-                                  CPTPERIOD,
-                                  DBO.SMJ_FN_DATEFMT('H', CPTSDATE)                     CPTSDATE,
-                                  DBO.SMJ_FN_DATEFMT('H', CPTPAYDATE)                   CPTPAYDATE,
-                                  FEE_DEAL_TOT,
-                                  FEE_DEAL_REAL,
-                                  CPTDESC,
-                                  CAR_NO,
-                                  CAR_NAME,
-                                  BUY_OWNER,
-                                  CPT_END,
-                                  CASE CPT_END
-                                    WHEN '0' THEN '진행중'
-                                    WHEN '1' THEN '종료'
-                                    ELSE ''
-                                  END                                                   CPT_END2,
-                                  FEE_DEAL_TOT - FEE_DEAL_REAL                          AS MINAP,
-                                  BUY_NOTIAMT,
-                                  CASE CAR_STATUS
-                                    WHEN '001' THEN '제시'
-                                    ELSE '매도'
-                                  END                                                   AS STATUS,
-                                  CPTCOMPANY,
-                                  FEE_HAEJI_SUM
-                            FROM   SMJ_MAINLIST A,
-                                  SMJ_CAPITAL_LIST B
-                            WHERE  A.CAR_REGID = B.REGID
-                                  AND A.CAR_AGENT = @CAR_AGENT
-                                  AND A.CAR_DELGUBN = '0') AS V
-                    WHERE  RNUM BETWEEN 1 AND 10 
-                    ;
-    `;
+    request.input("CAR_REGID", sql.VarChar, sell_car_regid);
+
+    const query = `SELECT SELL_TOTAL_FEE,
+                          SELL_REAL_FEE,
+                          (SELL_TOTAL_FEE - SELL_REAL_FEE) AS SELL_MINAP_FEE
+                    FROM   SMJ_SOLDLIST
+                    WHERE  SELL_CAR_REGID = @CAR_REGID ;`;
+
     const result = await request.query(query);
-    return result.recordset;
+    return result.recordset[0];
   } catch (err) {
-    console.error("Error fetching finance list:", err);
+    console.error("Error fetching sell fee:", err);
     throw err;
   }
 };
 
-// 재고금융 합계 조회
-exports.getFinanceSum = async ({ carAgent }) => {
+// 재고금융이자 조회
+exports.getFinanceInterest = async ({ sell_car_regid }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
-    const query = `SELECT '0' GUBUN, 
-                          SUM(CPTAMT) CPTAMT,
-                          SUM(FEE_COMP_SUM) FEE_COMP_SUM,
-                          SUM(FEE_DEAL_TOT) FEE_DEAL_TOT,
-                          SUM(FEE_DEAL_REAL) FEE_DEAL_REAL,
-                          SUM(FEE_DEAL_TOT) - SUM(FEE_DEAL_REAL) FEE_DEAL_DIFF,
-                          SUM(BUY_NOTIAMT) BUY_NOTIAMT,
-                          COUNT(CPTSEQNO) CNT
-                    FROM   SMJ_MAINLIST A,
-                          SMJ_CAPITAL_LIST B
-                    WHERE  A.CAR_REGID = B.REGID
-                          AND A.CAR_AGENT = '00002'
-                          AND A.CAR_DELGUBN = '0'
-                          AND B.CPT_END = '0' 
-                    UNION ALL
-                    SELECT '1' GUBUN, 
-                          SUM(CPTAMT) CPTAMT,
-                          SUM(FEE_COMP_SUM) FEE_COMP_SUM,
-                          SUM(FEE_DEAL_TOT) FEE_DEAL_TOT,
-                          SUM(FEE_DEAL_REAL) FEE_DEAL_REAL,
-                          SUM(FEE_DEAL_TOT) - SUM(FEE_DEAL_REAL) FEE_DEAL_DIFF,
-                          SUM(BUY_NOTIAMT) BUY_NOTIAMT,
-                          COUNT(CPTSEQNO) CNT
-                    FROM   SMJ_MAINLIST A,
-                          SMJ_CAPITAL_LIST B
-                    WHERE  A.CAR_REGID = B.REGID
-                          AND A.CAR_AGENT = '00511'
-                          AND A.CAR_DELGUBN = '0'
-                          AND B.CPT_END = '1' 
-                    ;
-    `;
+    request.input("CAR_REGID", sql.VarChar, sell_car_regid);
+
+    const query = `SELECT COUNT(CPTSEQNO) AS CPTSEQNO,
+                          SUM(FEE_DEAL_TOT) AS FEE_DEAL_TOT,
+                          SUM(FEE_DEAL_REAL) AS FEE_DEAL_REAL,
+                          SUM(FEE_DEAL_TOT) - SUM(FEE_DEAL_REAL) AS FEE_DEAL_DIFF
+                    FROM   SMJ_CAPITAL_LIST
+                    WHERE  REGID = @CAR_REGID ;`;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching finance interest:", err);
+    throw err;
+  }
+};
+
+// 매출증빙 목록 조회
+exports.getSellProofList = async ({ sell_car_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid); 
+
+    const query = `SELECT SELL_RECEIPT_AMT_1,
+                          SELL_RECEIPT_FEEAMT_1,
+                          SELL_SENGNUNGAMT_1,
+                          SELL_BOHEOMAMT_1,
+                          CASE SELL_RECEIPT_GUBN_1
+                            WHEN '0' THEN '현금영수증'
+                            WHEN '1' THEN '세금계산서'
+                            ELSE '카드매출'
+                          END AS SELL_RECEIPT_GUBN_1_NAME,
+                          CASE Len(SELL_RECEIPT_NO_1)
+                            WHEN 10 THEN LEFT(SELL_RECEIPT_NO_1, 6) + '****'
+                            WHEN 11 THEN LEFT(SELL_RECEIPT_NO_1, 7) + '****'
+                            ELSE LEFT(SELL_RECEIPT_NO_1, 6) + '-*******'
+                          END AS SELL_RECEIPT_NO_1_NAME,
+                          CASE RECEIPT_GUBN_1
+                            WHEN 'S' THEN '주민번호'
+                            WHEN 'H' THEN '휴대폰'
+                            ELSE '사업자번호'
+                          END AS RECEIPT_GUBN_1_NAME,
+                          SELL_RECEIPT_MEMO_1,
+                          SELL_RECEIPT_AMT_2,
+                          SELL_RECEIPT_FEEAMT_2,
+                          SELL_SENGNUNGAMT_2,
+                          SELL_BOHEOMAMT_2,
+                          CASE SELL_RECEIPT_GUBN_2
+                            WHEN '0' THEN '현금영수증'
+                            WHEN '1' THEN '세금계산서'
+                            ELSE '카드매출'
+                          END AS SELL_RECEIPT_GUBN_2_NAME,
+                          CASE Len(SELL_RECEIPT_NO_2)
+                            WHEN 10 THEN LEFT(SELL_RECEIPT_NO_2, 6) + '****'
+                            WHEN 11 THEN LEFT(SELL_RECEIPT_NO_2, 7) + '****'
+                            ELSE LEFT(SELL_RECEIPT_NO_2, 6) + '-*******'
+                          END AS SELL_RECEIPT_NO_2_NAME,
+                          CASE RECEIPT_GUBN_2
+                            WHEN 'S' THEN '주민번호'
+                            WHEN 'H' THEN '휴대폰'
+                            ELSE '사업자번호'
+                          END AS RECEIPT_GUBN_2_NAME,
+                          SELL_RECEIPT_MEMO_2,
+                          SELL_RECEIPT_AMT_3,
+                          SELL_RECEIPT_FEEAMT_3,
+                          SELL_SENGNUNGAMT_3,
+                          SELL_BOHEOMAMT_3,
+                          CASE SELL_RECEIPT_GUBN_3
+                            WHEN '0' THEN '현금영수증'
+                            WHEN '1' THEN '세금계산서'
+                            ELSE '카드매출'
+                          END AS SELL_RECEIPT_GUBN_3_NAME,
+                          CASE Len(SELL_RECEIPT_NO_3)
+                            WHEN 10 THEN LEFT(SELL_RECEIPT_NO_3, 6) + '****'
+                            WHEN 11 THEN LEFT(SELL_RECEIPT_NO_3, 7) + '****'
+                            ELSE LEFT(SELL_RECEIPT_NO_3, 6) + '-*******'
+                          END AS SELL_RECEIPT_NO_3_NAME,
+                          CASE RECEIPT_GUBN_3
+                            WHEN 'S' THEN '주민번호'
+                            WHEN 'H' THEN '휴대폰'
+                            ELSE '사업자번호'
+                          END AS RECEIPT_GUBN_3_NAME,
+                          SELL_RECEIPT_MEMO_3,
+                          SELL_ADJ_DATE
+                    FROM   SMJ_SOLDLIST B
+                    WHERE  SELL_CAR_REGID = @SELL_CAR_REGID ;`;
+
     const result = await request.query(query);
     return result.recordset;
-  } catch (err) {
-    console.error("Error fetching finance sum:", err);
+  } catch (err) { 
+    console.error("Error fetching sell proof list:", err);
     throw err;
   }
 };
 
 
+// 매도 상세 조회
+exports.getSellDetail = async ({ sell_car_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid);
+
+    const query = `SELECT CAR_REGID,
+                          DBO.SMJ_FN_DATEFMT('F', CAR_REGDATE) AS CAR_REGDATE,
+                          CAR_STATUS,
+                          CAR_DELGUBN,
+                          CAR_AGENT,
+                          CAR_EMPID,
+                          DBO.SMJ_FN_GETCDNAME('02', CAR_KIND) AS CAR_KIND,
+                          DBO.SMJ_FN_DATEFMT('D', CAR_BUYDATE) AS CAR_BUYDATE,
+                          CAR_LOANCNT,
+                          CAR_NO,
+                          CAR_NONEW,
+                          CAR_NAME,
+                          CAR_CATEGORY,
+                          CAR_MAKER,
+                          CAR_BIRTH,
+                          DBO.SMJ_FN_COMMA(CAR_KM)             AS CAR_KM,
+                          CAR_ID,
+                          DBO.SMJ_FN_COMMA(CAR_STDAMT)         AS CAR_STDAMT,
+                          BUY_OWNER,
+                          DBO.SMJ_FN_GETCDNAME_04('04', BUY_OWNERKIND) AS BUY_OWNERKIND,
+                          BUY_SSNO,
+                          BUY_BUZNO,
+                          BUY_TELNO,
+                          BUY_ZIP,
+                          BUY_ADDR1,
+                          BUY_ADDR2,
+                          BUY_NOTIAMT,
+                          DBO.SMJ_FN_COMMA(BUY_SUPAMT) AS BUY_SUPAMT,
+                          DBO.SMJ_FN_COMMA(BUY_TAX) AS BUY_TAX,
+                          CASE BUY_TAXRSVCHECK
+                            WHEN '' THEN '해당없음'
+                            WHEN '0' THEN '수령'
+                            WHEN '1' THEN '미수령'
+                            ELSE ''
+                          END AS BUY_TAXRSVCHECK,
+                          DBO.SMJ_FN_DATEFMT('D', BUY_TAXDATE) AS BUY_TAXDATE,
+                          CASE BUY_DOCUMENT
+                            WHEN '' THEN '해당없음'
+                            WHEN '0' THEN '수령'
+                            WHEN '1' THEN '미수령'
+                            ELSE ''
+                          END AS BUY_DOCUMENT,
+                          BUY_FILE_1,
+                          BUY_FILE_2,
+                          BUY_FILE_3,
+                          BUY_FILE_4,
+                          BUY_FILE_5,
+                          BUY_DESC,
+                          BUY_TOTAL_FEE,
+                          BUY_REAL_FEE,
+                          (BUY_TOTAL_FEE - BUY_REAL_FEE) AS BUY_MINAP_FEE,
+                          CAR_GUBN,
+                          CAR_YEAR,
+                          BUY_EMAIL,
+                          BUY_TAX_ONE,
+                          CASE BUY_TAXGUBN
+                            WHEN '0' THEN '전자(세금)계산서'
+                            WHEN '1' THEN '종이계산서'
+                            ELSE ''
+                          END AS BUY_TAXGUBNNAME,
+                          GOODS_FEE,
+                          DBO.SMJ_FN_EMPNAME(CAR_EMPID)        AS EMPNAME,
+                          EMPTAXGUBN,
+                          CASE CAR_GUBN
+                            WHEN '0' THEN '상사'
+                            WHEN '1' THEN '고객'
+                            ELSE ''
+                          END AS CAR_GUBNNAME
+                    FROM  SMJ_MAINLIST A,
+                          SMJ_USER B
+                    WHERE A.CAR_EMPID = B.EMPID
+                          AND CAR_DELGUBN = '0'
+                          AND CAR_REGID = @SELL_CAR_REGID ;`;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching sell detail:", err);
+    throw err;
+  }
+};
+
+// 매도 상세 목록 조회
+exports.getSellDetailList = async ({ sell_car_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid);
+
+    const query = `SELECT SELL_EMPID,
+                          DBO.SMJ_FN_GETCDNAME('03', SELL_KIND) AS SELL_KIND,
+                          DBO.SMJ_FN_DATEFMT('D', SELL_DATE) AS SELL_DATE,
+                          SELL_OWNER,
+                          DBO.SMJ_FN_GETCDNAME('04', SELL_OWNERKIND) AS SELL_OWNERKIND,
+                          SELL_SSNO,
+                          SELL_BUZNO,
+                          SELL_TELNO,
+                          SELL_ZIP,
+                          SELL_ADDR1,
+                          SELL_ADDR2,
+                          SELL_NOTIAMT,
+                          SELL_SUPAMT,
+                          SELL_TAX,
+                          SELL_TAXRECEIPT,
+                          SELLFEEGUBN,
+                          SELL_CASHKIND,
+                          SELL_CASHDESC,
+                          DBO.SMJ_FN_DATEFMT('D', SELL_CASHDATE) AS SELL_CASHDATE,
+                          SELL_FILE_1,
+                          SELL_FILE_2,
+                          SELL_FILE_3,
+                          SELL_FILE_4,
+                          SELL_FILE_5,
+                          SELL_DESC,
+                          BUY_EMP_TAXGUBN,
+                          SELL_EMP_TAXGUBN,
+                          SELL_COSIGNSHOP,
+                          SELL_COSIGNAGENT,
+                          SELL_COSIGNEMPID,
+                          SELL_COSIGNEMPNAME,
+                          SELL_COSIGNTELNO,
+                          SELL_COSIGNSNO,
+                          SELL_COSIGNBIZNO,
+                          SELL_COSIGNBANK,
+                          SELL_COSIGNBANKNO,
+                          SELL_COSIGNZIP,
+                          SELL_COSIGNADDR1,
+                          SELL_COSIGNADDR2,
+                          SELL_COSIGNEMPAMT,
+                          CASE SELL_EMPID
+                            WHEN '000000000' THEN SELL_COSIGNEMPNAME
+                            WHEN '999999999' THEN SELL_COSIGNEMPNAME
+                            ELSE DBO.SMJ_FN_EMPNAME(SELL_EMPID)
+                          END                              AS SELL_EMPNAME,
+                          CASE BUY_EMP_TAXGUBN
+                            WHEN '0' THEN '(원천징수대상자)'
+                            WHEN '1' THEN '(사업자등록자)'
+                            ELSE ''
+                          END                              AS BUY_EMP_TAXNAME,
+                          CASE SELL_EMP_TAXGUBN
+                            WHEN '0' THEN '(원천징수대상자)'
+                            WHEN '1' THEN '(사업자등록자)'
+                            ELSE ''
+                          END                              AS SELL_EMP_TAXNAME,
+                          SELL_NOTIAMT - SELL_COSIGNEMPAMT AS ALSONTAXSTDAMT,
+                          BUYFEEGUBN,
+                          CASE SELL_CASHKIND
+                            WHEN '0' THEN '현금영수증'
+                            WHEN '1' THEN '(세금계산서)'
+                            WHEN '2' THEN '(카드매출)'
+                            ELSE ''
+                          END                              AS SELL_CASHKINDNAME,
+                          SELL_TAXENDCHECK,
+                          SELL_CASHBILL_YN,
+                          SELL_CASHBILLFEE_YN,
+                          CASE
+                            WHEN CONVERT(DATE, SELL_ADJ_DATE) >= CONVERT(DATE, '2019-06-23') THEN
+                            'New'
+                            ELSE 'Old'
+                          END                              AS NEWOLD
+                    FROM  SMJ_MAINLIST A,
+                          SMJ_SOLDLIST B
+                    WHERE A.CAR_REGID = B.SELL_CAR_REGID
+                      AND CAR_DELGUBN = '0'
+                      AND SELL_CAR_REGID = @SELL_CAR_REGID ;`;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching sell detail list:", err);
+    throw err;
+  }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 알선

@@ -116,6 +116,12 @@ router.get("/getGoodsFeeDetail", carController.getGoodsFeeDetail);
 // 상품화비 상세 리스트 조회
 router.get("/getGoodsFeeDetailList", carController.getGoodsFeeDetailList);
 
+// 상품화비용 지출 내역 조회
+router.get("/getGoodsFeeExpenseList", carController.getGoodsFeeExpenseList);
+
+// 상품화비용 지출 저장
+router.post("/insertGoodsExpense", carController.insertGoodsExpense);
+
 //***************************************************************************************** */
 // 재고금융 
 //***************************************************************************************** */
@@ -126,15 +132,43 @@ router.post("/getFinanceList", carController.getFinanceList);
 // 재고금융 합계 조회
 router.post("/getFinanceSum", carController.getFinanceSum);
 
+// 재고금융 상세 조회
+router.get("/getFinanceDetail", carController.getFinanceDetail);
+
+// 재고금융 차량 상세 조회
+router.get("/getFinanceDetailCarInfo", carController.getFinanceDetailCarInfo);  
+
+// 재고금융 차량 상세 목록 조회
+router.get("/getFinanceDetailList", carController.getFinanceDetailList);  
+
+
 //***************************************************************************************** */
 // 매도 리스트 
 //***************************************************************************************** */
+
+// 매도비 조회
+router.get("/getSellFee", carController.getSellFee);
+
+// 재고금융이자 조회
+router.get("/getFinanceInterest", carController.getFinanceInterest);
+
+// 매출증빙 목록 조회
+router.get("/getSellProofList", carController.getSellProofList);
 
 // 매도 리스트 조회
 router.post("/getSellList", carController.getSellList);
 
 // 매도 리스트 합계 조회
 router.post("/getSellSum", carController.getSellSum);
+
+// 매도 리스트 상세 조회
+router.get("/getSellDetail", carController.getSellDetail);
+
+// 매도 리스트 상세 목록 조회
+router.get("/getSellDetailList", carController.getSellDetailList);
+
+// 매도 취소 변경
+router.post("/updateSellCancel", carController.updateSellCancel);
 
 
 //***************************************************************************************** */

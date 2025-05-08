@@ -90,3 +90,34 @@ exports.updateSellFee = async ({ fee_seqno, fee_no, fee_title, fee_cond, fee_rat
     throw err;
   }
 };
+
+
+// 매도 취소 변경
+exports.updateSellCancel = async ({ sell_car_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid);
+
+    const query1 = `UPDATE SMJ_SOLDLIST
+                    SET    SELL_TAXENDCHECK = 'N',
+                           SELL_ADJ_DATE = ''
+                    WHERE  SELL_CAR_REGID = @SELL_CAR_REGID`;
+
+    const query2 = `DELETE FROM SMJ_ADJUSTMENT 
+                    WHERE ADJ_CAR_REGID = @SELL_CAR_REGID`;
+
+    // 순차적으로 쿼리 실행
+    await request.query(query1);
+    await request.query(query2);
+
+    return { success: true, message: "매도 취소가 성공적으로 처리되었습니다." };
+
+  } catch (err) { 
+    console.error("Error updating sell cancel:", err);
+    throw new Error(`매도 취소 처리 중 오류가 발생했습니다: ${err.message}`);
+  }
+};
+
+
+
+

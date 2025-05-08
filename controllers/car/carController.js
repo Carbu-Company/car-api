@@ -336,9 +336,9 @@ exports.getGoodsFeeDetail = async (req, res, next) => {
 //  상품화비 상세 리스트 조회
 exports.getGoodsFeeDetailList = async (req, res, next) => {
   try {
-    const { goods_regid, goods_agent } = req.query;
+    const { goods_regid } = req.query;
 
-    const goodsFeeDetailList = await carSelectModel.getGoodsFeeDetailList({ goods_regid, goods_agent });
+    const goodsFeeDetailList = await carSelectModel.getGoodsFeeDetailList({ goods_regid });
     res.status(200).json(goodsFeeDetailList);
   } catch (err) {
     next(err);
@@ -346,7 +346,31 @@ exports.getGoodsFeeDetailList = async (req, res, next) => {
 };
 
 
-  
+// 상품화비용 지출 내역 조회
+exports.getGoodsFeeExpenseList = async (req, res, next) => {
+  try {
+    const { goods_regid } = req.query;
+
+    const goodsFeeExpenseList = await carSelectModel.getGoodsFeeExpenseList({ goods_regid });   
+    res.status(200).json(goodsFeeExpenseList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상품화비용 지출 내역 저장
+exports.insertGoodsExpense = async (req, res, next) => {
+  try {
+    const { goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang } = req.body;  
+
+    await carInsertModel.insertGoodsExpense({ goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 시제(계좌)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -441,6 +465,44 @@ exports.getFinanceSum = async (req, res, next) => {
 
     const financeSum = await carSelectModel.getFinanceSum({ carAgent });
     res.status(200).json(financeSum);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 재고금융 상세 조회
+exports.getFinanceDetail = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query; 
+
+    const financeDetail = await carSelectModel.getFinanceDetail({ carRegid });
+    res.status(200).json(financeDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 재고금융 차량 상세 조회
+exports.getFinanceDetailCarInfo = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;
+
+    const financeDetailCarInfo = await carSelectModel.getFinanceDetailCarInfo({ carRegid });
+    res.status(200).json(financeDetailCarInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 재고금융 차량 상세 목록 조회
+exports.getFinanceDetailList = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;
+
+    const financeDetailCarList = await carSelectModel.getFinanceDetailList({ carRegid });
+    res.status(200).json(financeDetailCarList);
   } catch (err) {
     next(err);
   }
@@ -830,6 +892,43 @@ exports.getTaxIssueSummary = async (req, res, next) => {
 // 매도 리스트
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// 매도비 조회
+exports.getSellFee = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query;  
+
+    const sellFee = await carSelectModel.getSellFee({ sell_car_regid });
+    res.status(200).json(sellFee);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 재고금융이자 조회
+exports.getFinanceInterest = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query;  
+
+    const financeInterest = await carSelectModel.getFinanceInterest({ sell_car_regid });
+    res.status(200).json(financeInterest);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매출증빙 목록 조회
+exports.getSellProofList = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query; 
+
+    const sellProofList = await carSelectModel.getSellProofList({ sell_car_regid });
+    res.status(200).json(sellProofList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 매도 리스트 조회
 exports.getSellList = async (req, res, next) => {
   try {
@@ -854,6 +953,45 @@ exports.getSellSum = async (req, res, next) => {
     next(err);
   }
 };
+
+
+// 매도 리스트 상세 조회
+exports.getSellDetail = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query;
+
+    const sellDetail = await carSelectModel.getSellDetail({ sell_car_regid });  
+    res.status(200).json(sellDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 매도 리스트 상세 목록 조회
+exports.getSellDetailList = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query;     
+
+    const sellDetailList = await carSelectModel.getSellDetailList({ sell_car_regid });
+    res.status(200).json(sellDetailList);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 매도 취소 변경
+exports.updateSellCancel = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.body;  
+
+    const updateSellCancel = await carUpdateModel.updateSellCancel({ sell_car_regid });
+    res.status(200).json(updateSellCancel);
+  } catch (err) {
+    next(err);
+  }
+};  
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
