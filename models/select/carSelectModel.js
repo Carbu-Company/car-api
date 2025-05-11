@@ -1821,8 +1821,8 @@ exports.getSellProofList = async ({ sell_car_regid }) => {
 };
 
 
-// 매도 상세 조회
-exports.getSellDetail = async ({ sell_car_regid }) => {
+// 매입매도비 상세 조회
+exports.getBuyDetail = async ({ sell_car_regid }) => {
   try {
     const request = pool.request();
     request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid);
@@ -1900,9 +1900,67 @@ exports.getSellDetail = async ({ sell_car_regid }) => {
                     WHERE A.CAR_EMPID = B.EMPID
                           AND CAR_DELGUBN = '0'
                           AND CAR_REGID = @SELL_CAR_REGID ;`;
+/*
+car_regid = RsUtil.convts(rs.getString(1));
+car_regdate = RsUtil.convts(rs.getString(2));
+car_status = RsUtil.convts(rs.getString(3));
+car_delgubn = RsUtil.convts(rs.getString(4));
+car_agent = RsUtil.convts(rs.getString(5));
+car_empid = RsUtil.convts(rs.getString(6));
+car_kind = RsUtil.convts(rs.getString(7));
+car_buydate = RsUtil.convts(rs.getString(8));
+car_loancnt =  rs.getInt(9);
+car_no = RsUtil.convts(rs.getString(10));
+car_nonew = RsUtil.convts(rs.getString(11));
+car_name = RsUtil.convts(rs.getString(12));
+car_category = RsUtil.convts(rs.getString(13));
+car_maker = RsUtil.convts(rs.getString(14));
+car_birth = RsUtil.convts(rs.getString(15));
+car_km = RsUtil.convts(rs.getString(16));
+car_id = RsUtil.convts(rs.getString(17));
+car_stdamt = RsUtil.convts(rs.getString(18));
+buy_owner = RsUtil.convts(rs.getString(19));
+buy_ownerkind = RsUtil.convts(rs.getString(20));
+buy_ssno = RsUtil.convts(rs.getString(21));
+buy_buzno = RsUtil.convts(rs.getString(22));
+buy_telno = RsUtil.convts(rs.getString(23));
+buy_zip = RsUtil.convts(rs.getString(24));
+buy_addr1 = RsUtil.convts(rs.getString(25));
+buy_addr2 = RsUtil.convts(rs.getString(26));
+buy_notiamt = rs.getInt(27);
+buy_supamt = RsUtil.convts(rs.getString(28));
+buy_tax = RsUtil.convts(rs.getString(29));
+buy_taxrsvcheck = RsUtil.convts(rs.getString(30));
+buy_taxdate = RsUtil.convts(rs.getString(31));
+buy_document = RsUtil.convts(rs.getString(32));
+buy_file_1 = RsUtil.convts(rs.getString(33));
+buy_file_2 = RsUtil.convts(rs.getString(34));
+buy_file_3 = RsUtil.convts(rs.getString(35));
+buy_file_4 = RsUtil.convts(rs.getString(36));
+buy_file_5 = RsUtil.convts(rs.getString(37));
+buy_desc = RsUtil.convts(rs.getString(38));
+
+
+buy_total_fee = rs.getInt(39);
+buy_real_fee = rs.getInt(40);
+buy_minap_fee = rs.getInt(41);
+
+
+
+car_gubn = RsUtil.convts(rs.getString(42));
+car_year = RsUtil.convts(rs.getString(43));
+buy_email = RsUtil.convts(rs.getString(44));
+buy_tax_one = RsUtil.convts(rs.getString(45));
+buy_taxgubn = RsUtil.convts(rs.getString(46));
+
+buy_goods_fee = rs.getInt(47);
+buyempname = RsUtil.convts(rs.getString(48));
+emptaxgubn = RsUtil.convts(rs.getString(49));//판매시는 저장된 거 가져오니까 필요없음
+car_gubnname = RsUtil.convts(rs.getString(50));
+*/
 
     const result = await request.query(query);
-    return result.recordset;
+    return result.recordset[0];
   } catch (err) {
     console.error("Error fetching sell detail:", err);
     throw err;
@@ -1910,7 +1968,7 @@ exports.getSellDetail = async ({ sell_car_regid }) => {
 };
 
 // 매도 상세 목록 조회
-exports.getSellDetailList = async ({ sell_car_regid }) => {
+exports.getSellDetail = async ({ sell_car_regid }) => {
   try {
     const request = pool.request();
     request.input("SELL_CAR_REGID", sql.VarChar, sell_car_regid);
@@ -1991,6 +2049,76 @@ exports.getSellDetailList = async ({ sell_car_regid }) => {
                     WHERE A.CAR_REGID = B.SELL_CAR_REGID
                       AND CAR_DELGUBN = '0'
                       AND SELL_CAR_REGID = @SELL_CAR_REGID ;`;
+/*
+		{
+
+			sell_empid  =  RsUtil.convts(rs.getString(1));
+			sell_kind =  RsUtil.convts(rs.getString(2));
+			sell_date =  RsUtil.convts(rs.getString(3));
+			sell_owner =  RsUtil.convts(rs.getString(4));
+			sell_ownerkind =  RsUtil.convts(rs.getString(5));
+			sell_ssno =  RsUtil.convts(rs.getString(6));
+			sell_buzno =  RsUtil.convts(rs.getString(7));
+			sell_telno =  RsUtil.convts(rs.getString(8));
+			sell_zip =  RsUtil.convts(rs.getString(9));
+			sell_addr1 =  RsUtil.convts(rs.getString(10));
+
+			sell_addr2 =  RsUtil.convts(rs.getString(11));
+			sell_notiamt =  RsUtil.convts(rs.getString(12));
+			sellamt =  RsUtil.convts(rs.getString(12));
+			sell_supamt =  RsUtil.convts(rs.getString(13));
+			sell_tax =  RsUtil.convts(rs.getString(14));
+			sell_taxreceipt =  RsUtil.convts(rs.getString(15));
+			sellfeegubn =  RsUtil.convts(rs.getString(16));
+//out.println("!!"+sellfeegubn);
+			sell_cashkind =  RsUtil.convts(rs.getString(17));
+			sell_cashdesc =  RsUtil.convts(rs.getString(18));
+			sell_cashdate =  RsUtil.convts(rs.getString(19));
+
+			sell_file_1 =  RsUtil.convts(rs.getString(20));
+			sell_file_2 =  RsUtil.convts(rs.getString(21));
+			sell_file_3 =  RsUtil.convts(rs.getString(22));
+			sell_file_4 =  RsUtil.convts(rs.getString(23));
+			sell_file_5 =  RsUtil.convts(rs.getString(24));
+			sell_desc =  RsUtil.convts(rs.getString(25));
+    		buy_emp_taxgubn  =  RsUtil.convts(rs.getString(26));
+    		sell_emp_taxgubn  =  RsUtil.convts(rs.getString(27));    
+    
+   	sell_cosignshop  =  RsUtil.convts(rs.getString(28));
+    sell_cosignagent  =  RsUtil.convts(rs.getString(29));
+    sell_cosignempid  =  RsUtil.convts(rs.getString(30));
+    sell_cosignempname  =  RsUtil.convts(rs.getString(31));
+    sell_cosigntelno  =  RsUtil.convts(rs.getString(32));
+    sell_cosignsno  =  RsUtil.convts(rs.getString(33));
+    sell_cosignbizno  =  RsUtil.convts(rs.getString(34));
+    sell_cosignbank  =  RsUtil.convts(rs.getString(35));
+    sell_cosignbankno  =  RsUtil.convts(rs.getString(36));
+    sell_cosignzip  =  RsUtil.convts(rs.getString(37));
+    sell_cosignaddr1  =  RsUtil.convts(rs.getString(38));
+    sell_cosignaddr2  =  RsUtil.convts(rs.getString(39));
+    sell_cosignempamt  =  RsUtil.convts(rs.getString(40));
+    sellempname  =  RsUtil.convts(rs.getString(41));
+    
+buyemp_taxname  =  RsUtil.convts(rs.getString(42));
+sellemp_taxname  =  RsUtil.convts(rs.getString(43));
+
+alsontaxstdamt  =  RsUtil.convts(rs.getString(44));
+
+
+
+
+buyfeegubn  =  RsUtil.convts(rs.getString(45));
+
+sell_cosignemp_alfee  =  RsUtil.convts(rs.getString(46));
+sellfee_alseon =  RsUtil.convts(rs.getString(46));
+
+sellfee_alseon_sup =  RsUtil.convts(rs.getString(47));
+sellfee_alseon_vat =  RsUtil.convts(rs.getString(48));
+
+
+
+
+*/
 
     const result = await request.query(query);
     return result.recordset[0];
@@ -2000,11 +2128,386 @@ exports.getSellDetailList = async ({ sell_car_regid }) => {
   }
 };
 
+// 정산 재고금융 존재 여부
+exports.getSettlementStockFinanceExist = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT Count(CPTSEQNO) AS SUM_STOCK_FINANCE_CNT
+                    FROM   SMJ_CAPITAL_LIST
+                    WHERE  CPT_END = '0'
+                          AND REGID = @CAR_REGID ;`;
+
+                          /*
+                          loan_end_check = rs.getInt(1);
+                          */
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching settlement stock finance exist:", err);
+    throw err;
+  }
+};
+
+
+// 정산 이자 수익 계산
+exports.getSettlementInterestRevenue = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT Sum(CPTDTLMNYDEAL - CPTDTLMNY) AS SUM_INTEREST_REVENUE
+                    FROM   SMJ_CAPITAL_LIST A,
+                          SMJ_CAPITAL_DETAIL B
+                    WHERE  A.CPTSEQNO = B.CPTSEQNO
+                          AND A.REGID = @CAR_REGID ;`;
+        /*
+				loansuip = rs.getInt(1);
+        */
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching settlement interest revenue:", err);
+    throw err;
+  }
+};
+
+
+// 정산 매입 정보
+exports.getSettlementPurchaseInfo = async ({ carRegid }) => {
+    try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+
+    const query = `SELECT CAR_REGID,
+                          DBO.SMJ_FN_DATEFMT('F', CAR_REGDATE) AS CAR_REGDATE,
+                          CAR_STATUS,
+                          CAR_DELGUBN,
+                          CAR_AGENT,
+                          CAR_EMPID,
+                          DBO.SMJ_FN_GETCDNAME('02', CAR_KIND) AS CAR_KIND,
+                          DBO.SMJ_FN_DATEFMT('D', CAR_BUYDATE)         AS CAR_BUYDATE,
+                          CAR_LOANCNT,
+                          CAR_NO,
+                          CAR_NONEW,
+                          CAR_NAME,
+                          CAR_CATEGORY,
+                          CAR_MAKER,
+                          CAR_BIRTH,
+                          DBO.SMJ_FN_COMMA(CAR_KM)                     AS CAR_KM,
+                          CAR_ID,
+                          DBO.SMJ_FN_COMMA(CAR_STDAMT)                 AS CAR_STDAMT,
+                          BUY_OWNER,
+                          DBO.SMJ_FN_GETCDNAME_04('04', BUY_OWNERKIND) AS BUY_OWNERKINDNAME,
+                          BUY_SSNO,
+                          BUY_BUZNO,
+                          BUY_TELNO,
+                          BUY_ZIP,
+                          BUY_ADDR1,
+                          BUY_ADDR2,
+                          BUY_NOTIAMT,
+                          BUY_SUPAMT,
+                          BUY_TAX,
+                          CASE BUY_TAXRSVCHECK
+                            WHEN '' THEN '해당없음'
+                            WHEN '0' THEN '수령'
+                            WHEN '1' THEN '미수령'
+                            ELSE ''
+                          END AS BUY_TAXRSVCHECK,
+                          DBO.SMJ_FN_DATEFMT('D', BUY_TAXDATE)         AS BUY_TAXDATE,
+                          CASE BUY_DOCUMENT
+                            WHEN '' THEN '해당없음'
+                            WHEN '0' THEN '수령'
+                            WHEN '1' THEN '미수령'
+                            ELSE ''
+                          END AS BUY_DOCUMENT,
+                          BUY_FILE_1,
+                          BUY_FILE_2,
+                          BUY_FILE_3,
+                          BUY_FILE_4,
+                          BUY_FILE_5,
+                          BUY_DESC,
+                          BUY_TOTAL_FEE,  -- sum_buy_tot_fee
+                          BUY_REAL_FEE,  -- sum_buy_real_fee
+                          BUY_TOTAL_FEE - BUY_REAL_FEE AS BUY_MINAP_FEE,     -- sum_buy_minap_fee
+                          CAR_GUBN,
+                          CAR_YEAR,
+                          BUY_EMAIL,
+                          BUY_TAX_ONE,
+                          CASE BUY_TAXGUBN
+                            WHEN '0' THEN '전자(세금)계산서'
+                            WHEN '1' THEN '종이계산서'
+                            ELSE ''
+                          END AS BUY_TAXGUBNNAME,
+                          GOODS_FEE,
+                          DBO.SMJ_FN_EMPNAME(CAR_EMPID)                AS EMPNAME,
+                          EMPTAXGUBN,
+                          CAR_LOANSUM,
+                          BUY_TAX15,
+                          Floor(Round(BUY_TAX15 * 0.033, 0)) AS BUY_TAX15_SUP,
+                          Floor(Round(BUY_TAX15 * 0.006, 0)) AS BUY_TAX15_VAT,
+                          BUY_OWNERKIND,
+                          Floor(Round(BUY_NOTIAMT * 0.0083, 0)) AS BUY_NOTIAMT_SUP,
+                          Floor(Round(BUY_NOTIAMT * 0.0017, 0)) AS BUY_NOTIAMT_VAT,
+                          EMPTELNO1
+                    FROM  SMJ_MAINLIST A,
+                          SMJ_USER B
+                    WHERE  A.CAR_EMPID = B.EMPID
+                          AND CAR_AGENT = @CAR_AGENT
+                          AND CAR_DELGUBN = '0'
+                          AND CAR_REGID = @CAR_REGID 
+                          `;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement purchase info:", err);
+    throw err;
+  }
+};
+
+
+// 매입매도비 합계 조회
+exports.getSettlementPurchaseFee = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT Sum(FEE_AMT) AS SUM_FEE_AMT    -- buy_fee1
+                    FROM   SMJ_FEEAMT
+                    WHERE  FEE_KIND = '0'
+                          AND FEE_NO <> 2
+                          AND FEE_CAR_REGID = @CAR_REGID ;`; 
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement purchase fee:", err);
+    throw err;
+  }
+};
+
+// 매입매도비 차이 조회
+exports.getSettlementPurchaseFeeDiff = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT A-B AS FEE_DIFF    --  sunnapmaeip
+                    FROM   (
+                                  SELECT ISNULL(Sum(FEE_INAMT),0) AS A
+                                  FROM   SMJ_FEEAMT
+                                  WHERE  FEE_KIND = '0'
+                                  AND    FEE_INDATE <> '1900-01-01 00:00:00'
+                                  AND    FEE_CAR_REGID = @CAR_REGID ) ATBL,
+                          (
+                                  SELECT ISNULL(Sum(FEE_INAMT),0) AS B
+                                  FROM   SMJ_FEEAMT
+                                  WHERE  FEE_KIND = '0'
+                                  AND    FEE_NO = 2
+                                  AND    FEE_INDATE <> '1900-01-01 00:00:00'
+                                  AND    FEE_CAR_REGID = @CAR_REGID ) BTBL 
+                    ;`; 
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement purchase fee diff:", err);
+    throw err;
+  }
+};
+
+
+// 매입매도비 미납1프로 조회
+exports.getSettlementPurchaseFeeOnePercent = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT ISNULL(FEE_AMT, 0) AS BUY_ONE_PERCENT  -- minap1pro
+                    FROM   SMJ_FEEAMT
+                    WHERE  FEE_KIND = '0'
+                          AND FEE_NO = 2
+                          AND FEE_INDATE = '1900-01-01 00:00:00'
+                          AND FEE_CAR_REGID = @CAR_REGID ;`; 
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement purchase fee one percent:", err);
+    throw err;
+  }
+};
+
+// 정산 매도비 조회
+exports.getSettlementSellFee = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);    
+
+    const query = `SELECT SELL_TOTAL_FEE,
+                          SELL_REAL_FEE,
+                          SELL_TOTAL_FEE - SELL_REAL_FEE AS SELL_MINAP_FEE,
+                          DBO.SMJ_FN_VAT_SUP(SELL_TOTAL_FEE) AS SELL_TOTAL_FEE_SUP,
+                          DBO.SMJ_FN_VAT_AMT(SELL_TOTAL_FEE) AS SELL_TOTAL_FEE_AMT,
+                          SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3 AS SELL_SENGNUNGAMT_SUM,
+                          DBO.SMJ_FN_VAT_SUP(SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3) AS SELL_SENGNUNGAMT_SUP,
+                          DBO.SMJ_FN_VAT_AMT(SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3) AS SELL_SENGNUNGAMT_AMT,
+                          SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3 AS SELL_BOHEOMAMT_SUM,
+                          DBO.SMJ_FN_VAT_SUP(SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3) AS SELL_BOHEOMAMT_SUP,
+                          DBO.SMJ_FN_VAT_AMT(SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3) AS SELL_BOHEOMAMT_AMT,
+                          SELL_NOTIAMT + SELL_TOTAL_FEE + SELL_COSIGNEMP_ALFEE + (SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3) + (SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3) AS SELL_NOTIAMT_SUM,
+                          DBO.SMJ_FN_VAT_SUP(SELL_NOTIAMT + SELL_TOTAL_FEE + SELL_COSIGNEMP_ALFEE + (SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3) + (SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3)) AS SELL_NOTIAMT_SUP,
+                          DBO.SMJ_FN_VAT_AMT(SELL_NOTIAMT + SELL_TOTAL_FEE + SELL_COSIGNEMP_ALFEE + (SELL_SENGNUNGAMT_1 + SELL_SENGNUNGAMT_2 + SELL_SENGNUNGAMT_3) + (SELL_BOHEOMAMT_1 + SELL_BOHEOMAMT_2 + SELL_BOHEOMAMT_3)) AS SELL_NOTIAMT_AMT
+                    FROM   SMJ_SOLDLIST
+                    WHERE  SELL_CAR_REGID = @CAR_REGID;`;
+
+
+        /*
+
+        sum_sell_tot_fee = rs.getInt(1);
+				sum_sell_real_fee = rs.getInt(2);
+				sum_sell_minap_fee = rs.getInt(3);
+				sum_sell_tot_fee_sup = rs.getInt(4);
+				sum_sell_tot_fee_vat = rs.getInt(5);
+				
+				sum_sengnung = rs.getInt(6);
+				sum_sengnung_sup = rs.getInt(7);
+				sum_sengnung_vat = rs.getInt(8);
+				
+				sum_boheom = rs.getInt(9);
+				sum_boheom_sup = rs.getInt(10);
+				sum_boheom_vat = rs.getInt(11);
+				
+				
+				machulamt = rs.getInt(12);
+				machulamt_sup = rs.getInt(13);
+				machulamt_vat = rs.getInt(14);
+
+        */
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement sell fee:", err);
+    throw err;  
+  }
+};
+
+
+// 정산 수수료 표준 금액 조회
+exports.getSettlementSellFeeStandard = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);  
+
+    const query = `SELECT Sum(FEE_STDAMT)
+                    FROM   SMJ_FEEAMT
+                    WHERE  FEE_CAR_REGID = @CAR_REGID
+                          AND FEE_KIND = '1' ;`;
+
+/*
+    sum_sell_tot_fee_std = rs.getInt(1);
+*/
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement sell fee standard:", err);
+    throw err;
+  }
+};
+
+
+// 정산 재고금융 조회
+exports.getSettlementStockFinance = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT Count(CPTSEQNO) AS SUM_LOAN_TOT_CNT,
+                          Sum(FEE_DEAL_TOT) AS SUM_LOAN_TOT_FEE,
+                          Sum(FEE_DEAL_REAL) AS SUM_LOAN_REAL_FEE,
+                          Sum(FEE_DEAL_TOT) - Sum(FEE_DEAL_REAL) AS SUM_LOAN_MINAP_FEE,
+                          Sum(FEE_HAEJI_SUM) AS SUM_LOAN_HAEJI_FEE
+                    FROM   SMJ_CAPITAL_LIST
+                    WHERE  REGID = @CAR_REGID ;`;
+/*
+				sum_loan_tot_cnt = rs.getInt(1);
+				sum_loan_tot_fee = rs.getInt(2);
+        buyfee_ija = RsUtil.convts(rs.getString(2));
+				sum_loan_real_fee = rs.getInt(3);
+				sum_loan_minap_fee = rs.getInt(4);
+				sum_loan_haeji_fee = rs.getInt(5);
+
+
+        sum_cost = sum_buy_real_fee + buy_goods_fee + buy_goods_fee_dl + sum_sell_real_fee + sum_loan_real_fee ;
+
+        //딜러선납금액 = 매입비(1%제외) + 재고금융입금액 + 상품화비 딜러
+        buybackfee =  sunnapmaeip + sum_loan_real_fee + buy_goods_fee_dl;
+*/
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching settlement stock finance:", err);
+    throw err;
+  }
+};
+
+// 정산 상품화비(부가세 공제건만 가져옴)
+// 부가세 공제건만 딜러 공제 인정해주는 상사
+exports.getSettlementProductFee = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+      const query = `SELECT SUM(GOODS_SENDAMT) AS GOODS_SENDAMT  -- buy_goods_fee
+                      FROM   SMJ_GOODSFEE
+                      WHERE  GOODS_REGID = ?0
+                            AND GOODS_DEALSANG = '1'                -- 0:딜러 1:상사
+                            AND GOODS_TAXGUBN = '1' ;`;             // 0:미공제 1:공제
+/*
+ 				buy_goods_fee_dl = rs.getInt(1);
+				buyfee_sangpum_d = RsUtil.convts(rs.getString(1));
+*/
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement product fee:", err);
+    throw err;
+  }
+};
+
+
+// 정산 상품화비 합계 조회
+exports.getSettlementProductFeeSum = async ({ carRegid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegid);
+
+    const query = `SELECT Sum(GOODS_SENDAMT) AS GOODS_SENDAMT,                 --buy_goods_fee_tot
+                          DBO.SMJ_FN_VAT_SUP(Sum(GOODS_SENDAMT)) AS VAT_SUP,   --buy_goods_fee_sup
+                          DBO.SMJ_FN_VAT_AMT(Sum(GOODS_SENDAMT)) AS VAT_AMT    --buy_goods_fee_vat
+                    FROM   SMJ_GOODSFEE
+                    WHERE  GOODS_REGID = ? ;`;
+/*
+				buy_goods_fee_tot = rs.getInt(1);
+				buy_goods_fee_sup = rs.getInt(2);
+				buy_goods_fee_vat = rs.getInt(3);
+*/
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching settlement product fee sum:", err);
+    throw err;
+  }
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 알선
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 알선 목록 조회
 exports.getAlsonList = async ({ carAgent }) => {
   try {
     const request = pool.request();

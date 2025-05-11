@@ -954,27 +954,13 @@ exports.getSellSum = async (req, res, next) => {
   }
 };
 
-
-// 매도 리스트 상세 조회
-exports.getSellDetail = async (req, res, next) => {
-  try {
-    const { sell_car_regid } = req.query;
-
-    const sellDetail = await carSelectModel.getSellDetail({ sell_car_regid });  
-    res.status(200).json(sellDetail);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
 // 매도 리스트 상세 목록 조회
-exports.getSellDetailList = async (req, res, next) => {
+exports.getSellDetail = async (req, res, next) => {
   try {
     const { sell_car_regid } = req.query;     
 
-    const sellDetailList = await carSelectModel.getSellDetailList({ sell_car_regid });
-    res.status(200).json(sellDetailList);
+    const sellDetail = await carSelectModel.getSellDetail({ sell_car_regid });
+    res.status(200).json(sellDetail);
   } catch (err) {
     next(err);
   }
@@ -992,6 +978,58 @@ exports.updateSellCancel = async (req, res, next) => {
     next(err);
   }
 };  
+
+// 정산 매입 정보 조회
+exports.getSettlementPurchaseInfo = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;
+
+    const settlementPurchaseInfo = await carSelectModel.getSettlementPurchaseInfo({ carRegid });
+    res.status(200).json(settlementPurchaseInfo);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 매입매도비 상세 조회
+exports.getBuyDetail = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query; 
+
+    const buyDetail = await carSelectModel.getBuyDetail({ sell_car_regid });
+    res.status(200).json(buyDetail);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 정산 재고금융 조회
+exports.getSettlementStockFinance = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;
+
+    const settlementStockFinance = await carSelectModel.getSettlementStockFinance({ carRegid });
+    res.status(200).json(settlementStockFinance);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 정산 매도비 조회
+exports.getSettlementSellFee = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query; 
+
+    const settlementSellFee = await carSelectModel.getSettlementSellFee({ carRegid });
+    res.status(200).json(settlementSellFee);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

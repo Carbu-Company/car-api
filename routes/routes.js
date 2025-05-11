@@ -158,18 +158,26 @@ router.get("/getSellProofList", carController.getSellProofList);
 // 매도 리스트 조회
 router.post("/getSellList", carController.getSellList);
 
+// 매입매도비 상세 조회
+router.get("/getBuyDetail", carController.getBuyDetail);
+
 // 매도 리스트 합계 조회
 router.post("/getSellSum", carController.getSellSum);
 
-// 매도 리스트 상세 조회
-router.get("/getSellDetail", carController.getSellDetail);
-
 // 매도 리스트 상세 목록 조회
-router.get("/getSellDetailList", carController.getSellDetailList);
+router.get("/getSellDetail", carController.getSellDetail);
 
 // 매도 취소 변경
 router.post("/updateSellCancel", carController.updateSellCancel);
 
+// 정산 매입 정보 조회
+router.get("/getSettlementPurchaseInfo", carController.getSettlementPurchaseInfo);
+
+// 정산 재고금융 조회
+router.get("/getSettlementStockFinance", carController.getSettlementStockFinance);
+
+// 정산 매도비 조회
+router.get("/getSettlementSellFee", carController.getSettlementSellFee);
 
 //***************************************************************************************** */
 // 알선 
