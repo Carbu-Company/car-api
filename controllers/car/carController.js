@@ -290,6 +290,18 @@ exports.updateSellFee = async (req, res, next) => {
   }
 };
 
+// 매입비 합계 변경
+exports.updateBuyFeeSum = async (req, res, next) => {
+  try {
+    const { fee_car_regid, buy_total_fee,  buy_real_fee} = req.body;
+
+    await carUpdateModel.updateBuyFeeSum({ fee_car_regid, buy_total_fee,  buy_real_fee});
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 
 
@@ -892,6 +904,47 @@ exports.getTaxIssueSummary = async (req, res, next) => {
 // 매도 리스트
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// 매도 리스트 조회
+exports.getSellList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;
+
+    const sellList = await carSelectModel.getSellList({ carAgent });
+
+    res.status(200).json(sellList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 매도 종합 합계 조회
+exports.getSellSum = async (req, res, next) => {
+  try {
+    const { carAgent } = req.body;      
+
+    const sellSum = await carSelectModel.getSellSum({ carAgent });
+    res.status(200).json(sellSum);
+  } catch (err) {
+    next(err);
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 매도 상세 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 매도 리스트 상세 목록 조회
+exports.getSellDetail = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query;     
+
+    const sellDetail = await carSelectModel.getSellDetail({ sell_car_regid });
+    res.status(200).json(sellDetail);
+  } catch (err) {
+    next(err);
+  }
+};  
+
 // 매도비 조회
 exports.getSellFee = async (req, res, next) => {
   try {
@@ -928,45 +981,6 @@ exports.getSellProofList = async (req, res, next) => {
   }
 };
 
-
-// 매도 리스트 조회
-exports.getSellList = async (req, res, next) => {
-  try {
-    const { carAgent } = req.body;
-
-    const sellList = await carSelectModel.getSellList({ carAgent });
-
-    res.status(200).json(sellList);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// 매도 종합 합계 조회
-exports.getSellSum = async (req, res, next) => {
-  try {
-    const { carAgent } = req.body;      
-
-    const sellSum = await carSelectModel.getSellSum({ carAgent });
-    res.status(200).json(sellSum);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// 매도 리스트 상세 목록 조회
-exports.getSellDetail = async (req, res, next) => {
-  try {
-    const { sell_car_regid } = req.query;     
-
-    const sellDetail = await carSelectModel.getSellDetail({ sell_car_regid });
-    res.status(200).json(sellDetail);
-  } catch (err) {
-    next(err);
-  }
-};  
-
-
 // 매도 취소 변경
 exports.updateSellCancel = async (req, res, next) => {
   try {
@@ -974,6 +988,23 @@ exports.updateSellCancel = async (req, res, next) => {
 
     const updateSellCancel = await carUpdateModel.updateSellCancel({ sell_car_regid });
     res.status(200).json(updateSellCancel);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 정산 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 매입매도비 상세 조회
+exports.getBuyDetail = async (req, res, next) => {
+  try {
+    const { sell_car_regid } = req.query; 
+
+    const buyDetail = await carSelectModel.getBuyDetail({ sell_car_regid });
+    res.status(200).json(buyDetail);
   } catch (err) {
     next(err);
   }
@@ -991,26 +1022,13 @@ exports.getSettlementPurchaseInfo = async (req, res, next) => {
   }
 };  
 
-// 매입매도비 상세 조회
-exports.getBuyDetail = async (req, res, next) => {
-  try {
-    const { sell_car_regid } = req.query; 
-
-    const buyDetail = await carSelectModel.getBuyDetail({ sell_car_regid });
-    res.status(200).json(buyDetail);
-  } catch (err) {
-    next(err);
-  }
-};  
-
-
-// 정산 재고금융 조회
-exports.getSettlementStockFinance = async (req, res, next) => {
+// 정산 매입매도비 합계 조회
+exports.getSettlementPurchaseFee = async (req, res, next) => {
   try {
     const { carRegid } = req.query;
 
-    const settlementStockFinance = await carSelectModel.getSettlementStockFinance({ carRegid });
-    res.status(200).json(settlementStockFinance);
+    const settlementPurchaseInfo = await carSelectModel.getSettlementPurchaseFee({ carRegid });
+    res.status(200).json(settlementPurchaseInfo);
   } catch (err) {
     next(err);
   }
@@ -1018,9 +1036,70 @@ exports.getSettlementStockFinance = async (req, res, next) => {
 
 
 // 정산 매도비 조회
-exports.getSettlementSellFee = async (req, res, next) => {
+exports.getSettlementPurchaseFeeDiff = async (req, res, next) => {
   try {
     const { carRegid } = req.query; 
+
+    const settlementPurchaseFeeDiff = await carSelectModel.getSettlementPurchaseFeeDiff({ carRegid });
+    res.status(200).json(settlementPurchaseFeeDiff);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 매입매도비 1% 조회
+exports.getSettlementPurchaseFeeOnePercent = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query; 
+
+    const settlementPurchaseFeeOnePercent = await carSelectModel.getSettlementPurchaseFeeOnePercent({ carRegid });
+    res.status(200).json(settlementPurchaseFeeOnePercent);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 상품화비(부가세 공제건만 가져옴)
+exports.getSettlementGoodsFee = async (req, res, next) => {
+  try {
+    const { carRegid, goodsDealsang, goodsTaxgubn } = req.query; 
+
+    const settlementGoodsFee = await carSelectModel.getSettlementGoodsFee({ carRegid, goodsDealsang, goodsTaxgubn });
+    res.status(200).json(settlementGoodsFee);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
+// 정산 상품화비(부가세 공제건만 가져옴)
+exports.getSettlementGoodsDealFee = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query; 
+
+    const settlementGoodsDealFee = await carSelectModel.getSettlementGoodsDealFee({ carRegid });
+    res.status(200).json(settlementGoodsDealFee);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 상품화비 합계 조회
+exports.getSettlementGoodsFeeSum = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query; 
+
+    const settlementGoodsFeeSum = await carSelectModel.getSettlementGoodsFeeSum({ carRegid });
+    res.status(200).json(settlementGoodsFeeSum);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 매도비 조회
+exports.getSettlementSellFee = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;  
 
     const settlementSellFee = await carSelectModel.getSettlementSellFee({ carRegid });
     res.status(200).json(settlementSellFee);
@@ -1029,8 +1108,89 @@ exports.getSettlementSellFee = async (req, res, next) => {
   }
 };  
 
+// 정산 수수료 표준 금액 조회
+exports.getSettlementSellFeeStandard = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;  
 
+    const settlementSellFeeStandard = await carSelectModel.getSettlementSellFeeStandard({ carRegid });
+    res.status(200).json(settlementSellFeeStandard);
+  } catch (err) {
+    next(err);
+  }
+};  
 
+// 매도 상세 조회
+exports.getSoldDetail = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;   
+
+    const soldDetail = await carSelectModel.getSoldDetail({ carRegid });
+    res.status(200).json(soldDetail);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 재고금융 존재 여부
+exports.getSettlementStockFinanceExist = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;   
+
+    const settlementStockFinanceExist = await carSelectModel.getSettlementStockFinanceExist({ carRegid });
+    res.status(200).json(settlementStockFinanceExist);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 이자 수익 계산
+exports.getSettlementInterestRevenue = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;   
+
+    const settlementInterestRevenue = await carSelectModel.getSettlementInterestRevenue({ carRegid });
+    res.status(200).json(settlementInterestRevenue);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 재고금융 합계 조회
+exports.getSettlementInterestRevenueSum = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;   
+
+    const settlementInterestRevenueSum = await carSelectModel.getSettlementInterestRevenueSum({ carRegid });
+    res.status(200).json(settlementInterestRevenueSum);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 매도 미납 총 합계
+exports.getSettlementSellMinapSum = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;    
+
+    const settlementSellMinapSum = await carSelectModel.getSettlementSellMinapSum({ carRegid });
+    res.status(200).json(settlementSellMinapSum);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 정산 매입,매도,재고금융 명칭 가져오기
+exports.getSettlementStockFinanceName = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;   
+
+    const settlementStockFinanceName = await carSelectModel.getSettlementStockFinanceName({ carRegid });
+    res.status(200).json(settlementStockFinanceName);
+  } catch (err) {
+    next(err);
+  }
+};  
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 환경설정

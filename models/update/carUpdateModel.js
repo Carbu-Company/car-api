@@ -92,6 +92,29 @@ exports.updateSellFee = async ({ fee_seqno, fee_no, fee_title, fee_cond, fee_rat
 };
 
 
+// 매입비 합계 변경
+exports.updateBuyFeeSum = async ({ fee_car_regid, buy_total_fee,  buy_real_fee}) => {
+  try {
+    const request = pool.request();
+    request.input("FEE_CAR_REGID", sql.VarChar, fee_car_regid);
+    request.input("BUY_TOTAL_FEE", sql.Decimal, buy_total_fee);
+    request.input("BUY_REAL_FEE", sql.Decimal, buy_real_fee);
+
+    const query = `UPDATE SMJ_MAINLIST
+                    SET BUY_TOTAL_FEE = @BUY_TOTAL_FEE,
+                        BUY_REAL_FEE = @BUY_REAL_FEE
+                    WHERE CAR_REGID = @FEE_CAR_REGID;`;
+
+    await request.query(query);
+  } catch (err) {
+    console.error("Error updating buy fee sum:", err);
+    throw err;
+  }
+};
+
+
+
+
 // 매도 취소 변경
 exports.updateSellCancel = async ({ sell_car_regid }) => {
   try {
