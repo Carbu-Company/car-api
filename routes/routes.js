@@ -100,6 +100,9 @@ router.post("/insertSellFee", carController.insertSellFee);
 // 매도비 항목 수정
 router.post("/updateSellFee", carController.updateSellFee);
 
+// 매입비 합계 변경
+router.post("/updateBuyFeeSum", carController.updateBuyFeeSum);
+
 //***************************************************************************************** */
 // 상품화비 
 //***************************************************************************************** */
@@ -146,6 +149,20 @@ router.get("/getFinanceDetailList", carController.getFinanceDetailList);
 // 매도 리스트 
 //***************************************************************************************** */
 
+// 매도 리스트 조회
+router.post("/getSellList", carController.getSellList);
+
+// 매도 리스트 합계 조회
+router.post("/getSellSum", carController.getSellSum);
+
+
+//***************************************************************************************** */
+// 매도 상세 
+//***************************************************************************************** */
+
+// 매도 리스트 상세 목록 조회
+router.get("/getSellDetail", carController.getSellDetail);
+
 // 매도비 조회
 router.get("/getSellFee", carController.getSellFee);
 
@@ -155,29 +172,65 @@ router.get("/getFinanceInterest", carController.getFinanceInterest);
 // 매출증빙 목록 조회
 router.get("/getSellProofList", carController.getSellProofList);
 
-// 매도 리스트 조회
-router.post("/getSellList", carController.getSellList);
+// 매도 취소 변경
+router.post("/updateSellCancel", carController.updateSellCancel);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 정산 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 매입매도비 상세 조회
 router.get("/getBuyDetail", carController.getBuyDetail);
 
-// 매도 리스트 합계 조회
-router.post("/getSellSum", carController.getSellSum);
-
-// 매도 리스트 상세 목록 조회
-router.get("/getSellDetail", carController.getSellDetail);
-
-// 매도 취소 변경
-router.post("/updateSellCancel", carController.updateSellCancel);
-
-// 정산 매입 정보 조회
+// 정산 목록 조회
 router.get("/getSettlementPurchaseInfo", carController.getSettlementPurchaseInfo);
 
-// 정산 재고금융 조회
-router.get("/getSettlementStockFinance", carController.getSettlementStockFinance);
+// 정산 매입매도비 합계 조회
+router.get("/getSettlementPurchaseFee", carController.getSettlementPurchaseFee);
+
+// 정산 매입매도비 차이 조회
+router.get("/getSettlementPurchaseFeeDiff", carController.getSettlementPurchaseFeeDiff);
+
+// 정산 매입매도비 1% 조회
+router.get("/getSettlementPurchaseFeeOnePercent", carController.getSettlementPurchaseFeeOnePercent);
+
+// 정산 상품화비(부가세 공제건만 가져옴)
+// 부가세 공제건만 딜러 공제 인정해주는 상사
+//router.post("/getSettlementGoodsSangFee", carController.getSettlementGoodsSangFee);
+
+// 부가세 공제건만 딜러 공제 인정해주는 상사
+router.get("/getSettlementGoodsFee", carController.getSettlementGoodsFee);
+
+// 정산 상품화비 합계 조회
+router.get("/getSettlementGoodsFeeSum", carController.getSettlementGoodsFeeSum);
 
 // 정산 매도비 조회
 router.get("/getSettlementSellFee", carController.getSettlementSellFee);
+
+// 정산 수수료 표준 금액 조회
+router.get("/getSettlementSellFeeStandard", carController.getSettlementSellFeeStandard);
+
+// 매도 상세 조회
+router.get("/getSoldDetail", carController.getSoldDetail);
+
+// 정산 재고금융 존재 여부
+router.get("/getSettlementStockFinanceExist", carController.getSettlementStockFinanceExist);
+
+// 정산 이자 수익 계산
+router.get("/getSettlementInterestRevenue", carController.getSettlementInterestRevenue);
+
+// 재고금융 합계 조회
+router.get("/getSettlementInterestRevenueSum", carController.getSettlementInterestRevenueSum);
+
+// 매도 미납 총 합계
+router.get("/getSettlementSellMinapSum", carController.getSettlementSellMinapSum);
+
+// 정산 매입,매도,재고금융 명칭 가져오기
+router.get("/getSettlementStockFinanceName", carController.getSettlementStockFinanceName);
+
+
+
+
 
 //***************************************************************************************** */
 // 알선 
