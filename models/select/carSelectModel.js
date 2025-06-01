@@ -1115,6 +1115,8 @@ exports.getDealerList = async ({ carAgent }) => {
                             DEALER_CODE,
                             EMPEDATE;    
     `;
+
+    console.log(query);
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
@@ -1356,6 +1358,9 @@ exports.getCompanyProfitList = async ({ carAgent }) => {
                       ORDER  BY SORTNO ASC,
                                 NAME ;
                   `;
+
+    console.log(query);
+
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
@@ -1363,6 +1368,57 @@ exports.getCompanyProfitList = async ({ carAgent }) => {
     throw err;
   }
 };
+
+
+// 고객 목록 조회
+exports.getCustomerList = async ({ carAgent, search }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("SEARCH", sql.VarChar, search);
+    const query = `SELECT CUSTNO,
+                          NAME,
+                          CUSTKIND,
+                          TELNO1,
+                          EMAIL,
+                          SSNO,
+                          BUZNO,
+                          ZIP,
+                          ADDR1,
+                          ADDR2,
+                          DBO.SMJ_FN_GETCDNAME('04', CUSTKIND) AS CUSTKINDNAME
+                    FROM   (SELECT CUSTNO,
+                                  NAME,
+                                  CUSTKIND,
+                                  TELNO1,
+                                  EMAIL,
+                                  SSNO,
+                                  BUZNO,
+                                  ZIP,
+                                  ADDR1,
+                                  ADDR2,
+                                  ROW_NUMBER()
+                                    OVER(
+                                      ORDER BY NAME ASC) RN
+                            FROM   SMJ_CUSER
+                            WHERE  1 = 1
+                                  AND AGENT = @CAR_AGENT
+                                  AND ( NAME LIKE '%' + @SEARCH + '%'
+                                        OR TELNO1 LIKE '%' + @SEARCH + '%' )) AS LIST
+                    WHERE  LIST.RN BETWEEN 1 AND 10 ;
+    `;
+    console.log(query);
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching customer list:", err);
+    throw err;
+  }
+};
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

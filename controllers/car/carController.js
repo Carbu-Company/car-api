@@ -1319,3 +1319,16 @@ exports.getCDList = async (req, res, next) => {
 };
 
 
+// 고객 목록 조회
+exports.getCustomerList = async (req, res, next) => {
+  try {
+    const { carAgent, search } = req.query;
+    const customerList = await carSelectModel.getCustomerList({ carAgent, search });
+    res.status(200).json(customerList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+

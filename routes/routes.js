@@ -26,6 +26,8 @@ router.get("/getCDList", carController.getCDList);
 // 딜러 조회
 router.get("/getDealerList", carController.getDealerList);
 
+// 고객 목록 조회
+router.get("/getCustomerList", carController.getCustomerList);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 사용 요청 
