@@ -1,6 +1,38 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
+// 제시 수정 등록 
+exports.updateSuggest = async ({ mgtKey, franchiseCorpName, cashBillRegDate, totalAmount, empName }) => {
+  try {
+    const request = pool.request();
+    request.input("MGTKEY", sql.VarChar, mgtKey);
+    request.input("FRANCHISECORPNAME", sql.VarChar, franchiseCorpName);
+    request.input("CASHBILLREGDATE", sql.VarChar, cashBillRegDate);
+    request.input("TOTALAMOUNT", sql.Decimal, totalAmount);
+    request.input("EMPNAME", sql.VarChar, empName);
+
+    const query1 = `
+      UPDATE CJB_CASHBILL2
+      SET FranchiseCorpName = @FRANCHISECORPNAME,
+          CashBillRegDate = @CASHBILLREGDATE,
+          TotalAmount = @TOTALAMOUNT  
+      WHERE MgtKey = @MGTKEY;
+    `;  
+
+    const query2 = `
+      UPDATE CJB_CASHBILL_LOG2
+      SET CashBillRegDate = @CASHBILLREGDATE
+      WHERE MgtKey = @MGTKEY;
+    `;
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error updating suggest:", err);
+    throw err;
+  }
+};
+
 // 계좌정보 수정
 exports.updateAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, accountName }) => {
   try {

@@ -5,8 +5,6 @@ class HtTaxinvoiceController {
     try {
       const { CorpNum, Type, DType, SDate, EDate, UserID } = req.body;
 
-      console.log(CorpNum, Type, DType, SDate, EDate, UserID);
-
       // 작업 요청
       HTTaxinvoiceService.requestJob(
               CorpNum,
@@ -132,8 +130,6 @@ class HtTaxinvoiceController {
     try {
       const { CorpNum, NTSConfirmNum, UserID } = req.body;
 
-      console.log(CorpNum, NTSConfirmNum, UserID);
-
       // 필수 파라미터 확인
       if (!CorpNum || !NTSConfirmNum) {
         return res.status(400).json({
@@ -178,8 +174,6 @@ class HtTaxinvoiceController {
   static async GetTaxinvoice (req, res) {
     try {
       const { CorpNum, NTSConfirmNum, UserID } = req.body;
-
-      console.log(CorpNum, NTSConfirmNum, UserID);
 
       // 필수 파라미터 확인
       if (!CorpNum || !NTSConfirmNum) {

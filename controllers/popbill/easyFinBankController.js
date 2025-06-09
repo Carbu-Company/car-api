@@ -6,8 +6,6 @@ class EasyFinBankController {
     try {
       const { CorpNum, BankAccountInfo, UserID } = req.body;
 
-      console.log(CorpNum, BankAccountInfo, UserID);
-
       EasyFinBankService.registBankAccount(
               CorpNum,
               BankAccountInfo,
@@ -43,8 +41,6 @@ class EasyFinBankController {
   static async updateBankAccount(req, res) {
     try {
       const { CorpNum, BankCode, AccountNumber, UpdateEasyFinBankAccountForm, UserID } = req.body;
-
-      console.log(CorpNum, BankCode, AccountNumber, UpdateEasyFinBankAccountForm, UserID);
 
       EasyFinBankService.updateBankAccount(
               CorpNum,
@@ -92,8 +88,6 @@ class EasyFinBankController {
         Order = 'D',
         UserID,
       } = req.body;
-
-      console.log(CorpNum, JobID, TradeType, SearchString, Page, PerPage, Order, UserID);
 
       EasyFinBankService.search(
               CorpNum,

@@ -164,6 +164,9 @@ exports.insertSuggest = async ({
   franchiseCorpName,
   cashBillRegDate,
   totalAmount,
+  empName,
+  fileUrls,
+  imageUrls
 }) => {
   try {
     const request = pool.request();
@@ -171,7 +174,25 @@ exports.insertSuggest = async ({
     request.input("franchiseCorpName", sql.VarChar, franchiseCorpName);
     request.input("cashBillRegDate", sql.VarChar, cashBillRegDate);
     request.input("totalAmount", sql.Decimal, totalAmount);
+    request.input("empName", sql.VarChar, empName);
 
+    // fileUrls 또는 imageUrls 처리 (둘 중 하나라도 있으면 처리)
+    const urlsToProcess = fileUrls || imageUrls;
+    if (Array.isArray(urlsToProcess) && urlsToProcess.length > 0) {
+      for (let i = 0; i < urlsToProcess.length; i++) {
+        const fileUrl = urlsToProcess[i];
+        // 파일 URL을 별도 테이블에 저장
+        const fileRequest = pool.request();
+        fileRequest.input("mgtKey", sql.VarChar, mgtKey);
+        fileRequest.input("fileUrl", sql.VarChar, fileUrl);
+        fileRequest.input("empName", sql.VarChar, empName || 'SYSTEM'); // empName이 빈 값이면 기본값 사용
+        await fileRequest.query(`
+          INSERT INTO CJB_CASHBILL_FILES (mgtKey, fileUrl, empName)
+          VALUES (@mgtKey, @fileUrl, @empName)
+        `);
+      }
+    }
+    
     const query1 = `
       INSERT INTO CJB_CASHBILL2 (MgtKey, FranchiseCorpName, CashBillRegDate, TotalAmount)
       VALUES (@mgtKey, @franchiseCorpName, @cashBillRegDate, @totalAmount);
@@ -305,3 +326,20 @@ exports.insertGoodsExpense = async ({ goods_regid, goods_agent, goods_empid, goo
   }
 };
 
+
+// 테스트 등록
+exports.insertTest = async ({ carAgent, carFee }) => {
+  try {
+    const request = pool.request();
+
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_FEE", sql.VarChar, carFee);
+
+    const query = `INSERT INTO SMJ_AGENT_FEE (AGENT, FEE) VALUES (@CAR_AGENT, @CAR_FEE);`;
+    await request.query(query);
+
+  } catch (err) {
+    console.error("Error inserting test:", err);
+    throw err;
+  }
+};

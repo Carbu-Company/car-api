@@ -58,8 +58,6 @@ class TaxinvoiceController {
     try {
       const { CorpNum, KeyType, MgtKey, Memo = '', UserID } = req.body;
 
-      console.log(CorpNum, KeyType, MgtKey, Memo, UserID);
-
       // TaxinvoiceService.cancelIssue 호출
       TaxinvoiceService.cancelIssue(
               CorpNum,
@@ -135,8 +133,6 @@ class TaxinvoiceController {
   static async getPrintURL(req, res) {
     try {
       const { CorpNum,  KeyType, MgtKey, UserID } = req.body; 
-
-      console.log(CorpNum, KeyType, MgtKey, UserID);
 
       // TaxinvoiceService.getPrintURL 호출
       TaxinvoiceService.getPrintURL(

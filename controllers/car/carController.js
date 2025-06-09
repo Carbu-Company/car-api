@@ -37,8 +37,6 @@ exports.getPhoneAuthNumber = async (req, res, next) => {
   try {
     const { representativePhone } = req.body;  
 
-    console.log(req.body);  
-
     const authNumber = await carSelectModel.getPhoneAuthNumber({ representativePhone });
 
     // 인증번호 등록
@@ -74,10 +72,8 @@ exports.checkPhoneAuthNumber = async (req, res, next) => {
 // 제시 차량 조회
 exports.getSuggestList = async (req, res, next) => {
   try {
-    const { carAgent, carNo, carName, buyOwner, empName, customerName } =
+    const { carAgent, carNo, carName, buyOwner, empName, customerName, page, pageSize } =
       req.body;
-
-    console.log(req.body);
 
     const cars = await carSelectModel.getSuggestList({
       carAgent,
@@ -86,6 +82,8 @@ exports.getSuggestList = async (req, res, next) => {
       buyOwner,
       empName,
       customerName,
+      page,
+      pageSize,
     });
     res.status(200).json(cars);
   } catch (err) {
@@ -98,10 +96,21 @@ exports.insertSuggest = async (req, res, next) => {
   try {
     const suggestData = req.body;
     
-    // 추후 구현 필요
     await carInsertModel.insertSuggest(suggestData);
     
-    res.status(200).json({ success: true, message: "제시 등록 기능이 곧 구현될 예정입니다." });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 제시 수정 등록
+exports.updateSuggest = async (req, res, next) => {
+  try {
+    const suggestData = req.body;
+
+    await carUpdateModel.updateSuggest(suggestData);
+    res.status(200).json({ success: true });
   } catch (err) {
     next(err);
   }
@@ -157,11 +166,9 @@ exports.insertCashBill = async (req, res, next) => {
 // 매입 매도비 목록 조회
 exports.getBuySellFeeList = async (req, res, next) => {
   try {
-    const { carAgent } = req.body;
+    const { carAgent, carNo, page, pageSize } = req.body;
 
-    console.log(req.body);
-
-    const buySellFeeList = await carSelectModel.getBuySellFeeList({ carAgent });
+    const buySellFeeList = await carSelectModel.getBuySellFeeList({ carAgent, carNo, page, pageSize });
     res.status(200).json(buySellFeeList);
   } catch (err) {
     next(err);
@@ -220,8 +227,6 @@ exports.getBuyFeeList = async (req, res, next) => {
 exports.insertBuyFee = async (req, res, next) => {
   try {
     const { fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc } = req.body;  
-
-    console.log(req.body);
 
     await carInsertModel.insertBuyFee({ fee_car_regid, fee_kind, fee_agent, fee_no, fee_title, fee_cond, fee_rate, fee_amt, fee_inamt, fee_indate, fee_indesc });
     res.status(200).json({ success: true });
@@ -312,9 +317,9 @@ exports.updateBuyFeeSum = async (req, res, next) => {
 // 상품화비 목록 조회
 exports.getGoodsFeeList = async (req, res, next) => {
   try {
-    const { carAgent } = req.body;
+    const { carAgent, page, pageSize } = req.body;
 
-    const goodsFeeList = await carSelectModel.getGoodsFeeList({ carAgent });
+    const goodsFeeList = await carSelectModel.getGoodsFeeList({ carAgent, page, pageSize });
     res.status(200).json(goodsFeeList);
   } catch (err) {
     next(err);
@@ -528,9 +533,9 @@ exports.getFinanceDetailList = async (req, res, next) => {
 // 알선 목록 조회
 exports.getAlsonList = async (req, res, next) => {
   try {
-    const { carAgent } = req.body;
+    const { carAgent, page, pageSize } = req.body;
 
-    const alsonList = await carSelectModel.getAlsonList({ carAgent });
+    const alsonList = await carSelectModel.getAlsonList({ carAgent, page, pageSize });
     res.status(200).json(alsonList);
   } catch (err) {
     next(err);
@@ -544,9 +549,9 @@ exports.getAlsonList = async (req, res, next) => {
 // 매출관리 목록 조회
 exports.getSystemSalesList = async (req, res, next) => {
   try  {
-    const { carAgent } = req.body;
+    const { carAgent, page, pageSize } = req.body;
 
-    const systemSalesList = await carSelectModel.getSystemSalesList({ carAgent });
+    const systemSalesList = await carSelectModel.getSystemSalesList({ carAgent, page, pageSize });
     res.status(200).json(systemSalesList);
   } catch (err) {
     next(err);
@@ -907,9 +912,9 @@ exports.getTaxIssueSummary = async (req, res, next) => {
 // 매도 리스트 조회
 exports.getSellList = async (req, res, next) => {
   try {
-    const { carAgent } = req.body;
+    const { carAgent, page, pageSize } = req.body;
 
-    const sellList = await carSelectModel.getSellList({ carAgent });
+    const sellList = await carSelectModel.getSellList({ carAgent, page, pageSize });
 
     res.status(200).json(sellList);
   } catch (err) {
@@ -1331,4 +1336,15 @@ exports.getCustomerList = async (req, res, next) => {
 };
 
 
+
+// 테스트 등록
+exports.insertTest = async (req, res, next) => {
+  try {
+    const { carAgent, carFee } = req.body;
+    const test = await carInsertModel.insertTest({ carAgent, carFee });
+    res.status(200).json(test);
+  } catch (err) {
+    next(err);
+  }
+};
 

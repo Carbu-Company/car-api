@@ -65,6 +65,12 @@ router.get("/getSuggestDetail", carController.getSuggestDetail);
 // 제시 등록
 router.post("/insertSuggest", carController.insertSuggest);
 
+// 제시 수정 등록
+router.post("/updateSuggest", carController.updateSuggest);
+
+// 테스트 등록
+router.post("/insertTest", carController.insertTest);
+
 //***************************************************************************************** */
 // 매입 매도비 
 //***************************************************************************************** */

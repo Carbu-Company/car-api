@@ -152,8 +152,6 @@ class CashbillController {
     try {
       const { CorpNum, MgtKey, UserID } = req.body;
 
-      console.log(CorpNum, MgtKey, UserID);
-
       // 필수 파라미터 확인
       if (!CorpNum || !MgtKey) {
         return res.status(400).json({

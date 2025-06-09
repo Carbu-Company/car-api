@@ -5,8 +5,6 @@ class BizInfoCheckController {
     try {
       const { JoinForm } = req.body;
 
-      console.log(JoinForm);
-
       // 연동회원 가입
       BizInfoCheckService.joinMember(
               JoinForm,
