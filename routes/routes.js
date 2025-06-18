@@ -5,6 +5,7 @@ const CashbillController = require("../controllers/popbill/cashbillController");
 const TaxinvoiceController = require("../controllers/popbill/taxinvoiceController");
 const EasyFinBankController = require("../controllers/popbill/easyFinBankController");
 const KakaoController = require("../controllers/popbill/kakaoController");
+const SmsController = require("../controllers/popbill/smsController");
 const BizInfoCheckController = require("../controllers/popbill/bizInfoCheckController");
 const FaxServiceController = require("../controllers/popbill/faxServiceController");
 const HtTaxinvoiceController = require("../controllers/popbill/htTaxinvoiceController");
@@ -479,6 +480,12 @@ router.post(
 );
 router.post("/popbill/v1/kakao/sendATS_one", KakaoController.sendATS_one);
 router.post("/popbill/v1/kakao/sendATS_multi", KakaoController.sendATS_multi);
+
+/* 문자 */
+router.post(
+  "/popbill/v1/sms/sendSMS",
+  SmsController.sendSMS
+);
 
 /* 연동회원 */
 router.post(

@@ -5,6 +5,13 @@ const pool = require("../../config/db");
 // 시스템 사용 요청 등록
 exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt }) => {
   try {
+
+    // agent 값 db에 있는 값 가져오기
+    const agent = await pool.request().query(`SELECT AGENT FROM SMJ_AGENT WHERE AGENT = @agent`);
+    console.log(agent);
+
+
+    
     const request = pool.request(); 
 
     request.input("agent", sql.VarChar, agent);
