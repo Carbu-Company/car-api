@@ -9,16 +9,27 @@ class SmsController {
         CorpNum, 
         Sender, 
         Receiver, 
-        ReceiverName, 
+        ReceiverName,
         Contents, 
+        reserveDT,
+        adsYN,
+        SenderName,
+        requestNum,
+        UserID
       } = req.body;
 
+      // 기본 항목을 그대로 전달... 빈 문자열이라도.
       MessageService.sendSMS(
               CorpNum,
               Sender,
               Receiver,
               ReceiverName,
               Contents,
+              reserveDT,
+              adsYN,
+              SenderName,
+              requestNum,
+              UserID,
               (result) => {
                 res.status(200).json({
                   success: true,

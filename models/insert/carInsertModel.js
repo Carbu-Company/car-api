@@ -3,15 +3,66 @@ const pool = require("../../config/db");
 
 
 // 시스템 사용 요청 등록
-exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt }) => {
+exports.insertUserRequest = async ({ unionName
+                                  , companyName
+                                  , businessRegistrationNumber
+                                  , representativeName
+                                  , representativePhone
+                                  , id
+                                  , password
+                                  , registrationCode }) => {
   try {
 
-    // agent 값 db에 있는 값 가져오기
-    const agent = await pool.request().query(`SELECT AGENT FROM SMJ_AGENT WHERE AGENT = @agent`);
-    console.log(agent);
+    // 문자열 배열 10개짜리 만들고 초기값 '0'로
+    let Buy_titleAmt = Array(10).fill('0');
+    let Buy_titleName = [];
+    Buy_titleName[0] = "상사매입비";
+    Buy_titleName[1] = "매입1%납부세액";
+    Buy_titleName[2] = "매입이전대행비";
+    Buy_titleName[3] = "수입인지대금";
+    Buy_titleName[4] = "기타";
+    Buy_titleName[5] = "기타";
+    Buy_titleName[6] = "기타";
+    Buy_titleName[7] = "기타";
+    Buy_titleName[8] = "기타";
+    Buy_titleName[9] = "기타";
 
+    // 매도수수료 기본  설정
+    let Sell_titleAmt = Array(10).fill('0');
+    let Sell_titleName = [];
+    Sell_titleName[0] = "상사매도비";
+    Sell_titleName[1] = "이전대행비";
+    Sell_titleName[2] = "수입인지대금";
+    Sell_titleName[3] = "기타";
+    Sell_titleName[4] = "기타";
+    Sell_titleName[5] = "기타";
+    Sell_titleName[6] = "기타";
+    Sell_titleName[7] = "기타";
+    Sell_titleName[8] = "기타";
+    Sell_titleName[9] = "기타";
 
     
+    // agent, alive_dt, cnt 값을 쿼리로 받아오기
+    const result = await pool.request().query(`
+      select 
+        dbo.SMJ_FN_MK_AGENT() as agent, 
+        convert(varchar(10), DATEADD(Day, 3650, GETDATE()), 21) as alive_dt, 
+        count(*) as cnt 
+      from SMJ_USER 
+      where LOGINID = '${id}'
+    `);
+    const { agent, alive_dt, cnt } = result.recordset[0];
+
+    //console.log(result);  
+    console.log(agent);
+    console.log(alive_dt);
+    console.log(cnt);
+
+    // 중복 체크
+    // if (cnt > 0) {
+    //   throw new Error("이미 존재하는 아이디입니다.");
+    // }
+
     const request = pool.request(); 
 
     request.input("agent", sql.VarChar, agent);
@@ -20,11 +71,12 @@ exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegi
     request.input("businessRegistrationNumber", sql.VarChar, businessRegistrationNumber);
     request.input("representativeName", sql.VarChar, representativeName);
     request.input("representativePhone", sql.VarChar, representativePhone);
-    request.input("id", sql.VarChar, id);
-    request.input("password", sql.VarChar, password);
     request.input("registrationCode", sql.VarChar, registrationCode);
     request.input("alive_dt", sql.VarChar, alive_dt);
-    request.input("cnt", sql.Int, cnt);
+
+    request.input("id", sql.VarChar, id);
+    request.input("password", sql.VarChar, password);
+
 
     const query1 = ` INSERT INTO SMJ_AGENT (
                        AGENT     
@@ -35,8 +87,8 @@ exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegi
                       ,AG_CODE 
                       ,AG_CEO_HP 
                       ,STATE 
-                      ,AG_DOTORI 
-                      ,AG_AUTH_TEL 
+                      ,AG_DOTORI
+                      ,AG_AUTH_TEL
                       ) VALUES ( 
                         @agent
                       , @companyName --COMNAME 상호명
@@ -46,8 +98,8 @@ exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegi
                       , @registrationCode --상사코드
                       , @representativePhone --휴대전호
                       , '1' --상태 우선 1(사용불가) 인증처리 후 0(사용가)으로 바꿈
-                      , @cnt --기본도토리 2000개
-                      , '1234' --문자용
+                      , 2000 --기본도토리 2000개
+                      , '1599-1579' --문자용
                       ); 
  
     `;
@@ -56,7 +108,7 @@ exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegi
                       ODR_AGENT, ODR_EMPID, ODR_DATE, ODR_PRD, ODR_AMT, ODR_PREVDATE, ODR_NEXTDATE,ODR_INAMTDATE     
                       ) VALUES ( 
                         @agent
-                      , @id 
+                      , @agent+'0001'
                       , getDate() 
                       , 0 
                       , 0 
@@ -104,8 +156,41 @@ exports.insertUserRequest = async ({ agent, unionName, companyName, businessRegi
                             AND INDEXCD = '81';
                 `;
 
-
     await Promise.all([request.query(query1), request.query(query2), request.query(query3), request.query(query4), request.query(query5)]);
+
+    // 매입수수료 및 매도수수료 기본 설정 
+    for (let i = 0; i < 10; i++) {
+      console.log(`for문 실행: ${i + 1}번째`);
+
+      //매입수수료 기본 설정
+      const query6 = `INSERT INTO SMJ_FEECONFIG (CNFG_FEE_AGENT, CNFG_FEE_KIND, CNFG_FEE_NO, CNFG_FEE_TITLE, CNFG_FEE_COND, CNFG_FEE_RATE, CNFG_FEE_AMT)
+        VALUES (
+          @agent
+        , '0'
+        , ${i+1}
+        , '${Buy_titleName[i]}'
+        , '1'
+        , '0'
+        , '${Buy_titleAmt[i]}'
+        );
+      `;
+
+      //매도수수료 기본 설정
+      const query7 = `INSERT INTO SMJ_FEECONFIG (CNFG_FEE_AGENT, CNFG_FEE_KIND, CNFG_FEE_NO, CNFG_FEE_TITLE, CNFG_FEE_COND, CNFG_FEE_RATE, CNFG_FEE_AMT)
+        VALUES (
+          @agent
+        , '1'
+        , ${i+1}
+        , '${Sell_titleName[i]}'
+        , '1'
+        , '0'
+        , '${Sell_titleAmt[i]}'
+        );
+      `;
+
+      await Promise.all([request.query(query6), request.query(query7)]);
+    }
+
   } catch (err) {
     console.error("Error inserting system use request:", err);  
     throw err;
