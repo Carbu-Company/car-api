@@ -1,7 +1,7 @@
 const carSelectModel = require("../../models/select/carSelectModel");
 const carInsertModel = require("../../models/insert/carInsertModel");
 const carUpdateModel = require("../../models/update/carUpdateModel");
-
+const carDeleteModel = require("../../models/delete/carDeleteModel");
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,6 +115,19 @@ exports.updateSuggest = async (req, res, next) => {
     next(err);
   }
 };
+
+// 제시 삭제
+exports.deleteSuggest = async (req, res, next) => {
+  try {
+    const { mgtKey } = req.body;
+
+    await carDeleteModel.deleteSuggest({ mgtKey });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 // 제시 차량 합계 조회
 exports.getSuggestSummary = async (req, res, next) => {

@@ -69,6 +69,9 @@ router.post("/insertSuggest", carController.insertSuggest);
 // 제시 수정 등록
 router.post("/updateSuggest", carController.updateSuggest);
 
+// 제시 삭제 
+router.post("/deleteSuggest", carController.deleteSuggest);
+
 // 테스트 등록
 router.post("/insertTest", carController.insertTest);
 

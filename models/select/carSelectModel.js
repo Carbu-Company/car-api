@@ -879,7 +879,7 @@ exports.getSuggestList = async ({
     // 전체 카운트 조회
     const countQuery = `
         SELECT COUNT(*) as totalCount
-        FROM SMJ_MAINLIST
+        FROM CJB_JAESI
         WHERE CAR_AGENT = @CAR_AGENT
             AND CAR_STATUS = '001'
             ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -937,7 +937,7 @@ exports.getSuggestList = async ({
             END AS MAEDODATE,
             BUY_BOHEOMAMT,                                                   -- 성능보험료
             BUY_TAX15                                                        -- 취득세
-        FROM SMJ_MAINLIST
+        FROM CJB_JAESI
         WHERE CAR_AGENT = @CAR_AGENT
             AND CAR_STATUS = '001'
             ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
