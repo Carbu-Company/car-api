@@ -954,6 +954,11 @@ exports.getSuggestList = async ({
         FETCH NEXT @PAGESIZE ROWS ONLY;
     `;
 
+    // 쿼리 로깅
+    console.log('carAgent:', carAgent);
+    console.log('Count Query:', countQuery);
+    console.log('Data Query:', dataQuery);
+
     // 두 쿼리를 동시에 실행
     const [countResult, dataResult] = await Promise.all([
       request.query(countQuery),
