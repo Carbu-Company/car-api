@@ -224,6 +224,18 @@ exports.getBuyInfoList = async (req, res, next) => {
   }
 };
 
+exports.getTaxCashNoList = async (req, res, next) => {
+  try {
+    const { agent_id } = req.query;
+
+    const taxCashNoList = await carSelectModel.getTaxCashNoList({ agent_id });
+    res.status(200).json(taxCashNoList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 매입비 항목 관리 (제시-매입정보)
 exports.getBuyFeeList = async (req, res, next) => {
   try {

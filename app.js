@@ -14,6 +14,7 @@ app.use(morgan("combined"));
 // 허용할 도메인 배열
 const whitelist = [
   "http://115.68.193.63:3000",
+  "http://localhost:3001",
   "http://carbu.infoedu.co.kr",
   "http://localhost:3000",
   "http://carbu-fo.infoedu.co.kr",

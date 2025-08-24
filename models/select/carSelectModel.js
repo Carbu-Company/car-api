@@ -194,6 +194,44 @@ exports.getBuySellFeeSum = async ({ carAgent }) => {
 };
 
 
+// test
+exports.getTaxCashNoList = async ({ agent_id }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agent_id);
+
+    const query = `SELECT A.COST_SEQ  -- 비용 순번
+                        , A.COST_PAY_METH_CD, B.CD_NM -- 결제 구분
+                        , A.COST_EVDC_CD, C.CD_NM -- 영수 증빙
+                        , E.USR_NM  -- 딜러명
+                        , A.COST_AMT   -- 비용 금액
+                        , D.PUR_AMT  -- 통지 금액
+                        , D.OWNR_NM  -- 고객명
+                    FROM dbo.CJB_COST A
+                        , dbo.CJB_COMM_CD B
+                        , dbo.CJB_COMM_CD C
+                        , dbo.CJB_CAR_PUR D
+                        , dbo.CJB_USR E
+                    WHERE A.COST_PAY_METH_CD = B.CD
+                    AND B.GRP_CD = '06'   -- 결제 구분
+                    AND A.COST_EVDC_CD = C.CD
+                    AND C.GRP_CD = '07'   -- 영수 증빙
+                    AND A.CAR_REG_ID = D.CAR_REG_ID
+                    AND D.DLR_ID = E.USR_ID
+                    AND A.COST_EVDC_CD IN ('001', '004')
+                    AND A.TAX_ISSU_YN = 'N'
+                    AND D.AGENT_ID = @AGENT_ID;`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
+
+
+
 // 매입 매도비 상세 조회
 exports.getBuySellFeeDetail = async ({ car_regid }) => {
   try {

@@ -388,6 +388,9 @@ router.post("/getAssetList", carController.getAssetList);
 // 계좌정보 조회
 router.get("/getAccountInfo", carController.getAccountInfo);
 
+// 계좌정보 조회
+router.get("/getTaxCashNoList", carController.getTaxCashNoList);
+
 
 //***************************************************************************************** */
 // 환경 설정
@@ -467,6 +470,7 @@ router.post(
   "/popbill/v1/easyfinbank/listBankAccount",
   EasyFinBankController.listBankAccount
 );
+
 
 /* 카톡 */
 router.post(
