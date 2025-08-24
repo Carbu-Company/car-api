@@ -1116,7 +1116,7 @@ exports.getSuggestDetail = async ({ car_regid }) => {
                             WHEN '' THEN ''
                             ELSE DBO.SMJ_FN_KUMAEDODATE(KU_JESI_NO)
                           END                                  AS MAEDODATE
-                    FROM   SMJ_MAINLIST
+                    FROM   CJB_JAESI
                     WHERE  CAR_REGID = @CAR_REGID `;
 
     const result = await request.query(query);
