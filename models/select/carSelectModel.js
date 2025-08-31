@@ -995,63 +995,67 @@ exports.getAssetSum = async ({ carAgent, accountNumber, startDate, endDate }) =>
 // 제시
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-exports.getSuggestListNew = async ({ carAgent }) => {
+exports.getSuggestListNew = async ({ carAgent, page, pageSize }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-    const query = `SELECT CAR_REG_ID                  // 차량 등록 ID         
-                        , CAR_REG_DT                  // 차량 등록 일자       
-                        , CAR_DEL_DT                  // 차량 삭제 일자       
-                        , CAR_STAT_CD                 // 차량 상태 코드       
-                        , CAR_DEL_YN                  // 차량 삭제 여부       
-                        , AGENT_ID                    // 상사 ID              
-                        , DLR_ID                      // 딜러 ID              
-                        , CAR_KND_NM                  // 차량 종류 명         
-                        , PRSN_SCT_CD                 // 제시 구분 코드       
-                        , CAR_PUR_DT                  // 차량 매입 일자       
-                        , CAR_LOAN_CNT                // 차량 대출 횟수       
-                        , CAR_LOAN_AMT                // 차량 대출 금액       
-                        , CAR_NO                      // 차량 번호            
-                        , CAR_NEW_YN                  // 차량 신규 여부       
-                        , CAR_NM                      // 차량 명              
-                        , CAR_CAT_NM                  // 차량 카테고리 명     
-                        , MFCP_NM                     // 제조사 명            
-                        , CAR_MNFT_DT                 // 차량 제조 일자       
-                        , RUN_DSTN                    // 주행 거리            
-                        , CAR_YOM                     // 차량 연식            
-                        , OWNR_NM                     // 소유자 명            
-                        , OWNR_TP_NM                  // 소유자 유형 명       
-                        , OWNR_SSN                    // 소유자 주민등록번호  
-                        , OWNR_BRNO                   // 소유자 사업자등록번호
-                        , OWNR_PHON                   // 소유자 전화번호      
-                        , OWNR_ZIP                    // 소유자 주소          
-                        , OWNR_ADDR1                  // 소유자 주소1         
-                        , OWNR_ADDR2                  // 소유자 주소2         
-                        , OWNR_EMAIL                  // 소유자 이메일        
-                        , PUR_AMT                     // 통지 금액            
-                        , PUR_SUP_AMT                 // 공급가               
-                        , PUR_VAT                     // 부가세               
-                        , GAIN_TAX                    // 취득 세              
-                        , AGENT_PUR_CST               // 상사 매입 비         
-                        , PURACSH_RCV_YN              // 매입계산서 수령 여부 
-                        , TXBL_ISSU_DT                // 세금계산서 발행 일자 
-                        , PUR_DESC                    // 매입 설명            
-                        , TOT_PUR_FEE                 // 총 매입 수수료       
-                        , TOT_PAY_FEE                 // 총 납부 수수료       
-                        , TOT_CMRC_COST_FEE           // 총 상품화비 수수료   
-                        , CUST_NO                     // 고객 번              
-                        , PRSN_NO                     // 제시 번              
-                        , PARK_ZON_CD                 // 주차 구역 코드       
-                        , PARK_ZON_DESC               // 주차 구역 설명       
-                        , PARK_KEY_NO                 // 주차 키 번호         
-                        , REG_DTIME                   // 등록 일시            
-                        , REGR_ID                     // 등록자 ID            
-                        , MOD_DTIME                   // 수정 일시            
-                        , MODR_ID                     // 수정자 ID            
+    console.log("carAgent:", carAgent);
+    console.log("page:", page);
+    console.log("pageSize:", pageSize);
+
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize); 
+
+    const query = `SELECT CAR_REG_ID               
+       , CAR_REG_DT              
+       , CAR_DEL_DT              
+       , CAR_STAT_CD             
+       , CAR_DEL_YN              
+       , AGENT_ID                
+       , DLR_ID                  
+       , CAR_KND_NM              
+       , PRSN_SCT_CD             
+       , CAR_PUR_DT              
+       , CAR_LOAN_CNT            
+       , CAR_LOAN_AMT            
+       , CAR_NO                  
+       , CAR_NEW_YN              
+       , CAR_NM                  
+       , CAR_CAT_NM              
+       , MFCP_NM                 
+       , CAR_MNFT_DT             
+       , RUN_DSTN                
+       , CAR_YOM                 
+       , OWNR_NM                 
+       , OWNR_TP_CD             
+       , OWNR_SSN                
+       , OWNR_BRNO               
+       , OWNR_PHON               
+       , OWNR_ZIP                
+       , OWNR_ADDR1              
+       , OWNR_ADDR2              
+       , OWNR_EMAIL              
+       , PUR_AMT                 
+       , PUR_SUP_PRC             
+       , PUR_VAT                 
+       , GAIN_TAX                
+       , AGENT_PUR_CST           
+       , PURACSH_RCV_YN          
+       , TXBL_ISSU_DT            
+       , PUR_DESC                
+       , TOT_PUR_FEE             
+       , TOT_PAY_FEE             
+       , TOT_CMRC_COST_FEE       
+       , CUST_NO                 
+       , PRSN_NO                 
+       , PARK_ZON_CD             
+       , PARK_ZON_DESC           
+       , PARK_KEY_NO             
+       , REG_DTIME               
+       , REGR_ID                 
+       , MOD_DTIME               
+       , MODR_ID             
                 FROM dbo.CJB_CAR_PUR
               WHERE AGENT_ID = @CAR_AGENT
                 AND CAR_DEL_YN = 'N'
@@ -1061,8 +1065,9 @@ exports.getSuggestListNew = async ({ carAgent }) => {
                 `;
 
     const result = await request.query(query);
+    console.log("result:", result.recordset);
     return result.recordset;
-  } catch (err) {
+X  } catch (err) {
     console.error("Error fetching suggest list:", err);
     throw err;
   }
@@ -1444,21 +1449,15 @@ exports.getDealerList = async ({ carAgent }) => {
     const request = pool.request();
     request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-    const query = `SELECT EMPID,
-                     EMPKNAME,
-                     EMPTELNO1,
-                     CASE
-                       WHEN EMPEDATE IS NULL THEN ''
-                       ELSE '[퇴사]'
-                     END AS EMPEDATE1
-                  FROM   SMJ_USER
-                  WHERE  AGENT = @CAR_AGENT
-                         AND SANGSA_CODE > 0
-                         AND EMPEDATE IS NULL
-                         AND EMPGRADE <> '4'
-                  ORDER  BY EMPKNAME,
-                            DEALER_CODE,
-                            EMPEDATE;    
+    const query = `SELECT USR_ID,
+                     USR_NM,
+                     USR_PHON
+                  FROM   dbo.CJB_USR
+                  WHERE  AGENT_ID = @CAR_AGENT
+                         AND AGENT_CD > 0
+                         AND dbo.CJB_FN_DATEFMT('D', GETDATE()) BETWEEN USR_STRT_DT AND USR_END_DT
+                         AND USR_GRADE_CD NOT IN ('9', '4')
+                  ORDER  BY USR_NM 
     `;
 
     const result = await request.query(query);

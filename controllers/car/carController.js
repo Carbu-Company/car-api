@@ -23,9 +23,9 @@ exports.insertUserRequest = async (req, res, next) => {
 // 사용 요청 등록 (테스트트)
 exports.registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel } = req.body;
 
-    await carInsertModel.registerUser({ name, email, password });
+    await carInsertModel.registerUser({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel });
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);
@@ -82,6 +82,24 @@ exports.checkPhoneAuthNumber = async (req, res, next) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 제시 차량 조회
+exports.getSuggestListNew = async (req, res, next) => {
+  try {
+    const { carAgent, page, pageSize } = req.body;
+
+    const cars = await carSelectModel.getSuggestListNew({
+      carAgent,
+      page,
+      pageSize,
+    });
+    res.status(200).json(cars);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+// 제시 차량 조회
 exports.getSuggestList = async (req, res, next) => {
   try {
     const { carAgent, carNo, carName, buyOwner, empName, customerName, page, pageSize } =
@@ -102,6 +120,8 @@ exports.getSuggestList = async (req, res, next) => {
     next(err);
   }
 };
+
+
 
 // 제시 등록
 exports.insertSuggest = async (req, res, next) => {

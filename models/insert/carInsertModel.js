@@ -6,29 +6,32 @@ const pool = require("../../config/db");
 // 사용 요청 등록
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-exports.registerUser = async ({ login_id, login_passwd, password, usr_nm, phone, name, email, agent_cd, login_ip }) => {
+exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel }) => {
   try {
     const request = pool.request();
 
     // agent_id 값도 미리 만들기
+    request.input("agent_cd", sql.VarChar, CombAgentCd); 
     const agent_id = await request.query(`SELECT dbo.CJB_FN_MK_AGENT(@agent_cd) as agent_id`);
     const new_agent_id = agent_id.recordset[0].agent_id;
 
     // usr_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_USR_ID(상사ID)
+    request.input("new_agent_id", sql.VarChar, new_agent_id); 
     const usr_id = await request.query(`SELECT dbo.CJB_FN_MK_USR_ID(@new_agent_id)`);
     const new_usr_id = usr_id.recordset[0].usr_id;
 
+
+
+
     request.input("usr_id", sql.VarChar, new_usr_id); 
     request.input("agent_id", sql.VarChar, new_agent_id); 
-    request.input("login_id", sql.VarChar, login_id);
-    request.input("login_passwd", sql.VarChar, login_passwd);
-    request.input("usr_nm", sql.VarChar, usr_nm);
-    request.input("phone", sql.VarChar, phone);
-    request.input("name", sql.VarChar, name);
-    request.input("email", sql.VarChar, email);
-    request.input("password", sql.VarChar, password);
-    request.input("agent_cd", sql.VarChar, agent_cd);
-    request.input("login_ip", sql.VarChar, login_ip);
+    request.input("login_id", sql.VarChar, UserId);
+    request.input("login_passwd", sql.VarChar, UserPw);
+    request.input("usr_nm", sql.VarChar, UsrNm);
+    request.input("email", sql.VarChar, Email);
+    request.input("phone", sql.VarChar, UsrTel);
+    request.input("agent_cd", sql.VarChar, CombAgentCd);
+    request.input("login_ip", sql.VarChar, "");
 
     const query = `
          INSERT INTO dbo.CJB_USR ( USR_ID    //  사용자 ID           CJB_FN_MK_USR_ID(상사ID)
@@ -44,7 +47,7 @@ exports.registerUser = async ({ login_id, login_passwd, password, usr_nm, phone,
               , AGENT_CD                     //  상사 코드            input 존재하면 agent_id 값을 획득 가능함.  
               , LOGIN_IP                     //  로그인 IP      
             ) VALUES (  
-                dbo.CJB_FN_MK_USR_ID(@agent_id)
+                @usr_id
               , @agent_id
               , @login_id
               , @login_passwd

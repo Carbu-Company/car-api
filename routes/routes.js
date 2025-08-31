@@ -58,6 +58,10 @@ router.post("/checkPhoneAuthNumber", carController.checkPhoneAuthNumber);
 //***************************************************************************************** */
 
 // 제시 차량 조회
+router.post("/getSuggestListNew", carController.getSuggestListNew);
+
+
+// 제시 차량 조회
 router.post("/getSuggestList", carController.getSuggestList);
 
 // 제시 차량 합계 조회
