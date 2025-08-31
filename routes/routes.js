@@ -37,6 +37,9 @@ router.get("/getCustomerList", carController.getCustomerList);
 // 사용 요청 등록
 router.post("/insertUserRequest", carController.insertUserRequest); 
 
+// 사용 요청 수정
+router.post("/registerUser", carController.registerUser); 
+
 // 시스템 사용 요청 조회
 router.get("/getSystemUseRequest", carController.getSystemUseRequest); 
 
@@ -388,9 +391,25 @@ router.post("/getAssetList", carController.getAssetList);
 // 계좌정보 조회
 router.get("/getAccountInfo", carController.getAccountInfo);
 
-// 계좌정보 조회
+//***************************************************************************************** */
+// DASH BOARD
+//***************************************************************************************** */
+
+
+// 현금영수증 , 세금계산서서 조회
 router.get("/getTaxCashNoList", carController.getTaxCashNoList);
 
+// 금융융 조회
+router.get("/getInventoryFinanceStatus", carController.getInventoryFinanceStatus);
+
+// 매출, 매입 합계 조회
+router.get("/getSalesPurchaseSummary", carController.getSalesPurchaseSummary);
+
+// 문의 조회
+router.get("/getInquiryStatus", carController.getInquiryStatus);
+
+// 문의 조회
+router.get("/getNoticeStatus", carController.getNoticeStatus);
 
 //***************************************************************************************** */
 // 환경 설정

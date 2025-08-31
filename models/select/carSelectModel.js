@@ -194,32 +194,33 @@ exports.getBuySellFeeSum = async ({ carAgent }) => {
 };
 
 
-// test
+// REAL PAGE
 exports.getTaxCashNoList = async ({ agent_id }) => {
   try {
     const request = pool.request();
     request.input("AGENT_ID", sql.VarChar, agent_id);
 
-    const query = `SELECT A.COST_SEQ  -- 비용 순번
-                        , A.COST_PAY_METH_CD, B.CD_NM -- 결제 구분
-                        , A.COST_EVDC_CD, C.CD_NM -- 영수 증빙
+    const query = `SELECT A.CMRC_COST_SEQ  -- 상품화비 순번
+                        , A.EXPD_METH_CD, B.CD_NM -- 결제 구분
+                        , A.EXPD_EVDC_CD, C.CD_NM -- 영수 증빙
                         , E.USR_NM  -- 딜러명
-                        , A.COST_AMT   -- 비용 금액
+                        , A.EXPD_AMT   -- 상품화비 금액
                         , D.PUR_AMT  -- 통지 금액
                         , D.OWNR_NM  -- 고객명
-                    FROM dbo.CJB_COST A
+                      FROM dbo.CJB_CMRC_COST A
                         , dbo.CJB_COMM_CD B
                         , dbo.CJB_COMM_CD C
                         , dbo.CJB_CAR_PUR D
                         , dbo.CJB_USR E
-                    WHERE A.COST_PAY_METH_CD = B.CD
-                    AND B.GRP_CD = '06'   -- 결제 구분
-                    AND A.COST_EVDC_CD = C.CD
-                    AND C.GRP_CD = '07'   -- 영수 증빙
-                    AND A.CAR_REG_ID = D.CAR_REG_ID
-                    AND D.DLR_ID = E.USR_ID
-                    AND A.COST_EVDC_CD IN ('001', '004')
-                    AND A.TAX_ISSU_YN = 'N'
+                    WHERE A.EXPD_METH_CD = B.CD
+                      AND B.GRP_CD = '06'   -- 결제 구분
+                      AND A.EXPD_EVDC_CD = C.CD
+                      AND C.GRP_CD = '07'   -- 영수 증빙
+                      AND A.CAR_REG_ID = D.CAR_REG_ID
+                      AND D.DLR_ID = E.USR_ID
+                      AND A.EXPD_EVDC_CD IN ('001', '004')
+                      and A.TAX_SCT_CD = '9'  -- 관세 대상 (세금계산서 아니면 9)
+                      and A.TXBL_ISSU_DT IS NULL
                     AND D.AGENT_ID = @AGENT_ID;`; 
 
     const result = await request.query(query);
@@ -230,7 +231,110 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   }
 };
 
+// REAL PAGE
+exports.getInventoryFinanceStatus = async ({ agent_id }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agent_id);
 
+    const query = `SELECT A.LOAN_CORP_NM
+                        , A.TOT_LMT_AMT
+                        , A.TOT_LOAN_AMT
+                        , FORMAT((TOT_LOAN_AMT/TOT_LMT_AMT) * 100, 'N1') + '%' AS RT
+                    FROM dbo.CJB_AGENT_LOAN_CORP A
+                    WHERE  A.AGENT_ID = @AGENT_ID;`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
+
+
+// REAL PAGE
+exports.getSalesPurchaseSummary = async ({ agent_id }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agent_id);
+
+    const query = `SELECT '매입' AS GUBUN 
+                        , COUNT(*) CNT
+                        , SUM(PUR_SUP_AMT) SUP_AMT
+                        , SUM(PUR_VAT) VAT
+                        , SUM(PUR_AMT) AMT
+                        , SUM(CAR_LOAN_AMT) CAR_LOAN_AMT
+                        , SUM(TOT_CMRC_COST_FEE) TOT_CMRC_COST_FEE
+                        , SUM(GAIN_TAX)  GAIN_TAX
+                        , SUM(TOT_PAY_FEE)  TOT_PAY_FEE
+                      FROM dbo.CJB_CAR_PUR A
+                    WHERE AGENT_ID = @AGENT_ID
+                    UNION ALL
+                    SELECT '매출' AS GUBUN 
+                        , COUNT(*) CNT
+                        , SUM(SALE_SUP_PRC) SUP_AMT
+                        , SUM(SALE_VAT) VAT
+                        , SUM(SALE_AMT) AMT
+                        , SUM(A.CAR_LOAN_AMT) CAR_LOAN_AMT
+                        , SUM(A.TOT_CMRC_COST_FEE) TOT_CMRC_COST_FEE
+                        , SUM(A.GAIN_TAX)  GAIN_TAX
+                        , SUM(A.TOT_PAY_FEE)  TOT_PAY_FEE
+                      FROM dbo.CJB_CAR_PUR A
+                        , dbo.CJB_CAR_SEL B
+                    WHERE A.AGENT_ID = @AGENT_ID
+                      AND A.CAR_REG_ID = B.CAR_REG_ID
+                    ;`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
+
+
+// REAL PAGE
+exports.getInquiryStatus = async ({ agent_id }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agent_id);
+
+    const query = `SELECT BBC_NO, BBC_TIT, CONVERT(CHAR(10), REG_DTIME, 23) AS REG_DT
+                     FROM dbo.CJB_INQ_BB
+                    WHERE AGENT_ID = @AGENT_ID
+                      AND DEL_YN = 'N';`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
+
+// REAL PAGE
+exports.getNoticeStatus = async ({ agent_id }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agent_id);
+
+    const query = `SELECT ALL_YN, 
+                          CASE WHEN ALL_YN = 'Y' THEN '전체' ELSE '개별' END GUBUN,
+                          NTC_NO, NTC_TIT, 
+                          CONVERT(CHAR(10), REG_DTIME, 23) REG_DT
+                     FROM dbo.CJB_NTC
+                    WHERE AGENT_ID = @AGENT_ID
+                      AND DEL_YN = 'N';`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
 
 // 매입 매도비 상세 조회
 exports.getBuySellFeeDetail = async ({ car_regid }) => {
@@ -891,6 +995,79 @@ exports.getAssetSum = async ({ carAgent, accountNumber, startDate, endDate }) =>
 // 제시
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+
+exports.getSuggestListNew = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT CAR_REG_ID                  // 차량 등록 ID         
+                        , CAR_REG_DT                  // 차량 등록 일자       
+                        , CAR_DEL_DT                  // 차량 삭제 일자       
+                        , CAR_STAT_CD                 // 차량 상태 코드       
+                        , CAR_DEL_YN                  // 차량 삭제 여부       
+                        , AGENT_ID                    // 상사 ID              
+                        , DLR_ID                      // 딜러 ID              
+                        , CAR_KND_NM                  // 차량 종류 명         
+                        , PRSN_SCT_CD                 // 제시 구분 코드       
+                        , CAR_PUR_DT                  // 차량 매입 일자       
+                        , CAR_LOAN_CNT                // 차량 대출 횟수       
+                        , CAR_LOAN_AMT                // 차량 대출 금액       
+                        , CAR_NO                      // 차량 번호            
+                        , CAR_NEW_YN                  // 차량 신규 여부       
+                        , CAR_NM                      // 차량 명              
+                        , CAR_CAT_NM                  // 차량 카테고리 명     
+                        , MFCP_NM                     // 제조사 명            
+                        , CAR_MNFT_DT                 // 차량 제조 일자       
+                        , RUN_DSTN                    // 주행 거리            
+                        , CAR_YOM                     // 차량 연식            
+                        , OWNR_NM                     // 소유자 명            
+                        , OWNR_TP_NM                  // 소유자 유형 명       
+                        , OWNR_SSN                    // 소유자 주민등록번호  
+                        , OWNR_BRNO                   // 소유자 사업자등록번호
+                        , OWNR_PHON                   // 소유자 전화번호      
+                        , OWNR_ZIP                    // 소유자 주소          
+                        , OWNR_ADDR1                  // 소유자 주소1         
+                        , OWNR_ADDR2                  // 소유자 주소2         
+                        , OWNR_EMAIL                  // 소유자 이메일        
+                        , PUR_AMT                     // 통지 금액            
+                        , PUR_SUP_AMT                 // 공급가               
+                        , PUR_VAT                     // 부가세               
+                        , GAIN_TAX                    // 취득 세              
+                        , AGENT_PUR_CST               // 상사 매입 비         
+                        , PURACSH_RCV_YN              // 매입계산서 수령 여부 
+                        , TXBL_ISSU_DT                // 세금계산서 발행 일자 
+                        , PUR_DESC                    // 매입 설명            
+                        , TOT_PUR_FEE                 // 총 매입 수수료       
+                        , TOT_PAY_FEE                 // 총 납부 수수료       
+                        , TOT_CMRC_COST_FEE           // 총 상품화비 수수료   
+                        , CUST_NO                     // 고객 번              
+                        , PRSN_NO                     // 제시 번              
+                        , PARK_ZON_CD                 // 주차 구역 코드       
+                        , PARK_ZON_DESC               // 주차 구역 설명       
+                        , PARK_KEY_NO                 // 주차 키 번호         
+                        , REG_DTIME                   // 등록 일시            
+                        , REGR_ID                     // 등록자 ID            
+                        , MOD_DTIME                   // 수정 일시            
+                        , MODR_ID                     // 수정자 ID            
+                FROM dbo.CJB_CAR_PUR
+              WHERE AGENT_ID = @CAR_AGENT
+                AND CAR_DEL_YN = 'N'
+              ORDER BY CAR_PUR_DT DESC, CAR_REG_DT DESC
+              OFFSET (@PAGE - 1) * @PAGESIZE ROWS
+              FETCH NEXT @PAGESIZE ROWS ONLY;  
+                `;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching suggest list:", err);
+    throw err;
+  }
+};
+
 // 차량 조회
 exports.getSuggestList = async ({
   carAgent,
@@ -1169,7 +1346,37 @@ exports.getSuggestDetail = async ({ car_regid }) => {
 // 공통
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 관리키 조회
+
+// 관리키 조회  dbo.SMJ_FN_MK_REGID   car_reg_id 값 만드는 함수 
+exports.getMgtKey = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("carAgent", sql.VarChar, carAgent);
+
+    const query = `
+      SELECT DBO.SMJ_FN_MK_MGTKEY(A.AGENT_ID) AS MgtKey,
+             AGENT_NM AS FranchiseCorpName
+        FROM CJB_AGENT A,
+             CJB_USR B
+       WHERE A.AGENT_ID = B.AGENT_ID
+         AND B.USR_GRADE_CD = '9'
+         AND A.AGENT_ID = @carAgent;
+    `;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching management key:", err);
+    throw err;
+  }
+};
+
+
+
+// 관리키 조회  - 이전 코드
+
+
+/*
 exports.getMgtKey = async ({ carAgent }) => {
   try {
     const request = pool.request();
@@ -1192,6 +1399,9 @@ exports.getMgtKey = async ({ carAgent }) => {
     throw err;
   }
 };
+*/
+
+
 
 // 조합 전산 딜러 조회
 exports.getCombineDealerList = async ({ carCombineAgent }) => {

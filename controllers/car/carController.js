@@ -20,6 +20,18 @@ exports.insertUserRequest = async (req, res, next) => {
   }
 };  
 
+// 사용 요청 등록 (테스트트)
+exports.registerUser = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+
+    await carInsertModel.registerUser({ name, email, password });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
 // 시스템 사용 요청 조회
 exports.getSystemUseRequest = async (req, res, next) => {
   try {
@@ -230,6 +242,53 @@ exports.getTaxCashNoList = async (req, res, next) => {
 
     const taxCashNoList = await carSelectModel.getTaxCashNoList({ agent_id });
     res.status(200).json(taxCashNoList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getInventoryFinanceStatus = async (req, res, next) => {
+  try {
+    const { agent_id } = req.query;
+
+    const inventoryFinanceStatus = await carSelectModel.getInventoryFinanceStatus({ agent_id });
+    res.status(200).json(inventoryFinanceStatus);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSalesPurchaseSummary = async (req, res, next) => {
+  try {
+    const { agent_id } = req.query;
+
+    const salesPurchaseSummary = await carSelectModel.getSalesPurchaseSummary({ agent_id });
+    res.status(200).json(salesPurchaseSummary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+
+exports.getInquiryStatus = async (req, res, next) => {
+  try {
+    const { agent_id } = req.query;
+
+    const inquiryStatus = await carSelectModel.getInquiryStatus({ agent_id });
+    res.status(200).json(inquiryStatus);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getNoticeStatus = async (req, res, next) => {
+  try {
+    const { agent_id } = req.query;
+
+    const noticeStatus = await carSelectModel.getNoticeStatus({ agent_id });
+    res.status(200).json(noticeStatus);
   } catch (err) {
     next(err);
   }
