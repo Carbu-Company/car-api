@@ -10,18 +10,22 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, C
   try {
     const request = pool.request();
 
+    // id값이 이미 존재하는지 체크
+    request.input("UserId", sql.VarChar, UserId);
+    const id_check = await request.query(`SELECT COUNT(*) FROM dbo.CJB_USR WHERE LOGIN_ID = @UserId`);
+    if (id_check.recordset[0].count > 0) {
+      throw new Error("이미 존재하는 아이디입니다.");
+    }
+
     // agent_id 값도 미리 만들기
-    request.input("agent_cd", sql.VarChar, CombAgentCd); 
-    const agent_id = await request.query(`SELECT dbo.CJB_FN_MK_AGENT(@agent_cd) as agent_id`);
+    request.input("AgentCd", sql.VarChar, CombAgentCd); 
+    const agent_id = await request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agent_id`);
     const new_agent_id = agent_id.recordset[0].agent_id;
 
     // usr_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_USR_ID(상사ID)
-    request.input("new_agent_id", sql.VarChar, new_agent_id); 
-    const usr_id = await request.query(`SELECT dbo.CJB_FN_MK_USR_ID(@new_agent_id)`);
+    request.input("NewAgentId", sql.VarChar, new_agent_id); 
+    const usr_id = await request.query(`SELECT dbo.CJB_FN_MK_USR_ID(@NewAgentId) as usr_id`);
     const new_usr_id = usr_id.recordset[0].usr_id;
-
-
-
 
     request.input("usr_id", sql.VarChar, new_usr_id); 
     request.input("agent_id", sql.VarChar, new_agent_id); 
@@ -33,19 +37,30 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, C
     request.input("agent_cd", sql.VarChar, CombAgentCd);
     request.input("login_ip", sql.VarChar, "");
 
+
+    console.log(new_usr_id);
+    console.log(new_agent_id);
+    console.log(UserId);
+    console.log(UserPw);
+    console.log(UsrNm);
+    console.log(Email);
+    console.log(UsrTel);
+    console.log(CombAgentCd);
+    console.log("");
+
     const query = `
-         INSERT INTO dbo.CJB_USR ( USR_ID    //  사용자 ID           CJB_FN_MK_USR_ID(상사ID)
-              , AGENT_ID                     //  상사 ID                        
-              , LOGIN_ID                     //  로그인 ID            INPUT
-              , LOGIN_PASSWD                 //  로그인 비밀번호       INPUT
-              , USR_NM                       //  사용자 명            INPUT
-              , USR_GRADE_CD                 //  사용자 등급코드       '9'
-              , USR_PHON                     //  사용자 전화번호       INPUT          
-              , USR_EMAIL                    //  사용자 이메일         INPUT
-              , USR_STRT_DT                  //  사용자 시작 일자      GETDATE()
-              , USR_END_DT                   //  사용자 종료 일자     '2999-12-31'
-              , AGENT_CD                     //  상사 코드            input 존재하면 agent_id 값을 획득 가능함.  
-              , LOGIN_IP                     //  로그인 IP      
+         INSERT INTO dbo.CJB_USR ( USR_ID    --  사용자 ID           CJB_FN_MK_USR_ID(상사ID)
+              , AGENT_ID                     --  상사 ID                        
+              , LOGIN_ID                     --  로그인 ID            INPUT
+              , LOGIN_PASSWD                 --  로그인 비밀번호       INPUT
+              , USR_NM                       --  사용자 명            INPUT
+              , USR_GRADE_CD                 --  사용자 등급코드       '9'
+              , USR_PHON                     --  사용자 전화번호       INPUT          
+              , USR_EMAIL                    --  사용자 이메일         INPUT
+              , USR_STRT_DT                  --  사용자 시작 일자      GETDATE()
+              , USR_END_DT                   --  사용자 종료 일자     '2999-12-31'
+              , AGENT_CD                     --  상사 코드            input 존재하면 agent_id 값을 획득 가능함.  
+              , LOGIN_IP                     --  로그인 IP      
             ) VALUES (  
                 @usr_id
               , @agent_id
@@ -59,6 +74,10 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, C
               , '2999-12-31'
               , @agent_cd
               , @login_ip);`;
+
+
+    console.log(query);
+
     await request.query(query);
   } catch (err) {
     console.error("Error inserting register user:", err);
@@ -322,132 +341,137 @@ exports.insertAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, ac
 
 // 제시 직접 등록
 exports.insertSuggest = async ({
-  car_reg_id                 // 차량 등록 ID         
-  , car_reg_dt               // 차량 등록 일자       
-  , car_del_dt               // 차량 삭제 일자       
-  , car_stat_cd              // 차량 상태 코드       
-  , car_del_yn               // 차량 삭제 여부       
-  , agent_id                 // 상사 ID              
-  , dlr_id                   // 딜러 ID              
-  , car_knd_nm               // 차량 종류 명         
-  , prsn_sct_cd              // 제시 구분 코드       
-  , car_pur_dt               // 차량 매입 일자       
-  , car_loan_cnt             // 차량 대출 횟수       
-  , car_loan_amt             // 차량 대출 금액       
-  , car_no                   // 차량 번호            
-  , car_new_yn               // 차량 신규 여부       
-  , car_nm                   // 차량 명              
-  , car_cat_nm               // 차량 카테고리 명     
-  , mfcp_nm                  // 제조사 명            
-  , car_mnft_dt              // 차량 제조 일자       
-  , run_dstn                 // 주행 거리            
-  , car_yom                  // 차량 연식            
-  , ownr_nm                  // 소유자 명            
-  , ownr_tp_nm               // 소유자 유형 명       
-  , ownr_ssn                 // 소유자 주민등록번호  
-  , ownr_brno                // 소유자 사업자등록번호
-  , ownr_phon                // 소유자 전화번호      
-  , ownr_zip                 // 소유자 주소          
-  , ownr_addr1               // 소유자 주소1         
-  , ownr_addr2               // 소유자 주소2         
-  , ownr_email               // 소유자 이메일        
-  , pur_amt                  // 통지 금액            
-  , pur_sup_amt              // 공급가               
-  , pur_vat                  // 부가세               
-  , gain_tax                 // 취득 세              
-  , agent_pur_cst            // 상사 매입 비         
-  , puracsh_rcv_yn           // 매입계산서 수령 여부 
-  , txbl_issu_dt             // 세금계산서 발행 일자 
-  , pur_desc                 // 매입 설명            
-  , tot_pur_fee              // 총 매입 수수료       
-  , tot_pay_fee              // 총 납부 수수료       
-  , tot_cmrc_cost_fee        // 총 상품화비 수수료   
-  , cust_no                  // 고객 번              
-  , prsn_no                  // 제시 번              
-  , park_zon_cd              // 주차 구역 코드       
-  , park_zon_desc            // 주차 구역 설명       
-  , park_key_no              // 주차 키 번호         
-  , reg_dtime                // 등록 일시            
-  , regr_id                  // 등록자 ID            
-  , mod_dtime                // 수정 일시            
-  , modr_id                  // 수정자 ID            
-  
+    carAgent                 // 상사 ID              
+  , purchaseAmount         //  매입금액
+  , purchaseDate             // 매입일   
+  , brokerageAmount       // 상사매입비
+  , brokerageDate         // 상사매입비 입금일
+  , acquisitionTax        // 취득세
+  , vehicleName         // 차량명
+  , vehicleNumberAfter   // 차량번호(매입후)
+  , vehicleNumberBefore // 차량번호(매입전)
+  , ownrTpNm            // 소유자 유형 코드드
+  , residentNumber    // 소유자 주민등록번호
+  , businessNumber    // 소유자 사업자등록번호
+  , customerName      // 고객명
+  , ownrZip            // 우편번호호
+  , evdcCd            // 증빙종류
+  , carKndNm            // 차량 종류 명
+  , presentationType            // 제시 구분 코드
+  , phoneNumber       // 연락처
+  , emailId           // 이메일 아이디
+  , emailDomain           // 이메일 도메인
+  , txblIssuDt            // 세금계산서 발행 일자
+  , purDesc            // 매입 설명
+  , address            // 주소
+  , addressDetail            // 상세주소
+  , attachedFiles            // 관련 서류 첨부
+  , usrId            // 사용자 ID
+  , dealerCd            // 매입딜러
+  , parkingLocation            // 주차위치 코드드
+  , parkingLocationDesc            // 주차위치 설명
+  , keyNumber            // 주차키 번호
+  , fctCndcYn            // 사실 확인서 여부부
+  , puracshRcvYn            // 매입계산서 수령 여부
+  , custNo            // 고객 번호
 }) => {
   try {
     const request = pool.request();
-    request.input("CAR_REG_ID", sql.VarChar, car_reg_id);                        // 차량 등록 ID         
-    request.input("CAR_REG_DT", sql.VarChar, car_reg_dt);                        // 차량 등록 일자       
-    request.input("CAR_DEL_DT", sql.VarChar, car_del_dt);                        // 차량 삭제 일자       
-    request.input("CAR_STAT_CD", sql.VarChar, car_stat_cd);                      // 차량 상태 코드       
-    request.input("CAR_DEL_YN", sql.VarChar, car_del_yn);                        // 차량 삭제 여부       
-    request.input("AGENT_ID", sql.VarChar, agent_id);                            // 상사 ID              
-    request.input("DLR_ID", sql.VarChar, dlr_id);                                // 딜러 ID              
-    request.input("CAR_KND_NM", sql.VarChar, car_knd_nm);                        // 차량 종류 명         
-    request.input("PRSN_SCT_CD", sql.VarChar, prsn_sct_cd);                      // 제시 구분 코드       
-    request.input("CAR_PUR_DT", sql.VarChar, car_pur_dt);                        // 차량 매입 일자       
-    request.input("CAR_LOAN_CNT", sql.Int, car_loan_cnt);                    // 차량 대출 횟수       
-    request.input("CAR_LOAN_AMT", sql.Int, car_loan_amt);                    // 차량 대출 금액       
-    request.input("CAR_NO", sql.VarChar, car_no);                                // 차량 번호            
-    request.input("CAR_NEW_YN", sql.VarChar, car_new_yn);                        // 차량 신규 여부       
-    request.input("CAR_NM", sql.VarChar, car_nm);                                // 차량 명              
-    request.input("CAR_CAT_NM", sql.VarChar, car_cat_nm);                        // 차량 카테고리 명     
-    request.input("MFCP_NM", sql.VarChar, mfcp_nm);                              // 제조사 명            
-    request.input("CAR_MNFT_DT", sql.VarChar, car_mnft_dt);                      // 차량 제조 일자       
-    request.input("RUN_DSTN", sql.VarChar, run_dstn);                            // 주행 거리            
-    request.input("CAR_YOM", sql.VarChar, car_yom);                              // 차량 연식            
-    request.input("OWNR_NM", sql.VarChar, ownr_nm);                              // 소유자 명            
-    request.input("OWNR_TP_NM", sql.VarChar, ownr_tp_nm);                        // 소유자 유형 명       
-    request.input("OWNR_SSN", sql.VarChar, ownr_ssn);                            // 소유자 주민등록번호  
-    request.input("OWNR_BRNO", sql.VarChar, ownr_brno);                          // 소유자 사업자등록번호
-    request.input("OWNR_PHON", sql.VarChar, ownr_phon);                          // 소유자 전화번호      
-    request.input("OWNR_ZIP", sql.VarChar, ownr_zip);                            // 소유자 주소          
-    request.input("OWNR_ADDR1", sql.VarChar, ownr_addr1);                        // 소유자 주소1         
-    request.input("OWNR_ADDR2", sql.VarChar, ownr_addr2);                        // 소유자 주소2         
-    request.input("OWNR_EMAIL", sql.VarChar, ownr_email);                        // 소유자 이메일        
-    request.input("PUR_AMT", sql.Int, pur_amt);                              // 통지 금액            
-    request.input("PUR_SUP_AMT", sql.Int, pur_sup_amt);                      // 공급가               
-    request.input("PUR_VAT", sql.Int, pur_vat);                              // 부가세               
-    request.input("GAIN_TAX", sql.Int, gain_tax);                            // 취득 세              
-    request.input("AGENT_PUR_CST", sql.Int, agent_pur_cst);                  // 상사 매입 비         
-    request.input("PURACSH_RCV_YN", sql.VarChar, puracsh_rcv_yn);                // 매입계산서 수령 여부 
-    request.input("TXBL_ISSU_DT", sql.VarChar, txbl_issu_dt);                    // 세금계산서 발행 일자 
-    request.input("PUR_DESC", sql.VarChar, pur_desc);                            // 매입 설명            
-    request.input("TOT_PUR_FEE", sql.Int, tot_pur_fee);                      // 총 매입 수수료       
-    request.input("TOT_PAY_FEE", sql.Int, tot_pay_fee);                      // 총 납부 수수료       
-    request.input("TOT_CMRC_COST_FEE", sql.Int, tot_cmrc_cost_fee);          // 총 상품화비 수수료   
-    request.input("CUST_NO", sql.VarChar, cust_no);                              // 고객 번              
-    request.input("PRSN_NO", sql.VarChar, prsn_no);                              // 제시 번              
-    request.input("PARK_ZON_CD", sql.VarChar, park_zon_cd);                      // 주차 구역 코드       
-    request.input("PARK_ZON_DESC", sql.VarChar, park_zon_desc);                  // 주차 구역 설명       
-    request.input("PARK_KEY_NO", sql.VarChar, park_key_no);                      // 주차 키 번호         
+
+    console.log("usrId:", usrId);
+
+    // 공급가 구하기 (매입 금액 기준으로)
+    const supAmt = purchaseAmount - (purchaseAmount * (10/110));
+
+    // 부가세 구하기기 (매입 금액 기준으로)
+    const vat = purchaseAmount * (10/110);
+
+    // 총 매입 수수료 구하기   = 취득세 + 상사매입비
+    const totPurFee = acquisitionTax + brokerageAmount;    
+
+    // car_reg_id 값도 미리 만들기
+    request.input("carAgent", sql.VarChar, carAgent); 
+    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
+    const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
+
+    request.input("CAR_REG_ID", sql.VarChar, newCarRegId);                        // 차량 등록 ID         
+    //request.input("CAR_REG_DT", sql.VarChar, car_reg_dt);                        // 차량 등록 일자       
+    //request.input("CAR_DEL_DT", sql.VarChar, car_del_dt);                        // 차량 삭제 일자       
+    //request.input("CAR_STAT_CD", sql.VarChar, car_stat_cd);                      // 차량 상태 코드       
+    //request.input("CAR_DEL_YN", sql.VarChar, car_del_yn);                        // 차량 삭제 여부       
+    request.input("AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("DLR_ID", sql.VarChar, dealerCd);                                // 딜러 ID              
+    request.input("CAR_KND_NM", sql.VarChar, carKndNm);                        // 차량 종류 명         
+    request.input("PRSN_SCT_CD", sql.VarChar, presentationType);                      // 제시 구분 코드       
+    request.input("CAR_PUR_DT", sql.VarChar, purchaseDate);                        // 차량 매입 일자       
+    //request.input("CAR_LOAN_CNT", sql.Int, car_loan_cnt);                    // 차량 대출 횟수       
+    //request.input("CAR_LOAN_AMT", sql.Int, car_loan_amt);                    // 차량 대출 금액       
+    request.input("CAR_NO", sql.VarChar, vehicleNumberAfter);                                // 차량 번호       
+    request.input("PUR_BEF_CAR_NO", sql.VarChar, vehicleNumberBefore);                                // 차량 번호 이전     
+    //request.input("CAR_NEW_YN", sql.VarChar, car_new_yn);                        // 차량 신규 여부       
+    request.input("CAR_NM", sql.VarChar, vehicleName);                                // 차량 명              
+    //request.input("CAR_CAT_NM", sql.VarChar, car_cat_nm);                        // 차량 카테고리 명     
+    //request.input("MFCP_NM", sql.VarChar, mfcp_nm);                              // 제조사 명            
+    //request.input("CAR_MNFT_DT", sql.VarChar, car_mnft_dt);                      // 차량 제조 일자       
+    //request.input("RUN_DSTN", sql.VarChar, run_dstn);                            // 주행 거리            
+    //request.input("CAR_YOM", sql.VarChar, car_yom);                              // 차량 연식       
+    request.input("PUR_EVDC_CD", sql.VarChar, evdcCd);                          // 증빙종류     
+    request.input("OWNR_NM", sql.VarChar, customerName);                              // 소유자 명            
+    request.input("OWNR_TP_CD", sql.VarChar, ownrTpNm);                        // 소유자 유형 명       
+    request.input("OWNR_SSN", sql.VarChar, residentNumber);                            // 소유자 주민등록번호  
+    request.input("OWNR_BRNO", sql.VarChar, businessNumber);                          // 소유자 사업자등록번호
+    request.input("OWNR_PHON", sql.VarChar, phoneNumber);                          // 소유자 전화번호      
+    request.input("OWNR_ZIP", sql.VarChar, ownrZip);                            // 소유자 주소          
+    request.input("OWNR_ADDR1", sql.VarChar, address);                        // 소유자 주소1         
+    request.input("OWNR_ADDR2", sql.VarChar, addressDetail);                        // 소유자 주소2         
+    request.input("OWNR_EMAIL", sql.VarChar, emailId + '@' + emailDomain);                        // 소유자 이메일        
+    request.input("PUR_AMT", sql.Int, purchaseAmount);                              // 매입금액액 금액            
+    request.input("PUR_SUP_PRC", sql.Int, supAmt);                      // 공급가               
+    request.input("PUR_VAT", sql.Int, vat);                              // 부가세               
+    request.input("GAIN_TAX", sql.Int, acquisitionTax);                            // 취득 세              
+    request.input("AGENT_PUR_CST", sql.Int, brokerageAmount);                  // 상사 매입 비         
+    request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);          // 상사 매입 비 입금일
+    request.input("TXBL_RCV_YN", sql.VarChar, puracshRcvYn);                // 매입계산서 수령 여부 
+    request.input("PURACSH_RCV_YN", sql.VarChar, puracshRcvYn);                // 매입계산서 수령 여부 
+    request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);                    // 세금계산서 발행 일자 
+    request.input("FCT_CNDC_YN", sql.VarChar, fctCndcYn);                    // 사실확인서 여부부 
+    request.input("PUR_DESC", sql.VarChar, purDesc);                            // 매입 설명           
+    request.input("TOT_PUR_FEE", sql.Int, 0);                      // 총 매입 수수료       
+    //request.input("TOT_PAY_FEE", sql.Int, tot_pay_fee);                      // 총 납부 수수료       
+    //request.input("TOT_CMRC_COST_FEE", sql.Int, tot_cmrc_cost_fee);          // 총 상품화비 수수료   
+    request.input("CUST_NO", sql.VarChar, custNo);                              // 고객 번              
+    //request.input("PRSN_NO", sql.VarChar, prsn_no);                              // 제시 번              
+    request.input("PARK_ZON_CD", sql.VarChar, parkingLocation);                      // 주차 구역 코드       
+    request.input("PARK_ZON_DESC", sql.VarChar, parkingLocationDesc);                  // 주차 구역 설명       
+    request.input("PARK_KEY_NO", sql.VarChar, keyNumber);                      // 주차 키 번호         
     //request.input("REG_DTIME", sql.VarChar, reg_dtime);                          // 등록 일시      - 기본값 자동 등록 함.      
-    request.input("REGR_ID", sql.VarChar, regr_id);                              // 등록자 ID            
+    request.input("REGR_ID", sql.VarChar, usrId);                              // 등록자 ID            
     //request.input("MOD_DTIME", sql.DateTime, mod_dtime);                          // 수정 일시     - 기본값 자동 등록 함.          
-    request.input("MODR_ID", sql.VarChar, modr_id);                              // 수정자 ID            
+    request.input("MODR_ID", sql.VarChar, usrId);                              // 수정자 ID            
                                                                                  
     const query = `INSERT INTO dbo.CJB_CAR_PUR (
                     CAR_REG_ID,
                     CAR_REG_DT,
-                    CAR_DEL_DT,
-                    CAR_STAT_CD,
-                    CAR_DEL_YN,
+                    --CAR_DEL_DT,
+                    --CAR_STAT_CD,
+                    --CAR_DEL_YN,
                     AGENT_ID,
                     DLR_ID,
                     CAR_KND_NM,
                     PRSN_SCT_CD,
                     CAR_PUR_DT,
-                    CAR_LOAN_CNT,
-                    CAR_LOAN_AMT,
+                    --CAR_LOAN_CNT,
+                    --CAR_LOAN_AMT,
                     CAR_NO,
-                    CAR_NEW_YN,
+                    --CAR_NEW_YN,
                     CAR_NM,
-                    CAR_CAT_NM,
-                    MFCP_NM,
-                    CAR_MNFT_DT,
-                    RUN_DSTN,
-                    CAR_YOM,
+                    --CAR_CAT_NM,
+                    --MFCP_NM,
+                    --CAR_MNFT_DT,
+                    --RUN_DSTN,
+                    --CAR_YOM,
                     OWNR_NM,
-                    OWNR_TP_NM,
+                    OWNR_TP_CD,
                     OWNR_SSN,
                     OWNR_BRNO,
                     OWNR_PHON,
@@ -456,18 +480,21 @@ exports.insertSuggest = async ({
                     OWNR_ADDR2,
                     OWNR_EMAIL,
                     PUR_AMT,
-                    PUR_SUP_AMT,
+                    PUR_SUP_PRC,
                     PUR_VAT,
                     GAIN_TAX,
                     AGENT_PUR_CST,
+                    AGENT_PUR_CST_PAY_DT,
                     PURACSH_RCV_YN,
+                    TXBL_RCV_YN,
                     TXBL_ISSU_DT,
+                    FCT_CNDC_YN,                  
                     PUR_DESC,
                     TOT_PUR_FEE,
-                    TOT_PAY_FEE,
-                    TOT_CMRC_COST_FEE,
+                    --TOT_PAY_FEE,
+                    --TOT_CMRC_COST_FEE,
                     CUST_NO,
-                    PRSN_NO,
+                    --PRSN_NO,
                     PARK_ZON_CD,
                     PARK_ZON_DESC,
                     PARK_KEY_NO,
@@ -475,27 +502,27 @@ exports.insertSuggest = async ({
                     MODR_ID
                   ) VALUES (
                     @CAR_REG_ID,
-                    @CAR_REG_DT,
-                    @CAR_DEL_DT,
-                    @CAR_STAT_CD,
-                    @CAR_DEL_YN,
+                    CONVERT(CHAR(10), GETDATE(), 23),
+                    --@CAR_DEL_DT,
+                    --@CAR_STAT_CD,
+                    --@CAR_DEL_YN,
                     @AGENT_ID,
                     @DLR_ID,
                     @CAR_KND_NM,
                     @PRSN_SCT_CD,
                     @CAR_PUR_DT,
-                    @CAR_LOAN_CNT,
-                    @CAR_LOAN_AMT,
+                    --@CAR_LOAN_CNT,
+                    --@CAR_LOAN_AMT,
                     @CAR_NO,
-                    @CAR_NEW_YN,
+                    --@CAR_NEW_YN,
                     @CAR_NM,
-                    @CAR_CAT_NM,
-                    @MFCP_NM,
-                    @CAR_MNFT_DT,
-                    @RUN_DSTN,
-                    @CAR_YOM,
+                    --@CAR_CAT_NM,
+                    --@MFCP_NM,
+                    --@CAR_MNFT_DT,
+                    --@RUN_DSTN,
+                    --@CAR_YOM,
                     @OWNR_NM,
-                    @OWNR_TP_NM,
+                    @OWNR_TP_CD,
                     @OWNR_SSN,
                     @OWNR_BRNO,
                     @OWNR_PHON,
@@ -504,24 +531,29 @@ exports.insertSuggest = async ({
                     @OWNR_ADDR2,
                     @OWNR_EMAIL,
                     @PUR_AMT,
-                    @PUR_SUP_AMT,
+                    @PUR_SUP_PRC,
                     @PUR_VAT,
                     @GAIN_TAX,
                     @AGENT_PUR_CST,
+                    @AGENT_PUR_CST_PAY_DT,
                     @PURACSH_RCV_YN,
+                    @TXBL_RCV_YN,
                     @TXBL_ISSU_DT,
+                    @FCT_CNDC_YN,
                     @PUR_DESC,
                     @TOT_PUR_FEE,
-                    @TOT_PAY_FEE,
-                    @TOT_CMRC_COST_FEE,
+                    --@TOT_PAY_FEE,
+                    --@TOT_CMRC_COST_FEE,
                     @CUST_NO,
-                    @PRSN_NO,
+                    --@PRSN_NO,
                     @PARK_ZON_CD,
                     @PARK_ZON_DESC,
                     @PARK_KEY_NO,
                     @REGR_ID,
                     @MODR_ID
                   )`;
+
+    console.log("query:", query);
 
     await request.query(query);
 

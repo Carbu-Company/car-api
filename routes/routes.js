@@ -40,6 +40,12 @@ router.post("/insertUserRequest", carController.insertUserRequest);
 // 사용 요청 수정
 router.post("/registerUser", carController.registerUser); 
 
+// 사용 요청 수정
+router.get("/checkSangsaCode", carController.checkSangsaCode); 
+
+
+
+
 // 시스템 사용 요청 조회
 router.get("/getSystemUseRequest", carController.getSystemUseRequest); 
 

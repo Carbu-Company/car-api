@@ -44,6 +44,18 @@ exports.getSystemUseRequest = async (req, res, next) => {
   }
 };  
 
+// 상사 코드 조회
+exports.checkSangsaCode = async (req, res, next) => {
+  try {
+    const { SangsaCode } = req.query;
+    const sangsaCode = await carSelectModel.checkSangsaCode({ SangsaCode });
+    res.status(200).json(sangsaCode);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 인증번호 조회
 exports.getPhoneAuthNumber = async (req, res, next) => {
   try {

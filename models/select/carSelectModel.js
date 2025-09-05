@@ -29,6 +29,28 @@ exports.getSystemUseRequest = async ({ carAgent }) => {
 };
 
 
+
+ // 인증번호 조회
+exports.checkSangsaCode = async ({ SangsaCode }) => {
+  try {
+    const request = pool.request();
+    request.input("SS_CODE", sql.VarChar, SangsaCode);  
+
+    const query = `SELECT COUNT(*) CNT
+                     FROM KU_SANGSA
+                    WHERE SS_CODE = @SS_CODE;`;
+    const result = await request.query(query);
+    
+    console.log("SangsaCode:", SangsaCode);
+    console.log("result:", result.recordset[0].CNT);
+    return result.recordset[0].CNT  ;
+
+  } catch (err) {
+    console.error("Error fetching sangsa code:", err);
+    throw err;
+  }
+};
+
 // 인증번호 조회
 exports.getPhoneAuthNumber = async ({ representativePhone }) => {
   try {
@@ -1538,8 +1560,8 @@ exports.getCDList = async ({ grpCD }) => {
 
     const query = `SELECT CD
                         , CD_NM
-                  FROM   CJB_CD
-                  WHERE  GRP_CD_ID = @GRP_CD
+                  FROM   dbo.CJB_COMM_CD
+                  WHERE  GRP_CD = @GRP_CD
                          AND USE_YN = 'Y'
                   ORDER  BY CD;
     `;
