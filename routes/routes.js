@@ -76,11 +76,19 @@ router.post("/getSuggestSummary", carController.getSuggestSummary);
 // 제시 차량 상세 조회
 router.get("/getSuggestDetail", carController.getSuggestDetail);    
 
+// 제시 차량 상세 조회
+router.get("/getSuggestDetailNew", carController.getSuggestDetailNew);    
+
+
 // 제시 등록
 router.post("/insertSuggest", carController.insertSuggest);
 
 // 제시 수정 등록
 router.post("/updateSuggest", carController.updateSuggest);
+// 제시 수정 등록
+router.post("/updatePurchase", carController.updatePurchase);
+
+
 
 // 제시 삭제 
 router.post("/deleteSuggest", carController.deleteSuggest);

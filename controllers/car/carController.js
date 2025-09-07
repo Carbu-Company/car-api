@@ -96,13 +96,9 @@ exports.checkPhoneAuthNumber = async (req, res, next) => {
 // 제시 차량 조회
 exports.getSuggestListNew = async (req, res, next) => {
   try {
-    const { carAgent, page, pageSize } = req.body;
+    //const { carAgent, page, pageSize } = req.body;
 
-    const cars = await carSelectModel.getSuggestListNew({
-      carAgent,
-      page,
-      pageSize,
-    });
+    const cars = await carSelectModel.getSuggestListNew(req.body);
     res.status(200).json(cars);
   } catch (err) {
     next(err);
@@ -148,6 +144,20 @@ exports.insertSuggest = async (req, res, next) => {
   }
 };
 
+
+// 제시 수정 등록
+exports.updatePurchase = async (req, res, next) => {
+  try {
+    const purchaseData = req.body;
+
+    await carUpdateModel.updatePurchase(purchaseData);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 제시 수정 등록
 exports.updateSuggest = async (req, res, next) => {
   try {
@@ -180,6 +190,18 @@ exports.getSuggestSummary = async (req, res, next) => {
 
     const cars = await carSelectModel.getSuggestSummary({ carAgent });
     res.status(200).json(cars);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 제시 차량 상세 조회
+exports.getSuggestDetailNew = async (req, res, next) => {
+  try {
+    const { car_regid } = req.query; 
+
+    const suggestDetail = await carSelectModel.getSuggestDetailNew({ car_regid });
+    res.status(200).json(suggestDetail);
   } catch (err) {
     next(err);
   }

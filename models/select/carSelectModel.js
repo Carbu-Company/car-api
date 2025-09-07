@@ -1017,17 +1017,44 @@ exports.getAssetSum = async ({ carAgent, accountNumber, startDate, endDate }) =>
 // 제시
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-exports.getSuggestListNew = async ({ carAgent, page, pageSize }) => {
+exports.getSuggestListNew = async ({ 
+  carAgent, 
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc',
+  listCount = 10
+}) => {
   try {
     const request = pool.request();
 
-    console.log("carAgent:", carAgent);
-    console.log("page:", page);
-    console.log("pageSize:", pageSize);
-
     request.input("CAR_AGENT", sql.VarChar, carAgent);
-    request.input("PAGE", sql.Int, page);
-    request.input("PAGESIZE", sql.Int, pageSize); 
+    request.input("LIST_COUNT", sql.Int, listCount);
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+    if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+    if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
 
     const query = `SELECT CAR_REG_ID               
        , CAR_REG_DT              
@@ -1036,7 +1063,7 @@ exports.getSuggestListNew = async ({ carAgent, page, pageSize }) => {
        , CAR_DEL_YN              
        , AGENT_ID                
        , DLR_ID                  
-       , CAR_KND_NM              
+       , CAR_KND_CD              
        , PRSN_SCT_CD             
        , CAR_PUR_DT              
        , CAR_LOAN_CNT            
@@ -1056,8 +1083,9 @@ exports.getSuggestListNew = async ({ carAgent, page, pageSize }) => {
        , OWNR_PHON               
        , OWNR_ZIP                
        , OWNR_ADDR1              
-       , OWNR_ADDR2              
-       , OWNR_EMAIL              
+       , OWNR_ADDR2     
+       , SUBSTRING(OWNR_EMAIL, 1, CHARINDEX('@', OWNR_EMAIL) - 1) AS OWNR_EMAIL
+       , SUBSTRING(OWNR_EMAIL, CHARINDEX('@', OWNR_EMAIL) + 1, LEN(OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
        , PUR_AMT                 
        , PUR_SUP_PRC             
        , PUR_VAT                 
@@ -1081,15 +1109,26 @@ exports.getSuggestListNew = async ({ carAgent, page, pageSize }) => {
                 FROM dbo.CJB_CAR_PUR
               WHERE AGENT_ID = @CAR_AGENT
                 AND CAR_DEL_YN = 'N'
-              ORDER BY CAR_PUR_DT DESC, CAR_REG_DT DESC
-              OFFSET (@PAGE - 1) * @PAGESIZE ROWS
-              FETCH NEXT @PAGESIZE ROWS ONLY;  
-                `;
+                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                ${dtGubun ? "AND DT_GUBUN = @DT_GUBUN" : ""}
+                ${startDt ? "AND CAR_REG_DT >= @START_DT" : ""}
+                ${endDt ? "AND CAR_REG_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND CUST_GUBUN = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND EVDC_GUBUN = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND CAR_NO_BEFORE = @DTL_CAR_NO_BEFORE" : ""}
+              ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
+              OFFSET 0 ROWS
+              FETCH NEXT @LIST_COUNT ROWS ONLY;`;
 
     const result = await request.query(query);
-    console.log("result:", result.recordset);
     return result.recordset;
-X  } catch (err) {
+  } catch (err) {
     console.error("Error fetching suggest list:", err);
     throw err;
   }
@@ -1281,6 +1320,81 @@ exports.getSuggestSummary = async ({ carAgent }) => {
 };
 
 // 제시 차량 상세 조회
+exports.getSuggestDetailNew = async ({ car_regid }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, car_regid);   
+
+    const query = `SELECT                  
+                          CAR_REG_ID              
+                          , CAR_REG_DT            
+                          , CAR_DEL_DT            
+                          , CAR_STAT_CD           
+                          , CAR_DEL_YN            
+                          , AGENT_ID              
+                          , DLR_ID                
+                          , CAR_KND_CD           
+                          , PRSN_SCT_CD           
+                          , CAR_PUR_DT            
+                          , CAR_LOAN_CNT          
+                          , CAR_LOAN_AMT          
+                          , CAR_NO                
+                          , PUR_BEF_CAR_NO        
+                          , CAR_NEW_YN            
+                          , CAR_NM                
+                          , CAR_CAT_NM            
+                          , MFCP_NM               
+                          , CAR_MNFT_DT           
+                          , RUN_DSTN              
+                          , CAR_YOM               
+                          , PUR_EVDC_CD           
+                          , OWNR_NM               
+                          , OWNR_TP_CD            
+                          , OWNR_SSN              
+                          , OWNR_BRNO             
+                          , OWNR_PHON             
+                          , OWNR_ZIP              
+                          , OWNR_ADDR1            
+                          , OWNR_ADDR2            
+                          , OWNR_EMAIL            
+                          , PUR_AMT               
+                          , PUR_SUP_PRC           
+                          , PUR_VAT               
+                          , GAIN_TAX              
+                          , AGENT_PUR_CST         
+                          , AGENT_PUR_CST_PAY_DT  
+                          , TXBL_RCV_YN           
+                          , PURACSH_RCV_YN        
+                          , TXBL_ISSU_DT          
+                          , FCT_CNDC_YN           
+                          , PUR_DESC              
+                          , TOT_PUR_FEE           
+                          , TOT_PAY_FEE           
+                          , TOT_CMRC_COST_FEE     
+                          , CUST_NO               
+                          , PRSN_NO               
+                          , PARK_ZON_CD           
+                          , PARK_ZON_DESC         
+                          , PARK_KEY_NO           
+                          , CTSH_NO               
+                          , CMBT_PRSN_MEMO        
+                          , REG_DTIME             
+                          , REGR_ID               
+                          , MOD_DTIME             
+                          , MODR_ID               
+                            FROM CJB_CAR_PUR      
+                          WHERE  CAR_REG_ID    = @CAR_REGID `;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching suggest detail:", err);
+    throw err;
+  }
+};
+
+
+// 제시 차량 상세 조회
 exports.getSuggestDetail = async ({ car_regid }) => {
   try {
     const request = pool.request();
@@ -1368,7 +1482,6 @@ exports.getSuggestDetail = async ({ car_regid }) => {
     throw err;
   }
 };
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 공통
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
