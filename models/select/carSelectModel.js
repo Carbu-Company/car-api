@@ -1111,17 +1111,16 @@ exports.getSuggestListNew = async ({
                 AND CAR_DEL_YN = 'N'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${dtGubun ? "AND DT_GUBUN = @DT_GUBUN" : ""}
-                ${startDt ? "AND CAR_REG_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_REG_DT <= @END_DT" : ""}
+                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
                 ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND CUST_GUBUN = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND EVDC_GUBUN = @DTL_EVDC_GUBUN" : ""}
+                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
                 ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
                 ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
                 ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
                 ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND CAR_NO_BEFORE = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
               ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
               OFFSET 0 ROWS
               FETCH NEXT @LIST_COUNT ROWS ONLY;`;
