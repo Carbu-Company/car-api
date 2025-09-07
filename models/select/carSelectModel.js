@@ -1271,43 +1271,44 @@ exports.getSuggestSummary = async ({ carAgent }) => {
     const request = pool.request();
     request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-    const query = `SELECT '상사' AS CAR_GUBN_NAME,
-                          SUM(BUY_NOTIAMT) / 10000 AS BUY_NOTIAMT,
-                          SUM(BUY_SUPAMT) / 10000  AS BUY_SUPAMT,
-                          SUM(BUY_TAX) / 10000 AS BUY_TAX,
-                          SUM(BUY_TOTAL_FEE) AS BUY_TOTAL_FEE,
-                          SUM(BUY_REAL_FEE) AS BUY_REAL_FEE,
-                          SUM(BUY_TOTAL_FEE) - SUM(BUY_REAL_FEE) AS BUY_DIFF_FEE,
-                          COUNT(CAR_REGID) AS CAR_REGID_CNT, 
-                          SUM(CAR_LOANSUM) / 10000 AS CAR_LOANSUM,
-                          SUM(GOODS_FEE) AS GOODS_FEE,
-                          SUM(BUY_BOHEOMAMT) AS BUY_BOHEOMAMT,
-                          SUM(BUY_TAX15) AS BUY_TAX15
-                          --SUM(BUY_REAL_FEE) AS BUY_REAL_FEE
-                    FROM   SMJ_MAINLIST
-                    WHERE  CAR_STATUS = '001'
-                          AND CAR_GUBN = '0'
-                          AND CAR_AGENT = '00002'
-                          AND CAR_DELGUBN = '0' 
-                    UNION ALL	   
-                    SELECT '고객/위탁',
-                          SUM(BUY_NOTIAMT),
-                          SUM(BUY_SUPAMT),
-                          SUM(BUY_TAX),
-                          SUM(BUY_TOTAL_FEE),
-                          SUM(BUY_REAL_FEE),
-                          SUM(BUY_TOTAL_FEE) - SUM(BUY_REAL_FEE),
-                          COUNT(CAR_REGID),
-                          SUM(CAR_LOANSUM) / 10000,
-                          SUM(GOODS_FEE),
-                          SUM(BUY_BOHEOMAMT),
-                          SUM(BUY_TAX15)
-                          --SUM(BUY_REAL_FEE)
-                    FROM   SMJ_MAINLIST
-                    WHERE  CAR_STATUS = '001'
-                          AND CAR_GUBN = '1'
-                          AND CAR_AGENT = '00002'
-                          AND CAR_DELGUBN = '0'   
+    const query = `SELECT '상사' AS PRSN_SCT_CD
+                        , COUNT(CAR_REG_ID) CNT
+                        , SUM(PUR_AMT) PUR_AMT
+                        , SUM(PUR_SUP_PRC) PUR_SUP_PRC
+                        , SUM(PUR_VAT) PUR_VAT
+                        , SUM(CAR_LOAN_AMT) CAR_LOAN_AMT
+                        , SUM(AGENT_PUR_CST) AGENT_PUR_CST
+                      FROM CJB_CAR_PUR
+                      WHERE AGENT_ID = @CAR_AGENT
+                        AND CAR_STAT_CD = '001'
+                        AND CAR_DEL_YN = 'N'
+                        AND PRSN_SCT_CD = '0'  -- 상사
+                    UNION ALL
+                    SELECT '고객위탁' AS PRSN_SCT_CD
+                        , COUNT(CAR_REG_ID) CNT
+                        , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                        , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                        , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                        , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                        , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
+                      FROM CJB_CAR_PUR
+                      WHERE AGENT_ID = @CAR_AGENT
+                        AND CAR_STAT_CD = '001'
+                        AND CAR_DEL_YN = 'N'
+                        AND PRSN_SCT_CD = '1'  -- 고객위탁
+                    UNION ALL
+                    SELECT '합계' AS PRSN_SCT_CD
+                        , COUNT(CAR_REG_ID) CNT
+                        , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                        , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                        , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                        , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                        , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
+                      FROM CJB_CAR_PUR
+                      WHERE AGENT_ID = @CAR_AGENT
+                        AND CAR_STAT_CD = '001'
+                        AND CAR_DEL_YN = 'N'
+                        ;
       ;`;
 
     const result = await request.query(query);
