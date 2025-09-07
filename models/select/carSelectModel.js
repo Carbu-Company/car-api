@@ -1019,6 +1019,8 @@ exports.getAssetSum = async ({ carAgent, accountNumber, startDate, endDate }) =>
 
 exports.getSuggestListNew = async ({ 
   carAgent, 
+  page,
+  pageSize,
   carNo,
   dealer,
   dtGubun,
@@ -1033,14 +1035,34 @@ exports.getSuggestListNew = async ({
   dtlCtshNo,
   dtlCarNoBefore,
   orderItem = '제시일',
-  ordAscDesc = 'desc',
-  listCount = 10
+  ordAscDesc = 'desc'
 }) => {
   try {
     const request = pool.request();
 
+    console.log('carAgent:', carAgent);
+    console.log('pageSize:', pageSize);
+    console.log('page:', page);
+
+    console.log('carNo:', carNo);
+    console.log('dealer:', dealer);
+    console.log('dtGubun:', dtGubun);
+    console.log('startDt:', startDt);
+    console.log('endDt:', endDt);
+    console.log('dtlCustomerName:', dtlCustomerName);
+    console.log('dtlCustGubun:', dtlCustGubun);
+    console.log('dtlEvdcGubun:', dtlEvdcGubun);
+    console.log('dtlPrsnGubun:', dtlPrsnGubun);
+    console.log('dtlOwnerBrno:', dtlOwnerBrno);
+    console.log('dtlOwnerSsn:', dtlOwnerSsn);
+    console.log('dtlCtshNo:', dtlCtshNo);
+    console.log('dtlCarNoBefore:', dtlCarNoBefore);
+    console.log('orderItem:', orderItem);
+    console.log('ordAscDesc:', ordAscDesc);
+
     request.input("CAR_AGENT", sql.VarChar, carAgent);
-    request.input("LIST_COUNT", sql.Int, listCount);
+    request.input("PAGE_SIZE", sql.Int, pageSize);
+    request.input("PAGE", sql.Int, page);
 
     if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
     if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
@@ -1056,13 +1078,34 @@ exports.getSuggestListNew = async ({
     if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
     if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
 
-    const query = `SELECT CAR_REG_ID               
+    // 전체 카운트 조회
+    const countQuery = `
+    SELECT COUNT(*) as totalCount
+              FROM dbo.CJB_CAR_PUR A
+            WHERE AGENT_ID = @CAR_AGENT
+              AND CAR_DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+    `;
+  
+    const dataQuery = `SELECT CAR_REG_ID               
        , CAR_REG_DT              
        , CAR_DEL_DT              
        , CAR_STAT_CD             
        , CAR_DEL_YN              
        , AGENT_ID                
        , DLR_ID                  
+       , (SELECT USR_NM FROM CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
        , CAR_KND_CD              
        , PRSN_SCT_CD             
        , CAR_PUR_DT              
@@ -1106,7 +1149,7 @@ exports.getSuggestListNew = async ({
        , REGR_ID                 
        , MOD_DTIME               
        , MODR_ID             
-                FROM dbo.CJB_CAR_PUR
+                FROM dbo.CJB_CAR_PUR A
               WHERE AGENT_ID = @CAR_AGENT
                 AND CAR_DEL_YN = 'N'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -1122,11 +1165,35 @@ exports.getSuggestListNew = async ({
                 ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
                 ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
               ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
-              OFFSET 0 ROWS
-              FETCH NEXT @LIST_COUNT ROWS ONLY;`;
+              OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
+              FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
 
-    const result = await request.query(query);
-    return result.recordset;
+    // 두 쿼리를 동시에 실행
+    const [countResult, dataResult] = await Promise.all([
+      request.query(countQuery),
+      request.query(dataQuery)
+    ]);
+
+    const totalCount = countResult.recordset[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+console.log('totalCount:', countQuery);
+console.log('totalPages:', dataQuery);
+    //console.log('page:', page);
+    //console.log('pageSize:', pageSize);
+
+    return {
+      carlist: dataResult.recordset,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+
   } catch (err) {
     console.error("Error fetching suggest list:", err);
     throw err;
