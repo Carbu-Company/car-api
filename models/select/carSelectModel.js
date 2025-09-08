@@ -1039,7 +1039,7 @@ exports.getSuggestListNew = async ({
 }) => {
   try {
     const request = pool.request();
-
+/*
     console.log('carAgent:', carAgent);
     console.log('pageSize:', pageSize);
     console.log('page:', page);
@@ -1059,10 +1059,11 @@ exports.getSuggestListNew = async ({
     console.log('dtlCarNoBefore:', dtlCarNoBefore);
     console.log('orderItem:', orderItem);
     console.log('ordAscDesc:', ordAscDesc);
-
+*/
     request.input("CAR_AGENT", sql.VarChar, carAgent);
     request.input("PAGE_SIZE", sql.Int, pageSize);
     request.input("PAGE", sql.Int, page);
+
 
     if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
     if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
@@ -1177,8 +1178,8 @@ exports.getSuggestListNew = async ({
     const totalCount = countResult.recordset[0].totalCount;
     const totalPages = Math.ceil(totalCount / pageSize);
 
-console.log('totalCount:', countQuery);
-console.log('totalPages:', dataQuery);
+//console.log('totalCount:', countQuery);
+//console.log('totalPages:', dataQuery);
     //console.log('page:', page);
     //console.log('pageSize:', pageSize);
 
@@ -1333,23 +1334,91 @@ exports.getSuggestList = async ({
 };
 
 // 제시 차량 합계 조회
-exports.getSuggestSummary = async ({ carAgent }) => {
+exports.getSuggestSummary = async ({  
+  carAgent, 
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc'
+}) => {
   try {
     const request = pool.request();
+
+    console.log('carAgent:', carAgent);
+    console.log('pageSize:', pageSize);
+    console.log('page:', page);
+
+    console.log('carNo:', carNo);
+    console.log('dealer:', dealer);
+    console.log('dtGubun:', dtGubun);
+    console.log('startDt:', startDt);
+    console.log('endDt:', endDt);
+    console.log('dtlCustomerName:', dtlCustomerName);
+    console.log('dtlCustGubun:', dtlCustGubun);
+    console.log('dtlEvdcGubun:', dtlEvdcGubun);
+    console.log('dtlPrsnGubun:', dtlPrsnGubun);
+    console.log('dtlOwnerBrno:', dtlOwnerBrno);
+    console.log('dtlOwnerSsn:', dtlOwnerSsn);
+    console.log('dtlCtshNo:', dtlCtshNo);
+    console.log('dtlCarNoBefore:', dtlCarNoBefore);
+    console.log('orderItem:', orderItem);
+    console.log('ordAscDesc:', ordAscDesc);
+
     request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE_SIZE", sql.Int, pageSize);
+    request.input("PAGE", sql.Int, page);
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+    if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+    if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
 
     const query = `SELECT '상사' AS PRSN_SCT_CD
                         , COUNT(CAR_REG_ID) CNT
-                        , SUM(PUR_AMT) PUR_AMT
-                        , SUM(PUR_SUP_PRC) PUR_SUP_PRC
-                        , SUM(PUR_VAT) PUR_VAT
-                        , SUM(CAR_LOAN_AMT) CAR_LOAN_AMT
-                        , SUM(AGENT_PUR_CST) AGENT_PUR_CST
+                        , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                        , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                        , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                        , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                        , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
                       FROM CJB_CAR_PUR
                       WHERE AGENT_ID = @CAR_AGENT
                         AND CAR_STAT_CD = '001'
                         AND CAR_DEL_YN = 'N'
                         AND PRSN_SCT_CD = '0'  -- 상사
+                        ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                        ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                        ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                        ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                        ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
                     UNION ALL
                     SELECT '고객위탁' AS PRSN_SCT_CD
                         , COUNT(CAR_REG_ID) CNT
@@ -1363,6 +1432,18 @@ exports.getSuggestSummary = async ({ carAgent }) => {
                         AND CAR_STAT_CD = '001'
                         AND CAR_DEL_YN = 'N'
                         AND PRSN_SCT_CD = '1'  -- 고객위탁
+                        ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                        ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                        ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                        ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                        ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
                     UNION ALL
                     SELECT '합계' AS PRSN_SCT_CD
                         , COUNT(CAR_REG_ID) CNT
@@ -1375,8 +1456,21 @@ exports.getSuggestSummary = async ({ carAgent }) => {
                       WHERE AGENT_ID = @CAR_AGENT
                         AND CAR_STAT_CD = '001'
                         AND CAR_DEL_YN = 'N'
-                        ;
-      ;`;
+                        ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                        ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                        ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                        ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                        ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+      `;
+
+      console.log('totalCount:', query);
 
     const result = await request.query(query);
     return result.recordset;

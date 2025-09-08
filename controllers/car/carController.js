@@ -186,9 +186,9 @@ exports.deleteSuggest = async (req, res, next) => {
 // 제시 차량 합계 조회
 exports.getSuggestSummary = async (req, res, next) => {
   try {
-    const { carAgent } = req.body;
+    //const { carAgent } = req.body;
 
-    const cars = await carSelectModel.getSuggestSummary({ carAgent });
+    const cars = await carSelectModel.getSuggestSummary(req.body);
     res.status(200).json(cars);
   } catch (err) {
     next(err);

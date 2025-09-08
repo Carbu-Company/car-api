@@ -6,37 +6,85 @@ const pool = require("../../config/db");
 // 사용 요청 등록
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel }) => {
+exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel }) => {
   try {
     const request = pool.request();
 
+    console.log("UserId:", UserId);
+    console.log("CombAgentCd:", CombAgentCd);
+
     // id값이 이미 존재하는지 체크
     request.input("UserId", sql.VarChar, UserId);
-    const id_check = await request.query(`SELECT COUNT(*) FROM dbo.CJB_USR WHERE LOGIN_ID = @UserId`);
+    const id_check = await request.query(`SELECT COUNT(*) as count FROM dbo.CJB_USR WHERE LOGIN_ID = @UserId`);
+    console.log("id_check:", id_check.recordset[0].count);
     if (id_check.recordset[0].count > 0) {
-      throw new Error("이미 존재하는 아이디입니다.");
+      console.log("USER_ID_EXIST");
+      throw new Error("USER_ID_EXIST");
     }
 
-    // agent_id 값도 미리 만들기
-    request.input("AgentCd", sql.VarChar, CombAgentCd); 
-    const agent_id = await request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agent_id`);
-    const new_agent_id = agent_id.recordset[0].agent_id;
+    // 상사코드 존재하는지 체크
+    let new_agent_id = '';
+    const agent_check_request = pool.request();
+    agent_check_request.input("CombAgentCd", sql.VarChar, CombAgentCd);
+    const agent_check = await agent_check_request.query(`SELECT COUNT(*) as count FROM dbo.CJB_AGENT WHERE CMBT_AGENT_CD = @CombAgentCd`);
+    if (agent_check.recordset[0].count > 0) {
+      // 존재하면 Agent_ID값 가져오기
+      const agent_id_request = pool.request();
+      agent_id_request.input("CombAgentCd", sql.VarChar, CombAgentCd);
+      const agent_id = await agent_id_request.query(`SELECT AGENT_ID FROM dbo.CJB_AGENT WHERE CMBT_AGENT_CD = @CombAgentCd`);
+      new_agent_id = agent_id.recordset[0].AGENT_ID;
+    }
+    else {
+      // 존재하지 않으면 agent_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_AGENT_ID()
+      const agent_id_request = pool.request();
+      const agent_id = await agent_id_request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agent_id`);
+      new_agent_id = agent_id.recordset[0].agent_id;
+
+      // 상사 정보 저장 처리 함수 
+      request.input("AGENT_ID", sql.VarChar, new_agent_id);
+      request.input("AGENT_NM", sql.VarChar, AgentNm);
+      request.input("AGENT_REG_NO", sql.VarChar, AgentRegNo);
+      request.input("CEO_NM", sql.VarChar, CeoNm);
+      request.input("AGRM_AGR_YN", sql.VarChar, 'N');
+      request.input("FIRM_YN", sql.VarChar, 'N');
+      request.input("REGR_ID", sql.VarChar, 'USER');
+      request.input("MODR_ID", sql.VarChar, 'USER');
+
+      const query = `INSERT INTO dbo.CJB_AGENT (AGENT_ID
+                                                 , AGENT_NM
+                                                 , BRNO
+                                                 , PRES_NM
+                                                 , AGRM_AGR_YN
+                                                 , FIRM_YN
+                                                 , REGR_ID
+                                                 , MODR_ID) VALUES 
+                                                 ( @AGENT_ID
+                                                 , @AGENT_NM
+                                                 , @AGENT_REG_NO
+                                                 , @CEO_NM
+                                                 , @AGRM_AGR_YN
+                                                 , @FIRM_YN
+                                                 , @REGR_ID
+                                                 , @MODR_ID);`;
+      await request.query(query);
+    }
 
     // usr_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_USR_ID(상사ID)
-    request.input("NewAgentId", sql.VarChar, new_agent_id); 
-    const usr_id = await request.query(`SELECT dbo.CJB_FN_MK_USR_ID(@NewAgentId) as usr_id`);
+    const usr_id_request = pool.request();
+    usr_id_request.input("NewAgentId", sql.VarChar, new_agent_id); 
+    const usr_id = await usr_id_request.query(`SELECT dbo.CJB_FN_MK_USR_ID(@NewAgentId) as usr_id`);
     const new_usr_id = usr_id.recordset[0].usr_id;
 
-    request.input("usr_id", sql.VarChar, new_usr_id); 
-    request.input("agent_id", sql.VarChar, new_agent_id); 
-    request.input("login_id", sql.VarChar, UserId);
-    request.input("login_passwd", sql.VarChar, UserPw);
-    request.input("usr_nm", sql.VarChar, UsrNm);
-    request.input("email", sql.VarChar, Email);
-    request.input("phone", sql.VarChar, UsrTel);
-    request.input("agent_cd", sql.VarChar, CombAgentCd);
-    request.input("login_ip", sql.VarChar, "");
-
+    const user_insert_request = pool.request();
+    user_insert_request.input("usr_id", sql.VarChar, new_usr_id); 
+    user_insert_request.input("agent_id", sql.VarChar, new_agent_id); 
+    user_insert_request.input("login_id", sql.VarChar, UserId);
+    user_insert_request.input("login_passwd", sql.VarChar, UserPw);
+    user_insert_request.input("usr_nm", sql.VarChar, UsrNm);
+    user_insert_request.input("email", sql.VarChar, Email);
+    user_insert_request.input("phone", sql.VarChar, UsrTel);
+    user_insert_request.input("agent_cd", sql.VarChar, CombAgentCd);
+    user_insert_request.input("login_ip", sql.VarChar, "");
 
     console.log(new_usr_id);
     console.log(new_agent_id);
@@ -78,7 +126,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, C
 
     console.log(query);
 
-    await request.query(query);
+    await user_insert_request.query(query);
   } catch (err) {
     console.error("Error inserting register user:", err);
     throw err;
