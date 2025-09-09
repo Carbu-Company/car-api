@@ -561,6 +561,7 @@ exports.insertSuggest = async ({
                     --CAR_LOAN_CNT,
                     --CAR_LOAN_AMT,
                     CAR_NO,
+                    PUR_BEF_CAR_NO,
                     --CAR_NEW_YN,
                     CAR_NM,
                     --CAR_CAT_NM,
@@ -613,6 +614,7 @@ exports.insertSuggest = async ({
                     --@CAR_LOAN_CNT,
                     --@CAR_LOAN_AMT,
                     @CAR_NO,
+                    @PUR_BEF_CAR_NO,
                     --@CAR_NEW_YN,
                     @CAR_NM,
                     --@CAR_CAT_NM,
@@ -654,6 +656,43 @@ exports.insertSuggest = async ({
                   )`;
 
     console.log("query:", query);
+
+    attachedFiles.forEach(async (file) => {
+
+
+      console.log("file:", file.name);
+      console.log("file:", file.url);
+
+      const fileRequest = pool.request();
+
+      fileRequest.input("CAR_REG_ID", sql.VarChar, newCarRegId);
+      fileRequest.input("FILE_NM", sql.VarChar, file.name);
+      fileRequest.input("FILE_PATH", sql.VarChar, file.url);
+      fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
+      fileRequest.input("FILE_KND_NM", sql.VarChar, 'P');
+      fileRequest.input("AGENT_ID", sql.VarChar, carAgent);
+      fileRequest.input("REGR_ID", sql.VarChar, usrId);
+      fileRequest.input("MODR_ID", sql.VarChar, usrId);
+
+      await fileRequest.query(`INSERT INTO CJB_FILE_INFO (
+                                          AGENT_ID,
+                                          FILE_SCT_CD,
+                                          FILE_KND_NM,
+                                          FILE_NM,
+                                          FILE_PATH,
+                                          CAR_REG_ID,
+                                          REGR_ID,
+                                          MODR_ID) VALUES (
+                                          @AGENT_ID, 
+                                          @FILE_SCT_CD, 
+                                          @FILE_KND_NM, 
+                                          @FILE_NM, 
+                                          @FILE_PATH, 
+                                          @CAR_REG_ID, 
+                                          @REGR_ID, 
+                                          @MODR_ID)`);
+
+    });
 
     await request.query(query);
 
