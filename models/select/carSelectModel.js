@@ -28,8 +28,6 @@ exports.getSystemUseRequest = async ({ carAgent }) => {
   }
 };
 
-
-
  // 인증번호 조회
 exports.checkSangsaCode = async ({ SangsaCode }) => {
   try {
@@ -1112,14 +1110,16 @@ exports.getSuggestListNew = async ({
        , CAR_PUR_DT              
        , CAR_LOAN_CNT            
        , CAR_LOAN_AMT            
-       , CAR_NO                  
+       , CAR_NO               
+       , PUR_BEF_CAR_NO   
        , CAR_NEW_YN              
        , CAR_NM                  
        , CAR_CAT_NM              
        , MFCP_NM                 
        , CAR_MNFT_DT             
        , RUN_DSTN                
-       , CAR_YOM                 
+       , CAR_YOM
+       , PUR_EVDC_CD                 
        , OWNR_NM                 
        , OWNR_TP_CD             
        , OWNR_SSN                

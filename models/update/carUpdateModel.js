@@ -38,7 +38,8 @@ exports.updatePurchase = async ({
       parkKeyNo,                                                 // Key번호
       fctCndcYn,                                                 // 사실 확인서 여부
       txblRcvYn,                                                 // 매입수취여부
-      ctshNo                                                     // 계약서번호
+      ctshNo,                                                     // 계약서번호
+      carRegDt,                                                  // 이전일
  }) => {
   try {
     const request = pool.request();
@@ -48,6 +49,7 @@ exports.updatePurchase = async ({
     request.input("CAR_KND_CD", sql.VarChar, carKndCd);
     request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);
     request.input("CAR_PUR_DT", sql.VarChar, carPurDt);
+    request.input("CAR_REG_DT", sql.VarChar, carRegDt);
     request.input("CAR_NO", sql.VarChar, carNo);
     request.input("PUR_BEF_CAR_NO", sql.VarChar, purBefCarNo);
     request.input("CAR_NM", sql.VarChar, carNm);
@@ -86,6 +88,7 @@ exports.updatePurchase = async ({
           CAR_KND_CD = @CAR_KND_CD,
           PRSN_SCT_CD = @PRSN_SCT_CD,
           CAR_PUR_DT = @CAR_PUR_DT,
+          CAR_REG_DT = @CAR_REG_DT,
           CAR_NO = @CAR_NO,
           PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO,
           CAR_NM = @CAR_NM,

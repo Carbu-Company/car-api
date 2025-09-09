@@ -33,12 +33,15 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
       agent_id_request.input("CombAgentCd", sql.VarChar, CombAgentCd);
       const agent_id = await agent_id_request.query(`SELECT AGENT_ID FROM dbo.CJB_AGENT WHERE CMBT_AGENT_CD = @CombAgentCd`);
       new_agent_id = agent_id.recordset[0].AGENT_ID;
+
+      console.log("agent_id:", new_agent_id);
     }
     else {
       // 존재하지 않으면 agent_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_AGENT_ID()
       const agent_id_request = pool.request();
       const agent_id = await agent_id_request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agent_id`);
       new_agent_id = agent_id.recordset[0].agent_id;
+      console.log("new_agent_id:", new_agent_id);
 
       // 상사 정보 저장 처리 함수 
       request.input("AGENT_ID", sql.VarChar, new_agent_id);
@@ -46,6 +49,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
       request.input("AGENT_REG_NO", sql.VarChar, AgentRegNo);
       request.input("CEO_NM", sql.VarChar, CeoNm);
       request.input("AGRM_AGR_YN", sql.VarChar, 'N');
+      request.input("CMBT_AGENT_CD", sql.VarChar, CombAgentCd);
       request.input("FIRM_YN", sql.VarChar, 'N');
       request.input("REGR_ID", sql.VarChar, 'USER');
       request.input("MODR_ID", sql.VarChar, 'USER');
@@ -55,6 +59,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                                  , BRNO
                                                  , PRES_NM
                                                  , AGRM_AGR_YN
+                                                 , CMBT_AGENT_CD
                                                  , FIRM_YN
                                                  , REGR_ID
                                                  , MODR_ID) VALUES 
@@ -63,10 +68,79 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                                  , @AGENT_REG_NO
                                                  , @CEO_NM
                                                  , @AGRM_AGR_YN
+                                                 , @CMBT_AGENT_CD
                                                  , @FIRM_YN
                                                  , @REGR_ID
                                                  , @MODR_ID);`;
       await request.query(query);
+
+
+
+      // 딜러 정보도 등록 한다.
+
+      const dealer_insert_request = pool.request();
+      dealer_insert_request.input("AGENT_ID", sql.VarChar, new_agent_id);
+      dealer_insert_request.input("CombAgentCd", sql.VarChar, CombAgentCd);
+      const dealer_insert_query = `INSERT INTO dbo.CJB_USR
+                                          ( USR_ID
+                                          , AGENT_ID
+                                          , LOGIN_ID
+                                          , LOGIN_PASSWD
+                                          , USR_NM
+                                          , USR_GRADE_CD
+                                          , USR_PHON
+                                          , USR_EMAIL
+                                          , USR_STRT_DT
+                                          , USR_END_DT
+                                          , ZIP
+                                          , ADDR1
+                                          , ADDR2
+                                          , USR_PHOTO_NM
+                                          , TAX_SCT_CD
+                                          , EMP_SN
+                                          , EMP_BRNO
+                                          , EMP_BNK_CD
+                                          , EMP_ACTN
+                                          , PUR_FEE_SCT_CD
+                                          , SALE_FEE_SCT_CD
+                                          , AGENT_CD
+                                          , DLR_CD
+                                          , LOGIN_IP
+                                          , LAST_LOGIN_DTIME
+                                          , REGR_ID
+                                          , MODR_ID)
+                                    SELECT dbo.CJB_FN_MK_USR_ID(@AGENT_ID) AS USR_ID  -- USR_ID            
+                                        , @AGENT_ID                                  -- AGENT_ID          
+                                        , NULL                                     -- LOGIN_ID          
+                                        , NULL                                     -- LOGIN_PASSWD      
+                                        , DL_NAME                                  -- USR_NM            
+                                        , '0'                                      -- USR_GRADE_CD      
+                                        , DL_TELNO                                 -- USR_PHON          
+                                        , ''                                       -- USR_EMAIL         
+                                        , DL_INDATE                                -- USR_STRT_DT       
+                                        , DL_OUTDATE                               -- USR_END_DT        
+                                        , DL_ZIP                                   -- ZIP               
+                                        , DL_ADDR1                                 -- ADDR1             
+                                        , DL_ADDR2                                 -- ADDR2             
+                                        , ''                                       -- USR_PHOTO_NM      
+                                        , '0'                                      -- TAX_SCT_CD        
+                                        , DL_SNO                                   -- EMP_SN            
+                                        , ''                                       -- EMP_BRNO          
+                                        , ''                                       -- EMP_BNK_CD        
+                                        , ''                                       -- EMP_ACTN          
+                                        , '0'                                      -- PUR_FEE_SCT_CD    
+                                        , '0'                                      -- SALE_FEE_SCT_CD   
+                                        , DL_SANGSA_CODE                           -- AGENT_CD          
+                                        , DL_CODE                                  -- DLR_CD            
+                                        , ''                                       -- LOGIN_IP          
+                                        , NULL                                     -- LAST_LOGIN_DTIME  
+                                        , 'USER'                                   -- REGR_ID           
+                                        , 'USER'                                   -- MODR_ID          
+                                    FROM dbo.KU_DEALER
+                                   WHERE DL_SANGSA_CODE = @CombAgentCd
+                                    ;`;
+      await dealer_insert_request.query(dealer_insert_query);
+
     }
 
     // usr_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_USR_ID(상사ID)
@@ -494,6 +568,7 @@ exports.insertSuggest = async ({
                     --CAR_MNFT_DT,
                     --RUN_DSTN,
                     --CAR_YOM,
+                    PUR_EVDC_CD,
                     OWNR_NM,
                     OWNR_TP_CD,
                     OWNR_SSN,
@@ -545,6 +620,7 @@ exports.insertSuggest = async ({
                     --@CAR_MNFT_DT,
                     --@RUN_DSTN,
                     --@CAR_YOM,
+                    @PUR_EVDC_CD,
                     @OWNR_NM,
                     @OWNR_TP_CD,
                     @OWNR_SSN,
