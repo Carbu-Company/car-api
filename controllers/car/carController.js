@@ -173,9 +173,9 @@ exports.updateSuggest = async (req, res, next) => {
 // 제시 삭제
 exports.deleteSuggest = async (req, res, next) => {
   try {
-    const { car_regid } = req.body;
+    const { car_regid, flag_type } = req.query;
 
-    await carDeleteModel.deleteSuggest({ car_regid });
+    await carDeleteModel.deleteSuggest({ car_regid, flag_type });
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);

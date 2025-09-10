@@ -91,7 +91,7 @@ router.post("/updatePurchase", carController.updatePurchase);
 
 
 // 제시 삭제 
-router.post("/deleteSuggest", carController.deleteSuggest);
+router.get("/deleteSuggest", carController.deleteSuggest);
 
 // 테스트 등록
 router.post("/insertTest", carController.insertTest);
