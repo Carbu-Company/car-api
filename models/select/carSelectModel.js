@@ -1493,8 +1493,10 @@ exports.getSuggestDetailNew = async ({ car_regid }) => {
                           , CAR_STAT_CD           
                           , CAR_DEL_YN            
                           , AGENT_ID              
-                          , DLR_ID                
-                          , CAR_KND_CD           
+                          , DLR_ID      
+                          , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM          
+                          , CAR_KND_CD         
+                          , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.CAR_KND_CD AND GRP_CD = '92') AS CAR_KND_NM
                           , PRSN_SCT_CD           
                           , CAR_PUR_DT            
                           , CAR_LOAN_CNT          
@@ -1534,7 +1536,8 @@ exports.getSuggestDetailNew = async ({ car_regid }) => {
                           , TOT_CMRC_COST_FEE     
                           , CUST_NO               
                           , PRSN_NO               
-                          , PARK_ZON_CD           
+                          , PARK_ZON_CD        
+                          , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.PARK_ZON_CD AND GRP_CD = '91') AS PARK_ZON_NM   
                           , PARK_ZON_DESC         
                           , PARK_KEY_NO           
                           , CTSH_NO               
@@ -1543,7 +1546,7 @@ exports.getSuggestDetailNew = async ({ car_regid }) => {
                           , REGR_ID               
                           , MOD_DTIME             
                           , MODR_ID               
-                            FROM CJB_CAR_PUR      
+                            FROM CJB_CAR_PUR A     
                           WHERE  CAR_REG_ID    = @CAR_REGID `;
 
     const result = await request.query(query);
