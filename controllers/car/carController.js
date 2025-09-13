@@ -303,10 +303,21 @@ exports.getTaxCashNoList = async (req, res, next) => {
 
 exports.getInventoryFinanceStatus = async (req, res, next) => {
   try {
-    const { agent_id } = req.query;
+    const { agent_id } = req.query;  
 
     const inventoryFinanceStatus = await carSelectModel.getInventoryFinanceStatus({ agent_id });
     res.status(200).json(inventoryFinanceStatus);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getCarLoanInfo = async (req, res, next) => {
+  try {
+    const { car_regid } = req.query;  
+
+    const carLoanInfo = await carSelectModel.getCarLoanInfo({ car_regid });
+    res.status(200).json(carLoanInfo);
   } catch (err) {
     next(err);
   }

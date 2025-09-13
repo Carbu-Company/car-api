@@ -844,6 +844,80 @@ exports.insertGoodsFeePre = async ({ goods_regid, goods_codename, goods_sendamt,
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 상품화비 2.0
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 상품화비 등록
+exports.insertCarGoodsFee = async ({ car_regid, expd_item_cd, expd_item_nm, expd_amt, expd_dt, expd_meth_cd, expd_evdc_cd, tax_sct_cd, txbl_issu_dt, rmrk, cash_recpt_rcgn_no, cash_mgmtkey, reg_dtime, regr_id, mod_dtime, modr_id, expd_sct_cd }) => {
+  try {
+    const request = pool.request();
+
+    request.input("GOODS_FEE_SEQ", sql.VarChar, '');
+    request.input("CAR_REG_ID", sql.VarChar, car_regid);
+    request.input("EXPD_ITEM_CD", sql.VarChar, expd_item_cd); 
+    request.input("EXPD_ITEM_NM", sql.VarChar, expd_item_nm);
+    request.input("EXPD_SCT_CD", sql.VarChar, expd_sct_cd);
+    request.input("EXPD_AMT", sql.Decimal, expd_amt);
+    request.input("EXPD_DT", sql.VarChar, expd_dt);
+    request.input("EXPD_METH_CD", sql.VarChar, expd_meth_cd);
+    request.input("EXPD_EVDC_CD", sql.VarChar, expd_evdc_cd);
+    request.input("TAX_SCT_CD", sql.VarChar, tax_sct_cd);
+    request.input("TXBL_ISSU_DT", sql.VarChar, txbl_issu_dt);
+    request.input("RMRK", sql.VarChar, rmrk);
+    request.input("CASH_RECPT_RCGN_NO", sql.VarChar, cash_recpt_rcgn_no);
+    request.input("CASH_MGMTKEY", sql.VarChar, cash_mgmtkey);
+    request.input("REGR_ID", sql.VarChar, regr_id);
+    request.input("MODR_ID", sql.VarChar, modr_id);
+
+    const query = `INSERT INTO dbo.CJB_GOODS_FEE (
+                          CAR_REG_ID,
+                          EXPD_ITEM_CD,
+                          EXPD_ITEM_NM,
+                          EXPD_SCT_CD,
+                          EXPD_AMT,
+                          EXPD_DT,
+                          EXPD_METH_CD,
+                          EXPD_EVDC_CD,
+                          TAX_SCT_CD,
+                          TXBL_ISSU_DT,
+                          RMRK,
+                          CASH_RECPT_RCGN_NO,
+                          CASH_MGMTKEY,
+                          REG_DTIME,
+                          REGR_ID,
+                          MOD_DTIME,
+                          MODR_ID
+                  ) VALUES (
+                          @CAR_REG_ID,
+                          @EXPD_ITEM_CD,
+                          @EXPD_ITEM_NM,
+                          @EXPD_SCT_CD,
+                          @EXPD_AMT,
+                          @EXPD_DT,
+                          @EXPD_METH_CD,
+                          @EXPD_EVDC_CD,
+                          @TAX_SCT_CD,
+                          @TXBL_ISSU_DT,
+                          @RMRK,
+                          @CASH_RECPT_RCGN_NO,
+                          @CASH_MGMTKEY,
+                          getdate(),
+                          @REGR_ID,
+                          getdate(),
+                          @MODR_ID
+                  );`;
+
+    await request.query(query);
+
+  } catch (err) {
+    console.error("Error inserting car goods fee:", err);
+    throw err;
+  }
+};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 // 상품화비 등록
 exports.insertGoodsExpense = async ({ goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang }) => {
   try {

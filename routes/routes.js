@@ -420,6 +420,9 @@ router.get("/getTaxCashNoList", carController.getTaxCashNoList);
 // 금융융 조회
 router.get("/getInventoryFinanceStatus", carController.getInventoryFinanceStatus);
 
+// 차량 대출 정보 조회
+router.get("/getCarLoanInfo", carController.getCarLoanInfo);
+
 // 매출, 매입 합계 조회
 router.get("/getSalesPurchaseSummary", carController.getSalesPurchaseSummary);
 

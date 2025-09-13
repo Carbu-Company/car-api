@@ -262,7 +262,8 @@ exports.getInventoryFinanceStatus = async ({ agent_id }) => {
                         , A.TOT_LOAN_AMT
                         , FORMAT((TOT_LOAN_AMT/TOT_LMT_AMT) * 100, 'N1') + '%' AS RT
                     FROM dbo.CJB_AGENT_LOAN_CORP A
-                    WHERE  A.AGENT_ID = @AGENT_ID;`; 
+                    WHERE A.AGENT_ID = @AGENT_ID
+                    ;`; 
 
     const result = await request.query(query);
     return result.recordset; 
@@ -272,6 +273,29 @@ exports.getInventoryFinanceStatus = async ({ agent_id }) => {
   }
 };
 
+
+// REAL PAGE
+exports.getCarLoanInfo = async ({ car_regid }) => {
+  try {
+    const request = pool.request();
+
+    request.input("CAR_REGID", sql.VarChar, car_regid);
+
+    const query = `SELECT A.LOAN_AMT
+                        , A.LOAN_CORP_INTR_RT 
+                        , A.LOAN_DT
+                        , A.TOT_PAY_INTR_AMT
+                    FROM dbo.CJB_CAR_LOAN A
+                    WHERE  A.CAR_REG_ID = @CAR_REGID
+                    ;`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching tax cash no list:", err);
+    throw err;
+  }
+};
 
 // REAL PAGE
 exports.getSalesPurchaseSummary = async ({ agent_id }) => {
@@ -591,6 +615,128 @@ exports.getSellFeeList = async ({ fee_car_regid }) => {
     return result.recordset;
   } catch (err) { 
     console.error("Error fetching sell fee list:", err);
+    throw err;
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 상품화비 2.0
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 상품화비 목록 조회
+exports.getCarGoodsFeeList = async ({ carRegId, page = 1, pageSize = 10 }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegId);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize);
+
+    // 전체 카운트 조회
+    const countQuery = `
+        SELECT COUNT(*) as totalCount
+        FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+        WHERE A.CAR_REG_ID = B.CAR_REG_ID
+            AND A.CAR_REG_ID = @CAR_REGID
+    `;
+
+    const dataQuery = ` SELECT B.GOODS_FEE_SEQ,
+                   A.CAR_REG_ID,
+                   B.EXPD_ITEM_CD,
+                   B.EXPD_ITEM_NM,
+                   B.EXPD_SCT_CD,
+                   CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러선지출' 
+                        ELSE '상사선지출' END AS EXPD_SCT_NM,
+                   B.EXPD_AMT,
+                   B.EXPD_DT,
+                   B.EXPD_METH_CD,
+                   dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                   B.EXPD_EVDC_CD,
+                   dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,
+                   B.TAX_SCT_CD,
+                   CASE WHEN B.TAX_SCT_CD =  '0' THEN '미공제' 
+                        ELSE '공제' END AS TAX_SCT_NM, 
+                   B.TXBL_ISSU_DT,
+                   B.RMRK,
+                   B.CASH_RECPT_RCGN_NO,
+                   B.CASH_MGMTKEY,
+                   B.REG_DTIME,
+                   B.REGR_ID,
+                   B.MOD_DTIME,
+                   B.MODR_ID
+        FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+        WHERE A.CAR_REG_ID = B.CAR_REG_ID
+            AND A.CAR_REG_ID = @CAR_REGID
+        ORDER BY B.EXPD_DT DESC
+        OFFSET (@PAGE - 1) * @PAGESIZE ROWS
+        FETCH NEXT @PAGESIZE ROWS ONLY
+    `;
+
+    // 두 쿼리를 동시에 실행
+    const [countResult, dataResult] = await Promise.all([
+      request.query(countQuery),
+      request.query(dataQuery)
+    ]);
+
+    const totalCount = countResult.recordset[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: dataResult.recordset,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  } catch (err) {
+    console.error("Error fetching goods fee list:", err);
+    throw err;
+  }
+}
+
+
+// 상품화비 합계
+exports.getCarGoodsFeeSum = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, carRegId);
+
+    const query = `SELECT CAR_REG_ID
+                        , EXPD_SCT_CD
+                        , CASE WHEN EXPD_SCT_CD = '0' THEN '딜러선지출' 
+                                ELSE '상사선지출' END AS EXPD_SCT_NM
+                        , EXPD_AMT
+                        , EXPD_METH_CD
+                        , dbo.CJB_FN_GET_CD_NM('06', EXPD_METH_CD) EXPD_METH_NM
+                        , EXPD_EVDC_CD
+                        , dbo.CJB_FN_GET_CD_NM('07', EXPD_EVDC_CD) EXPD_EVDC_NM
+                        , TAX_SCT_CD
+                        , CASE WHEN TAX_SCT_CD =  '0' THEN '미공제' 
+                                ELSE '공제' END AS TAX_SCT_NM
+                    FROM (SELECT B.CAR_REG_ID,
+                                B.EXPD_SCT_CD,
+                                SUM(B.EXPD_AMT) AS EXPD_AMT,
+                                B.EXPD_METH_CD,
+                                B.EXPD_EVDC_CD,
+                                B.TAX_SCT_CD
+                           FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                          WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                            AND A.CAR_REG_ID = @CAR_REGID
+                          GROUP BY B.CAR_REG_ID
+                                , B.EXPD_SCT_CD
+                                , B.EXPD_METH_CD 
+                                , B.EXPD_EVDC_CD
+                                , B.TAX_SCT_CD ) C
+                  ;`; 
+
+    const result = await request.query(query);
+    return result.recordset; 
+  } catch (err) {
+    console.error("Error fetching goods fee sum:", err);
     throw err;
   }
 };
