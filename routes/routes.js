@@ -43,9 +43,6 @@ router.post("/registerUser", carController.registerUser);
 // 사용 요청 수정
 router.get("/checkSangsaCode", carController.checkSangsaCode); 
 
-
-
-
 // 시스템 사용 요청 조회
 router.get("/getSystemUseRequest", carController.getSystemUseRequest); 
 
@@ -79,16 +76,14 @@ router.get("/getSuggestDetail", carController.getSuggestDetail);
 // 제시 차량 상세 조회
 router.get("/getSuggestDetailNew", carController.getSuggestDetailNew);    
 
-
 // 제시 등록
 router.post("/insertSuggest", carController.insertSuggest);
 
 // 제시 수정 등록
 router.post("/updateSuggest", carController.updateSuggest);
+
 // 제시 수정 등록
 router.post("/updatePurchase", carController.updatePurchase);
-
-
 
 // 제시 삭제 
 router.get("/deleteSuggest", carController.deleteSuggest);
@@ -143,20 +138,35 @@ router.post("/updateBuyFeeSum", carController.updateBuyFeeSum);
 // 상품화비 목록 조회
 router.post("/getGoodsFeeList", carController.getGoodsFeeList);
 
-// 상품화비 합계 조회
-router.post("/getGoodsFeeSum", carController.getGoodsFeeSum);
-
-// 상품화비 상세 조회
-router.get("/getGoodsFeeDetail", carController.getGoodsFeeDetail);
+// 상품화비 목록 조회
+router.post("/getGoodsFeeCarSumList", carController.getGoodsFeeCarSumList);
 
 // 상품화비 상세 리스트 조회
 router.get("/getGoodsFeeDetailList", carController.getGoodsFeeDetailList);
 
-// 상품화비용 지출 내역 조회
-router.get("/getGoodsFeeExpenseList", carController.getGoodsFeeExpenseList);
+// 상품화비 상세 조회
+router.get("/getGoodsFeeDetail", carController.getGoodsFeeDetail);
+
+// 상품화비 차량 합계 조회
+router.post("/getGoodsFeeCarSummary", carController.getGoodsFeeCarSummary);
 
 // 상품화비용 지출 저장
-router.post("/insertGoodsExpense", carController.insertGoodsExpense);
+router.post("/insertGoodsFee", carController.insertGoodsFee);
+
+
+
+//***************************************************************************************** */
+// 재고금융 2.0
+//***************************************************************************************** */
+
+// 재고금융 등록/리스트 조회
+router.post("/getCarLoanSumList", carController.getCarLoanSumList);
+
+// 이자납입리스트 조회
+router.post("/getCarLoanList", carController.getCarLoanList);
+
+// 캐피탈사별 이용현황 조회
+router.get("/getCarLoanSummary", carController.getCarLoanSummary);
 
 //***************************************************************************************** */
 // 재고금융 

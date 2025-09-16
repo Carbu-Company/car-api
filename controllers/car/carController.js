@@ -460,39 +460,39 @@ exports.updateBuyFeeSum = async (req, res, next) => {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 상품화비
+// 상품화비 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // 상품화비 목록 조회
 exports.getGoodsFeeList = async (req, res, next) => {
   try {
-    const { carAgent, page, pageSize } = req.body;
-
-    const goodsFeeList = await carSelectModel.getGoodsFeeList({ carAgent, page, pageSize });
+    const goodsFeeList = await carSelectModel.getGoodsFeeList(req.body);
     res.status(200).json(goodsFeeList);
   } catch (err) {
     next(err);
   }
 };
 
-// 상품화비 합계 조회
-exports.getGoodsFeeSum = async (req, res, next) => {
-  try {
-    const { carAgent } = req.body;
 
-    const goodsFeeSum = await carSelectModel.getGoodsFeeSum({ carAgent });
-    res.status(200).json(goodsFeeSum);
+
+// 상품화비 목록 조회
+exports.getGoodsFeeCarSumList = async (req, res, next) => {
+  try {
+    const goodsFeeCarSumList = await carSelectModel.getGoodsFeeCarSumList(req.body);
+    res.status(200).json(goodsFeeCarSumList);
   } catch (err) {
     next(err);
   }
 };
 
+
 // 상품화비 상세 조회
 exports.getGoodsFeeDetail = async (req, res, next) => {
   try {
-    const { goods_regid } = req.query;
+    const { goodsFeeSeq } = req.query;
 
-    const goodsFeeDetail = await carSelectModel.getGoodsFeeDetail({ goods_regid });
+    const goodsFeeDetail = await carSelectModel.getGoodsFeeDetail({ goodsFeeSeq });
     res.status(200).json(goodsFeeDetail);
   } catch (err) {
     next(err);
@@ -502,9 +502,9 @@ exports.getGoodsFeeDetail = async (req, res, next) => {
 //  상품화비 상세 리스트 조회
 exports.getGoodsFeeDetailList = async (req, res, next) => {
   try {
-    const { goods_regid } = req.query;
+    const { carRegId } = req.query;
 
-    const goodsFeeDetailList = await carSelectModel.getGoodsFeeDetailList({ goods_regid });
+    const goodsFeeDetailList = await carSelectModel.getGoodsFeeDetailList({ carRegId });
     res.status(200).json(goodsFeeDetailList);
   } catch (err) {
     next(err);
@@ -512,29 +512,89 @@ exports.getGoodsFeeDetailList = async (req, res, next) => {
 };
 
 
-// 상품화비용 지출 내역 조회
-exports.getGoodsFeeExpenseList = async (req, res, next) => {
+//  상품화비 상세 리스트 조회
+exports.getGoodsFeeCarSummary = async (req, res, next) => {
   try {
-    const { goods_regid } = req.query;
-
-    const goodsFeeExpenseList = await carSelectModel.getGoodsFeeExpenseList({ goods_regid });   
-    res.status(200).json(goodsFeeExpenseList);
+    const goodsFeeCarSummary = await carSelectModel.getGoodsFeeCarSummary(req.body);
+    res.status(200).json(goodsFeeCarSummary);
   } catch (err) {
     next(err);
   }
 };
 
-// 상품화비용 지출 내역 저장
-exports.insertGoodsExpense = async (req, res, next) => {
-  try {
-    const { goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang } = req.body;  
 
-    await carInsertModel.insertGoodsExpense({ goods_regid, goods_agent, goods_empid, goods_regdate, goods_code, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang });
+// 상품화비용 지출 내역 저장
+exports.insertGoodsFee = async (req, res, next) => {
+  try {
+    const {   carRegId,         // 차량 등록 ID
+      expdItemCd,       // 지출 항목 코드
+      expdItemNm,       // 지출 항목 명
+      expdSctCd,        // 지출 구분 코드
+      expdAmt,          // 지출 금액
+      expdSupPrc,       // 지출 공급가
+      expdVat,          // 지출 부가세
+      expdDt,           // 지출 일자
+      expdMethCd,       // 지출 방식 코드
+      expdEvdcCd,       // 지출 증빙 코드
+      taxSctCd,         // 세금 구분 코드
+      txblIssuDt,       // 세금계산서 발행 일자
+      rmrk,             // 비고
+      adjInclusYn,      // 정산 포함 여부
+      cashRecptRcgnNo,  // 현금 영수증 식별 번호
+      cashMgmtkey,      // 현금 관리키
+      delYn,            // 삭제여부
+      regDtime,         // 등록 일시
+      regrId,           // 등록자 ID
+      modDtime,         // 수정 일시
+      modrId            // 수정자 ID
+      } = req.body;  
+
+    await carInsertModel.insertGoodsFee({ carRegId, expdItemCd, expdItemNm, expdSctCd, expdAmt, expdSupPrc, expdVat, expdDt, expdMethCd, expdEvdcCd, taxSctCd, txblIssuDt, rmrk, adjInclusYn, cashRecptRcgnNo, cashMgmtkey, delYn, regDtime, regrId, modDtime, modrId });
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);
   }
 };  
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 재고금융 2.0
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// 재고금융 등록/리스트 조회
+exports.getCarLoanSumList = async (req, res, next) => {
+  try {
+    const carLoanSumList = await carSelectModel.getCarLoanSumList(req.body);
+    res.status(200).json(carLoanSumList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 이자납입리스트 조회
+exports.getCarLoanList = async (req, res, next) => {
+  try {
+    const carLoanList = await carSelectModel.getCarLoanList(req.body);
+    res.status(200).json(carLoanList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 캐피탈사별 이용현황 조회
+exports.getCarLoanSummary = async (req, res, next) => {
+  try {
+    const { carAgent } = req.query;
+
+    const carLoanSummary = await carSelectModel.getCarLoanSummary({ carAgent });
+    res.status(200).json(carLoanSummary);
+  } catch (err) {
+    next(err);
+  }
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

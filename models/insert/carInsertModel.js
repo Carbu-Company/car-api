@@ -512,7 +512,7 @@ exports.insertSuggest = async ({
     request.input("CAR_REG_ID", sql.VarChar, newCarRegId);                        // 차량 등록 ID         
     request.input("AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
     request.input("DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
-    request.input("CAR_KND_CD", sql.VarChar, carKndCd);                         // 차량 종류 코드         
+    request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);                         // 차량 종류 코드         
     request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);                       // 제시 구분 코드       
     request.input("CAR_PUR_DT", sql.VarChar, carPurDt);                         // 차량 매입 일자       
     request.input("CAR_NO", sql.VarChar, carNo);                                // 차량 번호       
@@ -822,23 +822,114 @@ exports.insertSellFee = async ({ fee_car_regid, fee_kind, fee_agent, fee_no, fee
 
 
 // 상품화비 등록 선처리
-exports.insertGoodsFeePre = async ({ goods_regid, goods_codename, goods_sendamt, goods_senddate, goods_way, goods_receipt, goods_taxgubn, goods_taxdate, goods_desc, goods_dealsang }) => {
+exports.insertGoodsFee = async ({ 
+  carRegId,         // 차량 등록 ID
+  expdItemCd,       // 지출 항목 코드
+  expdItemNm,       // 지출 항목 명
+  expdSctCd,        // 지출 구분 코드
+  expdAmt,          // 지출 금액
+  expdSupPrc,       // 지출 공급가
+  expdVat,          // 지출 부가세
+  expdDt,           // 지출 일자
+  expdMethCd,       // 지출 방식 코드
+  expdEvdcCd,       // 지출 증빙 코드
+  taxSctCd,         // 세금 구분 코드
+  txblIssuDt,       // 세금계산서 발행 일자
+  rmrk,             // 비고
+  adjInclusYn,      // 정산 포함 여부
+  cashRecptRcgnNo,  // 현금 영수증 식별 번호
+  cashMgmtkey,      // 현금 관리키
+  delYn,            // 삭제여부
+  regDtime,         // 등록 일시
+  regrId,           // 등록자 ID
+  modDtime,         // 수정 일시
+  modrId            // 수정자 ID
+}) => {
   try {
     const request = pool.request();
 
-    // 기존 상품화비 삭제 
-    const query1 = `DELETE FROM SMJ_GOODS WHERE GOODS_REGID = @GOODS_REGID`;
 
-    // 상사지출도 삭제
-    const query2 = `UPDATE SMJ_COST SET COST_DELGUBN ='1' 
-                     WHERE COST_AGENT = @GOODS_AGENT 
-                       AND COST_CARID = @GOODS_REGID 
-                       AND COST_KIND = '0' 
-                       AND COST_CODE = '002' `;
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
+    request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
+    request.input("EXPD_SCT_CD", sql.VarChar, expdSctCd);
+    request.input("EXPD_AMT", sql.Decimal, expdAmt);
+    request.input("EXPD_SUP_PRC", sql.Decimal, expdSupPrc);
+    request.input("EXPD_VAT", sql.Decimal, expdVat);
+    request.input("EXPD_DT", sql.VarChar, expdDt);
+    request.input("EXPD_METH_CD", sql.VarChar, expdMethCd);
+    request.input("EXPD_EVDC_CD", sql.VarChar, expdEvdcCd);
+    request.input("TAX_SCT_CD", sql.VarChar, taxSctCd);
+    request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);
+    request.input("RMRK", sql.VarChar, rmrk);
+    request.input("ADJ_INCLUS_YN", sql.VarChar, adjInclusYn);
+    request.input("CASH_RECPT_RCGN_NO", sql.VarChar, cashRecptRcgnNo);
+    request.input("CASH_MGMTKEY", sql.VarChar, cashMgmtkey);
+    request.input("DEL_YN", sql.VarChar, delYn);
+    request.input("REG_DTIME", sql.VarChar, regDtime);
+    request.input("REGR_ID", sql.VarChar, regrId);
+    request.input("MOD_DTIME", sql.VarChar, modDtime);
+    request.input("MODR_ID", sql.VarChar, modrId);
+
+    // 상품화비 등록
+    const query1 = `
+      INSERT INTO dbo.CJB_GOODS_FEE (
+        CAR_REG_ID,
+        EXPD_ITEM_CD,
+        EXPD_ITEM_NM, 
+        EXPD_SCT_CD,
+        EXPD_AMT,
+        EXPD_SUP_PRC,
+        EXPD_VAT,
+        EXPD_DT,
+        EXPD_METH_CD,
+        EXPD_EVDC_CD,
+        TAX_SCT_CD,
+        TXBL_ISSU_DT,
+        RMRK,
+        ADJ_INCLUS_YN,
+        CASH_RECPT_RCGN_NO,
+        CASH_MGMTKEY,
+        DEL_YN,
+        REG_DTIME,
+        REGR_ID,
+        MOD_DTIME,
+        MODR_ID
+      ) VALUES (
+        @CAR_REG_ID,
+        @EXPD_ITEM_CD,
+        @EXPD_ITEM_NM,
+        @EXPD_SCT_CD,
+        @EXPD_AMT,
+        @EXPD_SUP_PRC,
+        @EXPD_VAT,
+        @EXPD_DT,
+        @EXPD_METH_CD,
+        @EXPD_EVDC_CD,
+        @TAX_SCT_CD,
+        @TXBL_ISSU_DT,
+        @RMRK,
+        @ADJ_INCLUS_YN,
+        @CASH_RECPT_RCGN_NO,
+        @CASH_MGMTKEY,
+        @DEL_YN,
+        @REG_DTIME,
+        @REGR_ID,
+        @MOD_DTIME,
+        @MODR_ID
+      );`;
+
+
+    // 상품화비 총 금액 업데이트
+
+    const query2 = `
+      UPDATE dbo.CJB_CAR_PUR 
+      SET TOT_GOODS_FEE = TOT_GOODS_FEE + @EXPD_AMT 
+      WHERE CAR_REG_ID = @CAR_REG_ID;`;
 
     await Promise.all([request.query(query1), request.query(query2)]);
   } catch (err) {
-    console.error("Error inserting goods fee pre:", err);
+    console.error("Error inserting goods fee:", err);
     throw err;
   }
 };

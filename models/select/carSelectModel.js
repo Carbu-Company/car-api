@@ -624,53 +624,117 @@ exports.getSellFeeList = async ({ fee_car_regid }) => {
 // 상품화비 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 상품화비 목록 조회
-exports.getCarGoodsFeeList = async ({ carRegId, page = 1, pageSize = 10 }) => {
+// 상품화비용 리스트 조회
+exports.getGoodsFeeList = async ({   carAgent, 
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc' }) => {
   try {
     const request = pool.request();
-    request.input("CAR_REGID", sql.VarChar, carRegId);
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
     request.input("PAGE", sql.Int, page);
     request.input("PAGESIZE", sql.Int, pageSize);
 
+    if (carNo) request.input("CAR_NO", sql.VarChar, carNo);
+    if (dealer) request.input("DEALER", sql.VarChar, dealer);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+
     // 전체 카운트 조회
-    const countQuery = `
-        SELECT COUNT(*) as totalCount
-        FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
-        WHERE A.CAR_REG_ID = B.CAR_REG_ID
-            AND A.CAR_REG_ID = @CAR_REGID
+    const countQuery = `SELECT COUNT(*) as totalCount
+                          FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                          WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                              AND A.AGENT_ID = @CAR_AGENT
+                              AND A.CAR_DEL_YN = 'N'
+                              AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
     `;
 
-    const dataQuery = ` SELECT B.GOODS_FEE_SEQ,
-                   A.CAR_REG_ID,
-                   B.EXPD_ITEM_CD,
-                   B.EXPD_ITEM_NM,
-                   B.EXPD_SCT_CD,
-                   CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러선지출' 
-                        ELSE '상사선지출' END AS EXPD_SCT_NM,
-                   B.EXPD_AMT,
-                   B.EXPD_DT,
-                   B.EXPD_METH_CD,
-                   dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
-                   B.EXPD_EVDC_CD,
-                   dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,
-                   B.TAX_SCT_CD,
-                   CASE WHEN B.TAX_SCT_CD =  '0' THEN '미공제' 
-                        ELSE '공제' END AS TAX_SCT_NM, 
-                   B.TXBL_ISSU_DT,
-                   B.RMRK,
-                   B.CASH_RECPT_RCGN_NO,
-                   B.CASH_MGMTKEY,
-                   B.REG_DTIME,
-                   B.REGR_ID,
-                   B.MOD_DTIME,
-                   B.MODR_ID
-        FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
-        WHERE A.CAR_REG_ID = B.CAR_REG_ID
-            AND A.CAR_REG_ID = @CAR_REGID
-        ORDER BY B.EXPD_DT DESC
-        OFFSET (@PAGE - 1) * @PAGESIZE ROWS
-        FETCH NEXT @PAGESIZE ROWS ONLY
-    `;
+    const dataQuery = `SELECT B.GOODS_FEE_SEQ,           
+                              A.DLR_ID DLR_ID,     
+                              (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
+                              A.CAR_REG_ID,
+                              A.CAR_NO,         -- 차량번호
+                              A.CAR_NM,         -- 차량명
+                              B.EXPD_ITEM_CD,
+                              B.EXPD_ITEM_NM,   -- 비용항목
+                              B.EXPD_SCT_CD,
+                              CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러' 
+                                    ELSE '상사' END AS EXPD_SCT_NM,     -- 치출구분
+                              B.TAX_SCT_CD,
+                              CASE WHEN B.TAX_SCT_CD =  '0' THEN '과세' 
+                                    ELSE '비과세' END AS TAX_SCT_NM,        -- 과세구분
+                              B.EXPD_SUP_PRC,       -- 공급가
+                              B.EXPD_VAT,           -- 부가세
+                              B.EXPD_AMT,           -- 금액    
+                              B.EXPD_DT,            -- 결제일
+                              B.EXPD_EVDC_CD,
+                              dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙
+                              B.RMRK,            -- 비고
+                              B.ADJ_INCLUS_YN,   -- 정산 포함 여부 
+                              B.EXPD_METH_CD,
+                              dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                              B.TXBL_ISSU_DT,
+                              B.CASH_RECPT_RCGN_NO,
+                              B.CASH_MGMTKEY,
+                              B.REG_DTIME,
+                              B.REGR_ID,
+                              B.MOD_DTIME,
+                              B.MODR_ID
+                    FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                    WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                        AND A.AGENT_ID = @CAR_AGENT
+                        AND A.CAR_DEL_YN = 'N'
+                        AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                    ORDER BY ${orderItem} ${ordAscDesc}
+                    OFFSET (@PAGE - 1) * @PAGESIZE ROWS
+                    FETCH NEXT @PAGESIZE ROWS ONLY
+                    `;
 
     // 두 쿼리를 동시에 실행
     const [countResult, dataResult] = await Promise.all([
@@ -699,122 +763,105 @@ exports.getCarGoodsFeeList = async ({ carRegId, page = 1, pageSize = 10 }) => {
 }
 
 
-// 상품화비 합계
-exports.getCarGoodsFeeSum = async ({ carAgent }) => {
+// 차량별 리스트 조회
+exports.getGoodsFeeCarSumList = async ({ 
+  carAgent,
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc'
+  }) => {
   try {
     const request = pool.request();
-    request.input("CAR_REGID", sql.VarChar, carRegId);
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize);
 
-    const query = `SELECT CAR_REG_ID
-                        , EXPD_SCT_CD
-                        , CASE WHEN EXPD_SCT_CD = '0' THEN '딜러선지출' 
-                                ELSE '상사선지출' END AS EXPD_SCT_NM
-                        , EXPD_AMT
-                        , EXPD_METH_CD
-                        , dbo.CJB_FN_GET_CD_NM('06', EXPD_METH_CD) EXPD_METH_NM
-                        , EXPD_EVDC_CD
-                        , dbo.CJB_FN_GET_CD_NM('07', EXPD_EVDC_CD) EXPD_EVDC_NM
-                        , TAX_SCT_CD
-                        , CASE WHEN TAX_SCT_CD =  '0' THEN '미공제' 
-                                ELSE '공제' END AS TAX_SCT_NM
-                    FROM (SELECT B.CAR_REG_ID,
-                                B.EXPD_SCT_CD,
-                                SUM(B.EXPD_AMT) AS EXPD_AMT,
-                                B.EXPD_METH_CD,
-                                B.EXPD_EVDC_CD,
-                                B.TAX_SCT_CD
-                           FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
-                          WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                            AND A.CAR_REG_ID = @CAR_REGID
-                          GROUP BY B.CAR_REG_ID
-                                , B.EXPD_SCT_CD
-                                , B.EXPD_METH_CD 
-                                , B.EXPD_EVDC_CD
-                                , B.TAX_SCT_CD ) C
+    if (carNo) request.input("CAR_NO", sql.VarChar, carNo);
+    if (dealer) request.input("DEALER", sql.VarChar, dealer);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+
+    // 전체 카운트 조회
+    const countQuery = `
+                      SELECT COUNT(*) as totalCount
+                      FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                      WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'
+                          AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+    `;
+
+    const query = `SELECT B.CAR_REG_ID, 
+                          MIN(A.DLR_ID) DLR_ID,
+                          (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = MIN(A.DLR_ID)) AS DLR_NM,
+                          MIN(A.CAR_NM) CAR_NM,
+                          COUNT(B.CAR_REG_ID) CNT,
+                          SUM(B.EXPD_AMT) AS EXPD_AMT,
+                          SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC,
+                          SUM(B.EXPD_VAT) AS EXPD_VAT
+                    FROM dbo.CJB_CAR_PUR A
+                       , dbo.CJB_GOODS_FEE B
+                  WHERE 1 = 1
+                    AND A.AGENT_ID = @CAR_AGENT
+                    AND A.CAR_REG_ID = B.CAR_REG_ID
+                    AND A.CAR_DEL_YN = 'N'
+                    AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                    GROUP BY B.CAR_REG_ID
                   ;`; 
 
-    const result = await request.query(query);
-    return result.recordset; 
-  } catch (err) {
-    console.error("Error fetching goods fee sum:", err);
-    throw err;
-  }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 상품화비
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 상품화비 목록 조회
-exports.getGoodsFeeList = async ({ carAgent, page = 1, pageSize = 10 }) => {
-  try {
-    const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
-    request.input("PAGE", sql.Int, page);
-    request.input("PAGESIZE", sql.Int, pageSize);
-
-    // 전체 카운트 조회
-    const countQuery = `
-        SELECT COUNT(*) as totalCount
-        FROM SMJ_MAINLIST A, SMJ_SOLDLIST B
-        WHERE A.CAR_REGID = B.SELL_CAR_REGID
-            AND A.CAR_DELGUBN = '0'
-            AND A.GOODS_FEE > 0
-            AND CAR_AGENT = @CAR_AGENT
-    `;
-
-    const dataQuery = `
-        SELECT 
-            CAR_REGID,
-            DBO.SMJ_FN_EMPNAME(CAR_EMPID) AS EMPKNAME,
-            CAR_NO,
-            CAR_NAME,
-            BUY_OWNER,
-            BUY_NOTIAMT/10000 AS BUY_NOTIAMT,
-            DBO.SMJ_FN_DATEFMT('H',CAR_BUYDATE) AS CAR_BUYDATE,
-            SELL_OWNER,
-            SELL_NOTIAMT/10000 AS SELL_NOTIAMT,
-            DBO.SMJ_FN_DATEFMT('H',SELL_DATE) AS SELL_DATE,
-            BUY_TOTAL_FEE,
-            SELL_TOTAL_FEE,
-            CASE CAR_STATUS
-                WHEN '001' THEN '제시'
-                ELSE '매도'
-            END AS STATUS,
-            CASE CAR_GUBN
-                WHEN '0' THEN '상사'
-                WHEN '1' THEN '고객'
-                ELSE ''
-            END AS CAR_GUBNNAME,
-            GOODS_FEE,
-            DBO.SMJ_FN_GOODS_TAX(CAR_REGID) AS AMTARR,
-            BUY_REAL_FEE,
-            SELL_REAL_FEE,
-            BUY_TOTAL_FEE - BUY_REAL_FEE AS MINAP,
-            SELL_TOTAL_FEE - SELL_REAL_FEE AS SELLMINAP,
-            CAR_GUBN,
-            CASE
-                WHEN SELL_NOTIAMT > 0 THEN SELL_NOTIAMT-BUY_NOTIAMT-GOODS_FEE
-                ELSE '0'
-            END AS BFIT
-        FROM SMJ_MAINLIST A, SMJ_SOLDLIST B
-        WHERE A.CAR_REGID = B.SELL_CAR_REGID
-            AND A.CAR_DELGUBN = '0'
-            AND A.GOODS_FEE > 0
-            AND CAR_AGENT = @CAR_AGENT
-        ORDER BY SELL_DATE DESC, CAR_REGDATE DESC
-        OFFSET (@PAGE - 1) * @PAGESIZE ROWS
-        FETCH NEXT @PAGESIZE ROWS ONLY
-    `;
-
-    // 두 쿼리를 동시에 실행
     const [countResult, dataResult] = await Promise.all([
       request.query(countQuery),
-      request.query(dataQuery)
+      request.query(query)
     ]);
 
     const totalCount = countResult.recordset[0].totalCount;
-    const totalPages = Math.ceil(totalCount / pageSize);
+    const totalPages = Math.ceil(totalCount / pageSize);  
 
     return {
       data: dataResult.recordset,
@@ -828,134 +875,55 @@ exports.getGoodsFeeList = async ({ carAgent, page = 1, pageSize = 10 }) => {
       }
     };
   } catch (err) {
-    console.error("Error fetching goods fee list:", err);
-    throw err;
-  }
-}
-
-// 상품화비 합계
-exports.getGoodsFeeSum = async ({ carAgent }) => {
-  try {
-    const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
-
-    const query = `SELECT SUM(CNT_0) GOODS_0_CNT,
-                          SUM(SUM_0) GOODS_0_SUM,
-                          SUM(CNT_1) GOODS_1_CNT,
-                          SUM(SUM_1) GOODS_1_SUM,
-                          DBO.SMJ_FN_VAT_SUP(SUM(SUM_1)) VAT_SUP,
-                          DBO.SMJ_FN_VAT_AMT(SUM(SUM_1)) VAT_AMT,
-                          SUM(CNT_0 + CNT_1) GOODS_CNT,
-                          SUM(SUM_0 + SUM_1) GOODS_SUM
-                    FROM   (SELECT GOODS_REGID,
-                                  ( CASE
-                                      WHEN GOODS_TAXGUBN = '0' THEN 1
-                                      ELSE 0
-                                    END ) AS CNT_0,
-                                  ( CASE
-                                      WHEN GOODS_TAXGUBN = '1' THEN 1
-                                      ELSE 0
-                                    END ) AS CNT_1,
-                                  ( CASE
-                                      WHEN GOODS_TAXGUBN = '0' THEN GOODS_SENDAMT
-                                      ELSE 0
-                                    END ) AS SUM_0,
-                                  ( CASE
-                                      WHEN GOODS_TAXGUBN = '1' THEN GOODS_SENDAMT
-                                      ELSE 0
-                                    END ) AS SUM_1
-                            FROM   SMJ_GOODSFEE
-                            WHERE  GOODS_AGENT = '00511') A
-                          LEFT OUTER JOIN SMJ_MAINLIST B
-                                        ON GOODS_REGID = CAR_REGID
-                    WHERE  1 = 1
-                          AND B.CAR_DELGUBN = '0'`; 
-
-    const result = await request.query(query);
-    return result.recordset; 
-  } catch (err) {
-    console.error("Error fetching goods fee sum:", err);
+    console.error("Error fetching goods fee car sum list:", err);
     throw err;
   }
 };
 
-// 상품화비 상세 조회
-exports.getGoodsFeeDetail = async ({ goods_regid }) => {
+
+// 차량에 대한 상품화비 상세 조회
+exports.getGoodsFeeDetailList = async ({ carRegId }) => {
   try {
     const request = pool.request();
-    request.input("GOODS_REGID", sql.VarChar, goods_regid); 
+    request.input("CAR_REG_ID", sql.VarChar, carRegId); 
 
-    const query = `SELECT CAR_REGID,
-                          DBO.SMJ_FN_DATEFMT('F', CAR_REGDATE) AS CAR_REGDATE,
-                          CAR_STATUS,
-                          CAR_DELGUBN,
-                          CAR_AGENT,
-                          DBO.SMJ_FN_EMPNAME(CAR_EMPID) AS EMPKNAME,
-                          DBO.SMJ_FN_GETCDNAME('02', CAR_KIND) AS CAR_KIND,
-                          DBO.SMJ_FN_DATEFMT('D', CAR_BUYDATE) AS CAR_BUYDATE,
-                          CAR_LOANCNT,
-                          CAR_NO,
-                          CAR_NONEW,
-                          CAR_NAME,
-                          CAR_CATEGORY,
-                          CAR_MAKER,
-                          CAR_BIRTH,
-                          DBO.SMJ_FN_COMMA(CAR_KM)             AS CAR_KM,
-                          CAR_ID,
-                          DBO.SMJ_FN_COMMA(CAR_STDAMT)         AS CAR_STDAMT,
-                          BUY_OWNER,
-                          DBO.SMJ_FN_GETCDNAME('04', BUY_OWNERKIND) AS BUY_OWNERKIND,
-                          BUY_SSNO,
-                          BUY_BUZNO,
-                          BUY_TELNO,
-                          BUY_ZIP,
-                          BUY_ADDR1,
-                          BUY_ADDR2,
-                          BUY_NOTIAMT,
-                          DBO.SMJ_FN_COMMA(BUY_SUPAMT) AS BUY_SUPAMT,
-                          DBO.SMJ_FN_COMMA(BUY_TAX) AS BUY_TAX,
-                          CASE BUY_TAXRSVCHECK
-                            WHEN '' THEN '해당없음'
-                            WHEN '0' THEN '수령'
-                            WHEN '1' THEN '미수령'
-                            ELSE ''
-                          END AS BUY_TAXRSVCHECK,
-                          DBO.SMJ_FN_DATEFMT('D', BUY_TAXDATE) AS BUY_TAXDATE,
-                          CASE BUY_DOCUMENT
-                            WHEN '' THEN '해당없음'
-                            WHEN '0' THEN '수령'
-                            WHEN '1' THEN '미수령'
-                            ELSE ''
-                          END AS BUY_DOCUMENT,
-                          BUY_FILE_1,
-                          BUY_FILE_2,
-                          BUY_FILE_3,
-                          BUY_FILE_4,
-                          BUY_FILE_5,
-                          BUY_DESC,
-                          BUY_TOTAL_FEE,
-                          BUY_REAL_FEE,
-                          BUY_TOTAL_FEE - BUY_REAL_FEE,
-                          CASE CAR_GUBN
-                            WHEN '0' THEN '상사'
-                            WHEN '1' THEN '고객'
-                            ELSE ''
-                          END AS CAR_GUBN,
-                          CAR_YEAR,
-                          BUY_EMAIL,
-                          BUY_TAX_ONE,
-                          CASE BUY_TAXGUBN
-                            WHEN '0' THEN '전자(세금)계산서'
-                            WHEN '1' THEN '종이계산서'
-                            ELSE ''
-                          END AS BUY_TAXGUBN,
-                          CAR_EMPID,
-                          SELL_TAXENDCHECK
-                    FROM  SMJ_MAINLIST A,
-                          SMJ_SOLDLIST B
-                    WHERE  A.CAR_REGID = B.SELL_CAR_REGID
-                          AND CAR_DELGUBN = '0'
-                          AND CAR_REGID = @GOODS_REGID ;`;
+    const query = `SELECT B.GOODS_FEE_SEQ,           
+                              A.DLR_ID DLR_ID,     
+                              (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
+                              A.CAR_REG_ID,
+                              A.CAR_NO,         -- 차량번호
+                              A.CAR_NM,         -- 차량명
+                              B.EXPD_ITEM_CD,
+                              B.EXPD_ITEM_NM,   -- 비용항목
+                              B.EXPD_SCT_CD,
+                              CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러' 
+                                    ELSE '상사' END AS EXPD_SCT_NM,     -- 치출구분
+                              B.TAX_SCT_CD,
+                              CASE WHEN B.TAX_SCT_CD =  '0' THEN '과세' 
+                                    ELSE '비과세' END AS TAX_SCT_NM,        -- 과세구분
+                              B.EXPD_SUP_PRC,       -- 공급가
+                              B.EXPD_VAT,           -- 부가세
+                              B.EXPD_AMT,           -- 금액    
+                              B.EXPD_DT,            -- 결제일
+                              B.EXPD_EVDC_CD,
+                              dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙
+                              B.RMRK,            -- 비고
+                              B.ADJ_INCLUS_YN,   -- 정산 포함 여부 
+                              B.EXPD_METH_CD,
+                              dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                              B.TXBL_ISSU_DT,
+                              B.CASH_RECPT_RCGN_NO,
+                              B.CASH_MGMTKEY,
+                              B.REG_DTIME,
+                              B.REGR_ID,
+                              B.MOD_DTIME,
+                              B.MODR_ID
+                    FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                    WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                        AND A.CAR_REG_ID = @CAR_REG_ID
+                        AND B.DEL_YN = 'N'
+                    ORDER BY B.EXPD_ITEM_CD ASC
+                    ;`;
 
     const result = await request.query(query);
     return result.recordset;
@@ -965,34 +933,51 @@ exports.getGoodsFeeDetail = async ({ goods_regid }) => {
   }
 };
 
-// 상품화비 상세 리스트 조회
-exports.getGoodsFeeDetailList = async ({ goods_regid }) => {
+
+
+// 상품화비 한건에 대한 상세 조회
+exports.getGoodsFeeDetail = async ({ goodsFeeSeq }) => {
   try {
     const request = pool.request();
-    request.input("GOODS_REGID", sql.VarChar, goods_regid); 
 
-    const query = `SELECT GOODS_SEQ,
-                          DBO.SMJ_FN_DATEFMT('D', GOODS_REGDATE)  AS GOODS_REGDATE,
-                          GOODS_CODENAME,
-                          GOODS_SENDAMT,
-                          DBO.SMJ_FN_DATEFMT('D', GOODS_SENDDATE) AS GOODS_SENDDATE,
-                          DBO.SMJ_FN_GETCDNAME('06', GOODS_WAY) AS GOODS_WAY,
-                          DBO.SMJ_FN_GETCDNAME('07', GOODS_RECEIPT) AS GOODS_RECEIPT,
-                          CASE GOODS_TAXGUBN
-                            WHEN '0' THEN '미공제'
-                            WHEN '1' THEN '공제'
-                            ELSE ''
-                          END AS GOODS_TAXGUBN,
-                          DBO.SMJ_FN_DATEFMT('D', GOODS_TAXDATE) AS GOODS_TAXDATE,
-                          GOODS_DESC,
-                          CASE GOODS_DEALSANG
-                            WHEN '0' THEN '딜러선지출'
-                            WHEN '1' THEN '상사지출'
-                            ELSE ''
-                          END AS GOODS_DEALSANG
-                    FROM   SMJ_GOODSFEE
-                    WHERE  GOODS_REGID = @GOODS_REGID
-                    ORDER  BY GOODS_SENDDATE DESC ;`;
+    request.input("GOODS_FEE_SEQ", sql.VarChar, goodsFeeSeq); 
+
+    const query = `SELECT B.GOODS_FEE_SEQ,           
+                              A.DLR_ID DLR_ID,     
+                              (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
+                              A.CAR_REG_ID,
+                              A.CAR_NO,         -- 차량번호
+                              A.CAR_NM,         -- 차량명
+                              B.EXPD_ITEM_CD,
+                              B.EXPD_ITEM_NM,   -- 비용항목
+                              B.EXPD_SCT_CD,
+                              CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러' 
+                                    ELSE '상사' END AS EXPD_SCT_NM,     -- 치출구분
+                              B.TAX_SCT_CD,
+                              CASE WHEN B.TAX_SCT_CD =  '0' THEN '과세' 
+                                    ELSE '비과세' END AS TAX_SCT_NM,        -- 과세구분
+                              B.EXPD_SUP_PRC,       -- 공급가
+                              B.EXPD_VAT,           -- 부가세
+                              B.EXPD_AMT,           -- 금액    
+                              B.EXPD_DT,            -- 결제일
+                              B.EXPD_EVDC_CD,
+                              dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙
+                              B.RMRK,            -- 비고
+                              B.ADJ_INCLUS_YN,   -- 정산 포함 여부 
+                              B.EXPD_METH_CD,
+                              dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                              B.TXBL_ISSU_DT,
+                              B.CASH_RECPT_RCGN_NO,
+                              B.CASH_MGMTKEY,
+                              B.REG_DTIME,
+                              B.REGR_ID,
+                              B.MOD_DTIME,
+                              B.MODR_ID
+                    FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                    WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                        AND B.GOODS_FEE_SEQ = @GOODS_FEE_SEQ
+                        AND B.DEL_YN = 'N'
+                     ;`;
 
     const result = await request.query(query);
     return result.recordset;  
@@ -1001,6 +986,92 @@ exports.getGoodsFeeDetailList = async ({ goods_regid }) => {
     throw err;
   }
 };
+
+// 차량별 리스트 조회
+exports.getGoodsFeeCarSummary= async ({ 
+  carAgent,
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc'
+  }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize);
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, carNo);
+    if (dealer) request.input("DEALER", sql.VarChar, dealer);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+
+    // 전체 카운트 조회
+    const query = `
+                      SELECT TAX_SCT_CD
+                            , MIN(CASE WHEN TAX_SCT_CD =  '0' THEN '비과세' 
+                                    ELSE '과세' END) AS TAX_SCT_NM
+                            , COUNT(GOODS_FEE_SEQ) CNT
+                            , SUM(B.EXPD_AMT) AS EXPD_AMT
+                            , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
+                            , SUM(B.EXPD_VAT) AS EXPD_VAT
+                         FROM dbo.CJB_CAR_PUR A
+                            , dbo.CJB_GOODS_FEE B
+                        WHERE 1 = 1
+                          AND A.CAR_DEL_YN = 'N'
+                          AND B.DEL_YN = 'N'
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_REG_ID = B.CAR_REG_ID
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+            GROUP BY B.TAX_SCT_CD 
+    `;
+
+    const result = await request.query(query);
+    return result.recordset;  
+
+  } catch (err) {
+    console.error("Error fetching goods fee car sum list:", err);
+    throw err;
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 상품화비
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 // 상품화비용 지출 내역
@@ -1158,7 +1229,7 @@ exports.getAssetSum = async ({ carAgent, accountNumber, startDate, endDate }) =>
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 제시
+// 제시 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.getSuggestListNew = async ({ 
@@ -1323,11 +1394,6 @@ exports.getSuggestListNew = async ({
 
     const totalCount = countResult.recordset[0].totalCount;
     const totalPages = Math.ceil(totalCount / pageSize);
-
-//console.log('totalCount:', countQuery);
-//console.log('totalPages:', dataQuery);
-    //console.log('page:', page);
-    //console.log('pageSize:', pageSize);
 
     return {
       carlist: dataResult.recordset,
@@ -1616,8 +1682,6 @@ exports.getSuggestSummary = async ({
                         ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
       `;
 
-      console.log('totalCount:', query);
-
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
@@ -1694,6 +1758,8 @@ exports.getSuggestDetailNew = async ({ car_regid }) => {
                           , MODR_ID               
                             FROM CJB_CAR_PUR A     
                           WHERE  CAR_REG_ID    = @CAR_REGID `;
+
+    console.log('query:', query);
 
     const result = await request.query(query);
     return result.recordset[0];
@@ -1983,6 +2049,7 @@ exports.getCDList = async ({ grpCD }) => {
 
     const query = `SELECT CD
                         , CD_NM
+                        , CD_NM2
                   FROM   dbo.CJB_COMM_CD
                   WHERE  GRP_CD = @GRP_CD
                          AND USE_YN = 'Y'
@@ -2202,8 +2269,321 @@ exports.getCustomerList = async ({ carAgent, search }) => {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 재고금융 2.0
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+// 재고금융 리스트 조회 
+exports.getCarLoanList = async ({   carAgent, 
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc' }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize);
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, carNo);
+    if (dealer) request.input("DEALER", sql.VarChar, dealer);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+
+    // 전체 카운트 조회
+    const countQuery = `SELECT COUNT(*) as totalCount
+                          FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                          WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                              AND A.AGENT_ID = @CAR_AGENT
+                              AND A.CAR_DEL_YN = 'N'
+                              AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+    `;
+
+    const dataQuery = `SELECT B.GOODS_FEE_SEQ,           
+                              A.DLR_ID DLR_ID,     
+                              (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
+                              A.CAR_REG_ID,
+                              A.CAR_NO,         -- 차량번호
+                              A.CAR_NM,         -- 차량명
+                              B.EXPD_ITEM_CD,
+                              B.EXPD_ITEM_NM,   -- 비용항목
+                              B.EXPD_SCT_CD,
+                              CASE WHEN B.EXPD_SCT_CD = '0' THEN '딜러' 
+                                    ELSE '상사' END AS EXPD_SCT_NM,     -- 치출구분
+                              B.TAX_SCT_CD,
+                              CASE WHEN B.TAX_SCT_CD =  '0' THEN '과세' 
+                                    ELSE '비과세' END AS TAX_SCT_NM,        -- 과세구분
+                              B.EXPD_SUP_PRC,       -- 공급가
+                              B.EXPD_VAT,           -- 부가세
+                              B.EXPD_AMT,           -- 금액    
+                              B.EXPD_DT,            -- 결제일
+                              B.EXPD_EVDC_CD,
+                              dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙
+                              B.RMRK,            -- 비고
+                              B.ADJ_INCLUS_YN,   -- 정산 포함 여부 
+                              B.EXPD_METH_CD,
+                              dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                              B.TXBL_ISSU_DT,
+                              B.CASH_RECPT_RCGN_NO,
+                              B.CASH_MGMTKEY,
+                              B.REG_DTIME,
+                              B.REGR_ID,
+                              B.MOD_DTIME,
+                              B.MODR_ID
+                    FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                    WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                        AND A.AGENT_ID = @CAR_AGENT
+                        AND A.CAR_DEL_YN = 'N'
+                        AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                    ORDER BY ${orderItem} ${ordAscDesc}
+                    OFFSET (@PAGE - 1) * @PAGESIZE ROWS
+                    FETCH NEXT @PAGESIZE ROWS ONLY
+                    `;
+
+    // 두 쿼리를 동시에 실행
+    const [countResult, dataResult] = await Promise.all([
+      request.query(countQuery),
+      request.query(dataQuery)
+    ]);
+
+    const totalCount = countResult.recordset[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: dataResult.recordset,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  } catch (err) {
+    console.error("Error fetching goods fee list:", err);
+    throw err;
+  }
+}
+
+
+// 재고금융 차량별 리스트 조회
+exports.getCarLoanCarSumList = async ({ 
+  carAgent,
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  dtGubun,
+  startDt,
+  endDt, 
+  dtlCustomerName,
+  dtlCustGubun,
+  dtlEvdcGubun,
+  dtlPrsnGubun,
+  dtlOwnerBrno,
+  dtlOwnerSsn,
+  dtlCtshNo,
+  dtlCarNoBefore,
+  orderItem = '제시일',
+  ordAscDesc = 'desc'
+  }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE", sql.Int, page);
+    request.input("PAGESIZE", sql.Int, pageSize);
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, carNo);
+    if (dealer) request.input("DEALER", sql.VarChar, dealer);
+    if (startDt) request.input("START_DT", sql.VarChar, startDt);
+    if (endDt) request.input("END_DT", sql.VarChar, endDt);
+    if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
+    if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+    if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+    if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+    if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+    if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+    if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+    if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+
+    // 전체 카운트 조회
+    const countQuery = `
+                      SELECT COUNT(*) as totalCount
+                      FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                      WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'
+                          AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+    `;
+
+    const query = `SELECT B.CAR_REG_ID, 
+                          MIN(A.DLR_ID) DLR_ID,
+                          (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = MIN(A.DLR_ID)) AS DLR_NM,
+                          MIN(A.CAR_NM) CAR_NM,
+                          COUNT(B.CAR_REG_ID) CNT,
+                          SUM(B.EXPD_AMT) AS EXPD_AMT,
+                          SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC,
+                          SUM(B.EXPD_VAT) AS EXPD_VAT
+                    FROM dbo.CJB_CAR_PUR A
+                       , dbo.CJB_GOODS_FEE B
+                  WHERE 1 = 1
+                    AND A.AGENT_ID = @CAR_AGENT
+                    AND A.CAR_REG_ID = B.CAR_REG_ID
+                    AND A.CAR_DEL_YN = 'N'
+                    AND B.DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+              ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+              ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+              ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+              ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+              ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+              ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+              ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+              ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+              ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                    GROUP BY B.CAR_REG_ID
+                  ;`; 
+
+    const [countResult, dataResult] = await Promise.all([
+      request.query(countQuery),
+      request.query(query)
+    ]);
+
+    const totalCount = countResult.recordset[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);  
+
+    return {
+      data: dataResult.recordset,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  } catch (err) {
+    console.error("Error fetching goods fee car sum list:", err);
+    throw err;
+  }
+};
+
+
+
+// 재고금융 차량별 리스트 조회
+exports.getCarLoanSummary= async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    // 기본 목록 조회
+    const query = `SELECT B.LOAN_CORP_CD, 
+                             B.LOAN_CORP_NM,       -- 캐피탈사사
+                             B.TOT_LMT_AMT,        -- 총 대출한도액
+                             B.TOT_LOAN_AMT,       -- 총 대출액
+                             (TOT_LMT_AMT - TOT_LOAN_AMT) AS LMT_AMT, -- 남은 한도액
+                             (TOT_LOAN_AMT/TOT_LMT_AMT) * 100 AS RT, -- 사용률률
+                             B.TOT_CNT,            -- 총 실행건수
+                             B.RCNT_UTIL_DT,       -- 최근 사용일
+                             B.RPY_FCST_DT,        -- 이자납입일일
+                             C.CAR_NO, 
+                             C.CAR_NM , 
+                             C.DLR_NM ,
+                             C.LOAN_DT 
+                    FROM dbo.CJB_AGENT_LOAN_CORP B
+               LEFT JOIN (SELECT K.CAR_REG_ID
+                              , K.CAR_NO 
+                              , K.CAR_NM 
+                              , K.DLR_NM 
+                              , K.LOAN_DT 
+                              , K.AGENT_ID
+                              , K.LOAN_CORP_CD
+                            FROM (SELECT  ROW_NUMBER() OVER(PARTITION BY B.LOAN_CORP_CD ORDER BY B.LOAN_DT DESC) AS RN
+                                  , C.CAR_NO
+                                  , C.CAR_NM
+                                  , (SELECT USR_ID FROM dbo.CJB_USR X WHERE X.USR_ID = C.DLR_ID) AS DLR_NM
+                                  , B.LOAN_DT
+                                  , A.AGENT_ID 
+                                  , A.LOAN_CORP_CD
+                                  , B.CAR_REG_ID
+                                FROM dbo.CJB_AGENT_LOAN_CORP A
+                                LEFT JOIN dbo.CJB_CAR_LOAN B ON (A.AGENT_ID = B.AGENT_ID AND A.LOAN_CORP_CD = B.LOAN_CORP_CD)
+                                LEFT JOIN dbo.CJB_CAR_PUR C  ON (B.CAR_REG_ID = C.CAR_REG_ID)
+                              WHERE A.AGENT_ID = @CAR_AGENT ) K
+                          WHERE K.RN = 1) C
+                  ON ( B.AGENT_ID = C.AGENT_ID AND B.LOAN_CORP_CD = C.LOAN_CORP_CD )
+    `;
+
+    const result = await request.query(query);
+    return result.recordset;  
+
+  } catch (err) {
+    console.error("Error fetching car loan car sum list:", err);
+    throw err;
+  }
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

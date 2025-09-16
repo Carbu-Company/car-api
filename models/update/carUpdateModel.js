@@ -46,7 +46,7 @@ exports.updatePurchase = async ({
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
     request.input("AGENT_ID", sql.VarChar, carAgent);
     request.input("DLR_ID", sql.VarChar, dealerId);
-    request.input("CAR_KND_CD", sql.VarChar, carKndCd);
+    request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);
     request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);
     request.input("CAR_PUR_DT", sql.VarChar, carPurDt);
     request.input("CAR_REG_DT", sql.VarChar, carRegDt);
