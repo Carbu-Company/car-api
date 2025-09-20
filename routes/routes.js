@@ -57,39 +57,43 @@ router.post("/checkPhoneAuthNumber", carController.checkPhoneAuthNumber);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //***************************************************************************************** */
-// 제시 
+// 제시 2.0
 //***************************************************************************************** */
 
 // 제시 차량 조회
-router.post("/getSuggestListNew", carController.getSuggestListNew);
-
-
-// 제시 차량 조회
-router.post("/getSuggestList", carController.getSuggestList);
+router.post("/getCarPurList", carController.getCarPurList);
 
 // 제시 차량 합계 조회
-router.post("/getSuggestSummary", carController.getSuggestSummary);
+router.post("/getCarPurSummary", carController.getCarPurSummary);
 
 // 제시 차량 상세 조회
-router.get("/getSuggestDetail", carController.getSuggestDetail);    
-
-// 제시 차량 상세 조회
-router.get("/getSuggestDetailNew", carController.getSuggestDetailNew);    
+router.get("/getCarPurDetail", carController.getCarPurDetail);    
 
 // 제시 등록
-router.post("/insertSuggest", carController.insertSuggest);
+router.post("/insertCarPur", carController.insertCarPur);
 
 // 제시 수정 등록
-router.post("/updateSuggest", carController.updateSuggest);
-
-// 제시 수정 등록
-router.post("/updatePurchase", carController.updatePurchase);
+router.post("/updateCarPur", carController.updateCarPur);
 
 // 제시 삭제 
-router.get("/deleteSuggest", carController.deleteSuggest);
+router.get("/deleteCarPur", carController.deleteCarPur);
 
-// 테스트 등록
-router.post("/insertTest", carController.insertTest);
+
+//***************************************************************************************** */
+// 매도 2.0
+//***************************************************************************************** */
+
+// 제시 차량 조회
+router.post("/getCarSelList", carController.getCarSelList);
+
+// 판매매도 차량 합계 조회
+router.post("/getCarSelSummary", carController.getCarSelSummary);
+
+// 판매매도 수정 등록
+router.post("/updateCarSel", carController.updateCarSel);
+
+// 판매매도 삭제 
+router.get("/deleteCarSel", carController.deleteCarSel);
 
 //***************************************************************************************** */
 // 매입 매도비 
@@ -124,9 +128,6 @@ router.get("/getSellFeeList", carController.getSellFeeList);
 
 // 매도비 항목 등록
 router.post("/insertSellFee", carController.insertSellFee);
-
-// 매도비 항목 수정
-router.post("/updateSellFee", carController.updateSellFee);
 
 // 매입비 합계 변경
 router.post("/updateBuyFeeSum", carController.updateBuyFeeSum);

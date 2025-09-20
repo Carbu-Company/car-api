@@ -1,0 +1,833 @@
+const sql = require("mssql");
+const pool = require("../../config/db");
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 제시 2.0
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+exports.getCarPurList = async ({ 
+    carAgent, 
+    page,
+    pageSize,
+    carNo,
+    dealer,
+    dtGubun,
+    startDt,
+    endDt, 
+    dtlCustomerName,
+    dtlCustGubun,
+    dtlEvdcGubun,
+    dtlPrsnGubun,
+    dtlOwnerBrno,
+    dtlOwnerSsn,
+    dtlCtshNo,
+    dtlCarNoBefore,
+    orderItem = '제시일',
+    ordAscDesc = 'desc'
+  }) => {
+    try {
+      const request = pool.request();
+  /*
+      console.log('carAgent:', carAgent);
+      console.log('pageSize:', pageSize);
+      console.log('page:', page);
+  
+      console.log('carNo:', carNo);
+      console.log('dealer:', dealer);
+      console.log('dtGubun:', dtGubun);
+      console.log('startDt:', startDt);
+      console.log('endDt:', endDt);
+      console.log('dtlCustomerName:', dtlCustomerName);
+      console.log('dtlCustGubun:', dtlCustGubun);
+      console.log('dtlEvdcGubun:', dtlEvdcGubun);
+      console.log('dtlPrsnGubun:', dtlPrsnGubun);
+      console.log('dtlOwnerBrno:', dtlOwnerBrno);
+      console.log('dtlOwnerSsn:', dtlOwnerSsn);
+      console.log('dtlCtshNo:', dtlCtshNo);
+      console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('orderItem:', orderItem);
+      console.log('ordAscDesc:', ordAscDesc);
+  */
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("PAGE_SIZE", sql.Int, pageSize);
+      request.input("PAGE", sql.Int, page);
+  
+  
+      if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+      if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+      if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+      if (startDt) request.input("START_DT", sql.VarChar, startDt);
+      if (endDt) request.input("END_DT", sql.VarChar, endDt);
+      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+  
+      // 전체 카운트 조회
+      const countQuery = `
+      SELECT COUNT(*) as totalCount
+                FROM dbo.CJB_CAR_PUR A
+              WHERE AGENT_ID = @CAR_AGENT
+                AND CAR_DEL_YN = 'N'
+                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+      `;
+    
+      const dataQuery = `SELECT CAR_REG_ID               
+         , CAR_REG_DT              
+         , CAR_DEL_DT              
+         , CAR_STAT_CD             
+         , CAR_DEL_YN              
+         , AGENT_ID                
+         , DLR_ID                  
+         , (SELECT USR_NM FROM CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+         , CAR_KND_CD              
+         , PRSN_SCT_CD             
+         , CAR_PUR_DT              
+         , CAR_LOAN_CNT            
+         , CAR_LOAN_AMT            
+         , CAR_NO               
+         , PUR_BEF_CAR_NO   
+         , CAR_NEW_YN              
+         , CAR_NM                  
+         , CAR_CAT_NM              
+         , MFCP_NM                 
+         , CAR_MNFT_DT             
+         , RUN_DSTN                
+         , CAR_YOM
+         , PUR_EVDC_CD                 
+         , OWNR_NM                 
+         , OWNR_TP_CD             
+         , OWNR_SSN                
+         , OWNR_BRNO               
+         , OWNR_PHON               
+         , OWNR_ZIP                
+         , OWNR_ADDR1              
+         , OWNR_ADDR2     
+         , SUBSTRING(OWNR_EMAIL, 1, CHARINDEX('@', OWNR_EMAIL) - 1) AS OWNR_EMAIL
+         , SUBSTRING(OWNR_EMAIL, CHARINDEX('@', OWNR_EMAIL) + 1, LEN(OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
+         , PUR_AMT                 
+         , PUR_SUP_PRC             
+         , PUR_VAT                 
+         , GAIN_TAX                
+         , AGENT_PUR_CST           
+         , PURACSH_RCV_YN          
+         , TXBL_ISSU_DT            
+         , PUR_DESC                
+         , TOT_PUR_FEE             
+         , TOT_PAY_FEE             
+         , TOT_CMRC_COST_FEE       
+         , CUST_NO                 
+         , PRSN_NO                 
+         , PARK_ZON_CD             
+         , PARK_ZON_DESC           
+         , PARK_KEY_NO             
+         , REG_DTIME               
+         , REGR_ID                 
+         , MOD_DTIME               
+         , MODR_ID             
+                  FROM dbo.CJB_CAR_PUR A
+                WHERE AGENT_ID = @CAR_AGENT
+                  AND CAR_DEL_YN = 'N'
+                  ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                  ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                  ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                  ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                  ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                  ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                  ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                  ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                  ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                  ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                  ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                  ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
+                OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
+                FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
+  
+      // 두 쿼리를 동시에 실행
+      const [countResult, dataResult] = await Promise.all([
+        request.query(countQuery),
+        request.query(dataQuery)
+      ]);
+  
+      const totalCount = countResult.recordset[0].totalCount;
+      const totalPages = Math.ceil(totalCount / pageSize);
+  
+      return {
+        carlist: dataResult.recordset,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalCount: totalCount,
+          totalPages: totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      };
+  
+    } catch (err) {
+      console.error("Error fetching car pur list:", err);
+      throw err;
+    }
+  };
+  
+  // 제시 차량 합계 조회
+  exports.getCarPurSummary = async ({  
+    carAgent, 
+    page,
+    pageSize,
+    carNo,
+    dealer,
+    dtGubun,
+    startDt,
+    endDt, 
+    dtlCustomerName,
+    dtlCustGubun,
+    dtlEvdcGubun,
+    dtlPrsnGubun,
+    dtlOwnerBrno,
+    dtlOwnerSsn,
+    dtlCtshNo,
+    dtlCarNoBefore,
+    orderItem = '제시일',
+    ordAscDesc = 'desc'
+  }) => {
+    try {
+      const request = pool.request();
+  
+      console.log('carAgent:', carAgent);
+      console.log('pageSize:', pageSize);
+      console.log('page:', page);
+  
+      console.log('carNo:', carNo);
+      console.log('dealer:', dealer);
+      console.log('dtGubun:', dtGubun);
+      console.log('startDt:', startDt);
+      console.log('endDt:', endDt);
+      console.log('dtlCustomerName:', dtlCustomerName);
+      console.log('dtlCustGubun:', dtlCustGubun);
+      console.log('dtlEvdcGubun:', dtlEvdcGubun);
+      console.log('dtlPrsnGubun:', dtlPrsnGubun);
+      console.log('dtlOwnerBrno:', dtlOwnerBrno);
+      console.log('dtlOwnerSsn:', dtlOwnerSsn);
+      console.log('dtlCtshNo:', dtlCtshNo);
+      console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('orderItem:', orderItem);
+      console.log('ordAscDesc:', ordAscDesc);
+  
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("PAGE_SIZE", sql.Int, pageSize);
+      request.input("PAGE", sql.Int, page);
+  
+      if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+      if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+      if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+      if (startDt) request.input("START_DT", sql.VarChar, startDt);
+      if (endDt) request.input("END_DT", sql.VarChar, endDt);
+      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+  
+      const query = `SELECT '상사' AS PRSN_SCT_CD
+                          , COUNT(CAR_REG_ID) CNT
+                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM CJB_CAR_PUR
+                        WHERE AGENT_ID = @CAR_AGENT
+                          AND CAR_STAT_CD = '001'
+                          AND CAR_DEL_YN = 'N'
+                          AND PRSN_SCT_CD = '0'  -- 상사
+                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      UNION ALL
+                      SELECT '고객위탁' AS PRSN_SCT_CD
+                          , COUNT(CAR_REG_ID) CNT
+                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM CJB_CAR_PUR
+                        WHERE AGENT_ID = @CAR_AGENT
+                          AND CAR_STAT_CD = '001'
+                          AND CAR_DEL_YN = 'N'
+                          AND PRSN_SCT_CD = '1'  -- 고객위탁
+                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      UNION ALL
+                      SELECT '합계' AS PRSN_SCT_CD
+                          , COUNT(CAR_REG_ID) CNT
+                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM CJB_CAR_PUR
+                        WHERE AGENT_ID = @CAR_AGENT
+                          AND CAR_STAT_CD = '001'
+                          AND CAR_DEL_YN = 'N'
+                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+        `;
+  
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching car pur sum:", err);
+      throw err;
+    }
+  };
+  
+  // 제시 차량 상세 조회
+  exports.getCarPurDetail = async ({ car_regid }) => {
+    try {
+      const request = pool.request();
+      request.input("CAR_REGID", sql.VarChar, car_regid);   
+  
+      const query = `SELECT                  
+                            CAR_REG_ID              
+                            , CAR_REG_DT            
+                            , CAR_DEL_DT            
+                            , CAR_STAT_CD           
+                            , CAR_DEL_YN            
+                            , AGENT_ID              
+                            , DLR_ID      
+                            , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM          
+                            , CAR_KND_CD         
+                            , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.CAR_KND_CD AND GRP_CD = '92') AS CAR_KND_NM
+                            , PRSN_SCT_CD           
+                            , CAR_PUR_DT            
+                            , CAR_LOAN_CNT          
+                            , CAR_LOAN_AMT          
+                            , CAR_NO                
+                            , PUR_BEF_CAR_NO        
+                            , CAR_NEW_YN            
+                            , CAR_NM                
+                            , CAR_CAT_NM            
+                            , MFCP_NM               
+                            , CAR_MNFT_DT           
+                            , RUN_DSTN              
+                            , CAR_YOM               
+                            , PUR_EVDC_CD           
+                            , OWNR_NM               
+                            , OWNR_TP_CD            
+                            , OWNR_SSN              
+                            , OWNR_BRNO             
+                            , OWNR_PHON             
+                            , OWNR_ZIP              
+                            , OWNR_ADDR1            
+                            , OWNR_ADDR2            
+                            , OWNR_EMAIL            
+                            , PUR_AMT               
+                            , PUR_SUP_PRC           
+                            , PUR_VAT               
+                            , GAIN_TAX              
+                            , AGENT_PUR_CST         
+                            , AGENT_PUR_CST_PAY_DT  
+                            , TXBL_RCV_YN           
+                            , PURACSH_RCV_YN        
+                            , TXBL_ISSU_DT          
+                            , FCT_CNDC_YN           
+                            , PUR_DESC              
+                            , TOT_PUR_FEE           
+                            , TOT_PAY_FEE           
+                            , TOT_CMRC_COST_FEE     
+                            , CUST_NO               
+                            , PRSN_NO               
+                            , PARK_ZON_CD        
+                            , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.PARK_ZON_CD AND GRP_CD = '91') AS PARK_ZON_NM   
+                            , PARK_ZON_DESC         
+                            , PARK_KEY_NO           
+                            , CTSH_NO               
+                            , CMBT_PRSN_MEMO        
+                            , REG_DTIME             
+                            , REGR_ID               
+                            , MOD_DTIME             
+                            , MODR_ID               
+                              FROM CJB_CAR_PUR A     
+                            WHERE  CAR_REG_ID    = @CAR_REGID `;
+  
+      console.log('query:', query);
+  
+      const result = await request.query(query);
+      return result.recordset[0];
+    } catch (err) {
+      console.error("Error fetching car pur detail:", err);
+      throw err;
+    }
+  };
+
+// 제시 직접 등록
+exports.insertCarPur = async ({
+    carAgent                 // 상사 ID              
+  , purAmt                  // 매입금액
+  , purSupPrc               // 공급가
+  , purVat                  // 부가세
+  , carPurDt                // 매입일   
+  , agentPurCst             // 상사매입비
+  , brokerageDate           // 상사매입비 입금일
+  , gainTax                 // 취득세
+  , carNm                   // 차량명
+  , carNo                   // 차량번호(매입후)
+  , purBefCarNo            // 차량번호(매입전)
+  , ownrTpCd               // 소유자 유형 코드
+  , ownrSsn                // 주민등록번호
+  , ownrBrno               // 사업자등록번호
+  , ownrNm                 // 고객명
+  , ownrZip                // 우편번호
+  , evdcCd                 // 증빙종류
+  , carKndCd               // 차량 종류 코드
+  , prsnSctCd              // 제시 구분 코드
+  , ownrPhon               // 연락처
+  , ownrEmail              // 이메일 아이디
+  , emailDomain            // 이메일 도메인
+  , txblIssuDt             // 세금계산서 발행 일자
+  , purDesc                // 매입 설명
+  , ownrAddr1              // 주소
+  , ownrAddr2              // 상세주소
+  , attachedFiles          // 관련 서류 첨부
+  , usrId                  // 사용자 ID
+  , dealerId               // 매입딜러
+  , parkingCd              // 주차위치 코드
+  , parkingLocationDesc    // 주차위치 설명
+  , parkKeyNo              // 주차키 번호
+  , fctCndcYn              // 사실 확인서 여부
+  , txblRcvYn              // 매입계산서 수령 여부
+  , ctshNo                 // 고객 번호
+}) => {
+  try {
+    const request = pool.request();
+
+    console.log("usrId:", usrId);
+
+    // car_reg_id 값도 미리 만들기
+    request.input("carAgent", sql.VarChar, carAgent); 
+    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
+    const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
+
+    request.input("CAR_REG_ID", sql.VarChar, newCarRegId);                        // 차량 등록 ID         
+    request.input("AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
+    request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);                         // 차량 종류 코드         
+    request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);                       // 제시 구분 코드       
+    request.input("CAR_PUR_DT", sql.VarChar, carPurDt);                         // 차량 매입 일자       
+    request.input("CAR_NO", sql.VarChar, carNo);                                // 차량 번호       
+    request.input("PUR_BEF_CAR_NO", sql.VarChar, purBefCarNo);                 // 차량 번호 이전     
+    request.input("CAR_NM", sql.VarChar, carNm);                               // 차량 명              
+    request.input("PUR_EVDC_CD", sql.VarChar, evdcCd);                         // 증빙종류     
+    request.input("OWNR_NM", sql.VarChar, ownrNm);                             // 소유자 명            
+    request.input("OWNR_TP_CD", sql.VarChar, ownrTpCd);                        // 소유자 유형 명       
+    request.input("OWNR_SSN", sql.VarChar, ownrSsn);                           // 소유자 주민등록번호  
+    request.input("OWNR_BRNO", sql.VarChar, ownrBrno);                         // 소유자 사업자등록번호
+    request.input("OWNR_PHON", sql.VarChar, ownrPhon);                         // 소유자 전화번호      
+    request.input("OWNR_ZIP", sql.VarChar, ownrZip);                           // 소유자 주소          
+    request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);                       // 소유자 주소1         
+    request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);                       // 소유자 주소2         
+    request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);   // 소유자 이메일        
+    request.input("PUR_AMT", sql.Int, purAmt);                                 // 매입금액액 금액            
+    request.input("PUR_SUP_PRC", sql.Int, purSupPrc);                          // 공급가               
+    request.input("PUR_VAT", sql.Int, purVat);                                 // 부가세               
+    request.input("GAIN_TAX", sql.Int, gainTax);                              // 취득 세              
+    request.input("AGENT_PUR_CST", sql.Int, agentPurCst);                     // 상사 매입 비         
+    request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);        // 상사 매입 비 입금일
+    request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);                     // 매입계산서 수령 여부 
+    request.input("PURACSH_RCV_YN", sql.VarChar, txblRcvYn);                  // 매입계산서 수령 여부 
+    request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);                   // 세금계산서 발행 일자 
+    request.input("FCT_CNDC_YN", sql.VarChar, fctCndcYn);                     // 사실확인서 여부부 
+    request.input("PUR_DESC", sql.VarChar, purDesc);                          // 매입 설명           
+    request.input("TOT_PUR_FEE", sql.Int, 0);                                 // 총 매입 수수료       
+    request.input("CUST_NO", sql.VarChar, ctshNo);                            // 고객 번              
+    request.input("PARK_ZON_CD", sql.VarChar, parkingCd);                     // 주차 구역 코드       
+    request.input("PARK_ZON_DESC", sql.VarChar, parkingLocationDesc);         // 주차 구역 설명       
+    request.input("PARK_KEY_NO", sql.VarChar, parkKeyNo);                     // 주차 키 번호         
+    request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID            
+    request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID   
+
+    const query1 = `INSERT INTO dbo.CJB_CAR_PUR (
+                    CAR_REG_ID,
+                    CAR_REG_DT,
+                    --CAR_DEL_DT,
+                    --CAR_STAT_CD,
+                    --CAR_DEL_YN,
+                    AGENT_ID,
+                    DLR_ID,
+                    CAR_KND_CD,
+                    PRSN_SCT_CD,
+                    CAR_PUR_DT,
+                    --CAR_LOAN_CNT,
+                    --CAR_LOAN_AMT,
+                    CAR_NO,
+                    PUR_BEF_CAR_NO,
+                    --CAR_NEW_YN,
+                    CAR_NM,
+                    --CAR_CAT_NM,
+                    --MFCP_NM,
+                    --CAR_MNFT_DT,
+                    --RUN_DSTN,
+                    --CAR_YOM,
+                    PUR_EVDC_CD,
+                    OWNR_NM,
+                    OWNR_TP_CD,
+                    OWNR_SSN,
+                    OWNR_BRNO,
+                    OWNR_PHON,
+                    OWNR_ZIP,
+                    OWNR_ADDR1,
+                    OWNR_ADDR2,
+                    OWNR_EMAIL,
+                    PUR_AMT,
+                    PUR_SUP_PRC,
+                    PUR_VAT,
+                    GAIN_TAX,
+                    AGENT_PUR_CST,
+                    AGENT_PUR_CST_PAY_DT,
+                    PURACSH_RCV_YN,
+                    TXBL_RCV_YN,
+                    TXBL_ISSU_DT,
+                    FCT_CNDC_YN,                  
+                    PUR_DESC,
+                    TOT_PUR_FEE,
+                    --TOT_PAY_FEE,
+                    --TOT_CMRC_COST_FEE,
+                    CUST_NO,
+                    --PRSN_NO,
+                    PARK_ZON_CD,
+                    PARK_ZON_DESC,
+                    PARK_KEY_NO,
+                    REGR_ID,
+                    MODR_ID
+                  ) VALUES (
+                    @CAR_REG_ID,
+                    CONVERT(CHAR(10), GETDATE(), 23),
+                    --@CAR_DEL_DT,
+                    --@CAR_STAT_CD,
+                    --@CAR_DEL_YN,
+                    @AGENT_ID,
+                    @DLR_ID,
+                    @CAR_KND_CD,
+                    @PRSN_SCT_CD,
+                    @CAR_PUR_DT,
+                    --@CAR_LOAN_CNT,
+                    --@CAR_LOAN_AMT,
+                    @CAR_NO,
+                    @PUR_BEF_CAR_NO,
+                    --@CAR_NEW_YN,
+                    @CAR_NM,
+                    --@CAR_CAT_NM,
+                    --@MFCP_NM,
+                    --@CAR_MNFT_DT,
+                    --@RUN_DSTN,
+                    --@CAR_YOM,
+                    @PUR_EVDC_CD,
+                    @OWNR_NM,
+                    @OWNR_TP_CD,
+                    @OWNR_SSN,
+                    @OWNR_BRNO,
+                    @OWNR_PHON,
+                    @OWNR_ZIP,
+                    @OWNR_ADDR1,
+                    @OWNR_ADDR2,
+                    @OWNR_EMAIL,
+                    @PUR_AMT,
+                    @PUR_SUP_PRC,
+                    @PUR_VAT,
+                    @GAIN_TAX,
+                    @AGENT_PUR_CST,
+                    @AGENT_PUR_CST_PAY_DT,
+                    @PURACSH_RCV_YN,
+                    @TXBL_RCV_YN,
+                    @TXBL_ISSU_DT,
+                    @FCT_CNDC_YN,
+                    @PUR_DESC,
+                    @TOT_PUR_FEE,
+                    --@TOT_PAY_FEE,
+                    --@TOT_CMRC_COST_FEE,
+                    @CUST_NO,
+                    --@PRSN_NO,
+                    @PARK_ZON_CD,
+                    @PARK_ZON_DESC,
+                    @PARK_KEY_NO,
+                    @REGR_ID,
+                    @MODR_ID
+                  )`;
+
+    //console.log("query:", query1);
+
+    attachedFiles.forEach(async (file) => {
+
+      console.log("file:", file.name);
+      console.log("file:", file.url);
+
+      const fileRequest = pool.request();
+
+      fileRequest.input("CAR_REG_ID", sql.VarChar, newCarRegId);
+      fileRequest.input("FILE_NM", sql.VarChar, file.name);
+      fileRequest.input("FILE_PATH", sql.VarChar, file.url);
+      fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
+      fileRequest.input("FILE_KND_NM", sql.VarChar, 'P');
+      fileRequest.input("AGENT_ID", sql.VarChar, carAgent);
+      fileRequest.input("REGR_ID", sql.VarChar, usrId);
+      fileRequest.input("MODR_ID", sql.VarChar, usrId);
+
+      await fileRequest.query(`INSERT INTO CJB_FILE_INFO (
+                                          AGENT_ID,
+                                          FILE_SCT_CD,
+                                          FILE_KND_NM,
+                                          FILE_NM,
+                                          FILE_PATH,
+                                          CAR_REG_ID,
+                                          REGR_ID,
+                                          MODR_ID) VALUES (
+                                          @AGENT_ID, 
+                                          @FILE_SCT_CD, 
+                                          @FILE_KND_NM, 
+                                          @FILE_NM, 
+                                          @FILE_PATH, 
+                                          @CAR_REG_ID, 
+                                          @REGR_ID, 
+                                          @MODR_ID)`);
+
+    });
+
+    // 차량판매
+    const query2 = `INSERT INTO dbo.CJB_CAR_SEL
+            (CAR_REG_ID,
+             AGENT_ID,
+             REGR_ID, 
+             MODR_ID)
+       VALUES (
+        @CAR_REG_ID,
+        @AGENT_ID,
+        @REGR_ID,
+        @MODR_ID);`;
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error inserting car pur:", err);
+    throw err;
+  }
+};
+
+
+
+// 제시 수정 등록 
+exports.updateCarPur = async ({ 
+    carRegId,                                                  // 차량 등록 ID
+    carAgent,                                                  // 상사사 ID
+    purAmt,                                                    // 매입금액
+    purSupPrc,                                                 // 공급가액
+    purVat,                                                    // 부가세
+    carPurDt,                                                  // 매입일   
+    agentPurCst,                                               // 상사매입비
+    brokerageDate,                                             // 상사매입비 입금일
+    gainTax,                                                   // 취득세
+    carNm,                                                     // 차량명
+    carNo,                                                     // 차량번호(매입후)
+    purBefCarNo,                                               // 차량번호(매입전)
+    ownrTpCd,                                                  // 소유자 유형
+    ownrSsn,                                                   // 주민등록번호
+    ownrBrno,                                                  // 사업자등록번호
+    ownrNm,                                                    // 고객명
+    ownrZip,                                                   // 주소 우편번호
+    evdcCd,                                                    // 증빙종류
+    carKndCd,                                                  // 차량 유형 
+    prsnSctCd,                                                 // 제시 구분
+    ownrPhon,                                                  // 연락처
+    ownrEmail,                                                 // 이메일 아이디
+    emailDomain,                                               // 이메일 도메인
+    txblIssuDt,                                                // 세금 납부일
+    purDesc,                                                   // 매입설명
+    ownrAddr1,                                                 // 주소
+    ownrAddr2,                                                 // 상세주소
+    attachedFiles,                                             // 관련 서류 첨부
+    usrId,                                                     // 사용자 ID
+    dealerId,                                                  // 딜러 코드
+    parkingCd,                                                 // 주차위치 코드
+    parkingLocationDesc,                                       // 주차위치 설명
+    parkKeyNo,                                                 // Key번호
+    fctCndcYn,                                                 // 사실 확인서 여부
+    txblRcvYn,                                                 // 매입수취여부
+    ctshNo,                                                     // 계약서번호
+    carRegDt,                                                  // 이전일
+}) => {
+try {
+  const request = pool.request();
+  request.input("CAR_REG_ID", sql.VarChar, carRegId);
+  request.input("AGENT_ID", sql.VarChar, carAgent);
+  request.input("DLR_ID", sql.VarChar, dealerId);
+  request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);
+  request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);
+  request.input("CAR_PUR_DT", sql.VarChar, carPurDt);
+  request.input("CAR_REG_DT", sql.VarChar, carRegDt);
+  request.input("CAR_NO", sql.VarChar, carNo);
+  request.input("PUR_BEF_CAR_NO", sql.VarChar, purBefCarNo);
+  request.input("CAR_NM", sql.VarChar, carNm);
+  request.input("PUR_EVDC_CD", sql.VarChar, evdcCd);
+  request.input("OWNR_NM", sql.VarChar, ownrNm);
+  request.input("OWNR_TP_CD", sql.VarChar, ownrTpCd);
+  request.input("OWNR_SSN", sql.VarChar, ownrSsn);
+  request.input("OWNR_BRNO", sql.VarChar, ownrBrno);
+  request.input("OWNR_PHON", sql.VarChar, ownrPhon);
+  request.input("OWNR_ZIP", sql.VarChar, ownrZip);
+  request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);
+  request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);
+  request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);
+  request.input("PUR_AMT", sql.Decimal, purAmt);
+  request.input("PUR_SUP_PRC", sql.Decimal, purSupPrc);
+  request.input("PUR_VAT", sql.Decimal, purVat);
+  request.input("GAIN_TAX", sql.Decimal, gainTax);
+  request.input("AGENT_PUR_CST", sql.Decimal, agentPurCst);
+  request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);
+  request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);
+  request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);
+  request.input("FCT_CNDC_YN", sql.VarChar, fctCndcYn);
+  request.input("PUR_DESC", sql.VarChar, purDesc);
+  request.input("PARK_ZON_CD", sql.VarChar, parkingCd);
+  request.input("PARK_ZON_DESC", sql.VarChar, parkingLocationDesc);
+  request.input("PARK_KEY_NO", sql.VarChar, parkKeyNo);
+  request.input("CTSH_NO", sql.VarChar, ctshNo);
+  request.input("REGR_ID", sql.VarChar, usrId);
+  request.input("MODR_ID", sql.VarChar, usrId);
+
+  const query1 = `
+    UPDATE CJB_CAR_PUR
+    SET CAR_REG_ID = @CAR_REG_ID,
+        AGENT_ID = @AGENT_ID,
+        DLR_ID = @DLR_ID,
+        CAR_KND_CD = @CAR_KND_CD,
+        PRSN_SCT_CD = @PRSN_SCT_CD,
+        CAR_PUR_DT = @CAR_PUR_DT,
+        CAR_REG_DT = @CAR_REG_DT,
+        CAR_NO = @CAR_NO,
+        PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO,
+        CAR_NM = @CAR_NM,
+        PUR_EVDC_CD = @PUR_EVDC_CD,
+        OWNR_NM = @OWNR_NM,
+        OWNR_TP_CD = @OWNR_TP_CD,
+        OWNR_SSN = @OWNR_SSN,
+        OWNR_BRNO = @OWNR_BRNO,
+        OWNR_PHON = @OWNR_PHON,
+        OWNR_ZIP = @OWNR_ZIP,
+        OWNR_ADDR1 = @OWNR_ADDR1,
+        OWNR_ADDR2 = @OWNR_ADDR2,
+        OWNR_EMAIL = @OWNR_EMAIL,
+        PUR_AMT = @PUR_AMT,
+        PUR_SUP_PRC = @PUR_SUP_PRC,
+        PUR_VAT = @PUR_VAT,
+        GAIN_TAX = @GAIN_TAX,
+        AGENT_PUR_CST = @AGENT_PUR_CST,
+        AGENT_PUR_CST_PAY_DT = @AGENT_PUR_CST_PAY_DT,
+        TXBL_RCV_YN = @TXBL_RCV_YN,
+        TXBL_ISSU_DT = @TXBL_ISSU_DT,
+        FCT_CNDC_YN = @FCT_CNDC_YN,
+        PUR_DESC = @PUR_DESC,
+        PARK_ZON_CD = @PARK_ZON_CD,
+        PARK_ZON_DESC = @PARK_ZON_DESC,
+        PARK_KEY_NO = @PARK_KEY_NO,
+        CTSH_NO = @CTSH_NO,
+        MODR_ID = @MODR_ID,
+        MOD_DTIME = GETDATE()
+    WHERE CAR_REG_ID = @CAR_REG_ID;
+  `;  
+
+  const query2 = `
+    UPDATE CJB_CAR_PUR
+    SET MODR_ID = @MODR_ID
+      , MOD_DTIME = GETDATE()
+    WHERE CAR_REG_ID = @CAR_REG_ID;
+  `;
+
+  await Promise.all([request.query(query1), request.query(query2)]);
+
+} catch (err) {
+  console.error("Error updating car pur:", err);
+  throw err;
+}
+};
+
+
+// 제시 삭제
+exports.deleteCarPur = async ({car_regid, flag_type}) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REGID", sql.VarChar, car_regid);
+
+    let query = "";
+
+    if(flag_type == "1") {
+
+      query = `DELETE CJB_CAR_PUR
+                        WHERE CAR_REG_ID = @CAR_REGID
+                        AND CAR_DEL_YN = 'N'
+            `;  
+    } else {
+      query = `UPDATE CJB_CAR_PUR
+                        SET CAR_DEL_YN = 'Y'
+                          , CAR_DEL_DT = GETDATE()
+                        WHERE CAR_REG_ID = @CAR_REGID;
+            `;  
+    }
+
+    console.log("query:", query);
+
+    await request.query(query);
+
+  } catch (err) {
+    console.error("Error deleting car pur:", err);
+    throw err;
+  }
+};
