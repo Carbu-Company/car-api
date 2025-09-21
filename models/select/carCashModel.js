@@ -226,7 +226,7 @@ exports.getCarCashList = async ({
                           , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
                           , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(B.VAT), 0) VAT
-                        FROM CJB_CAR_PUR A
+                        FROM dbo.CJB_CAR_PUR A
                            , dbo.CJB_CASH_RECPT B
                            , dbo.CJB_GOODS_FEE C
                         WHERE A.CAR_REG_ID = C.CAR_REG_ID
@@ -252,7 +252,7 @@ exports.getCarCashList = async ({
                           , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
                           , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(B.VAT), 0) VAT
-                        FROM CJB_CAR_PUR A
+                        FROM dbo.CJB_CAR_PUR A
                            , dbo.CJB_CASH_RECPT B
                            , dbo.CJB_GOODS_FEE C
                         WHERE A.CAR_REG_ID = C.CAR_REG_ID
@@ -278,7 +278,7 @@ exports.getCarCashList = async ({
                           , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
                           , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(B.VAT), 0) VAT
-                        FROM CJB_CAR_PUR A
+                        FROM dbo.CJB_CAR_PUR A
                            , dbo.CJB_CASH_RECPT B
                            , dbo.CJB_GOODS_FEE C
                         WHERE A.CAR_REG_ID = C.CAR_REG_ID
@@ -347,7 +347,7 @@ exports.getCarCashList = async ({
                             B.REGR_ID                       -- 등록자 ID               
                             B.MOD_DTIME                     -- 수정 일시               
                             B.MODR_ID                       -- 수정자 ID               
-                        FROM CJB_CAR_PUR A
+                        FROM dbo.CJB_CAR_PUR A
                            , dbo.CJB_CASH_RECPT B
                            , dbo.CJB_GOODS_FEE C
                         WHERE A.CAR_REG_ID = C.CAR_REG_ID
@@ -615,7 +615,7 @@ try {
   request.input("MODR_ID", sql.VarChar, usrId);
 
   const query1 = `
-    UPDATE CJB_CASH_RECPT
+    UPDATE dbo.CJB_CASH_RECPT
     SET NTS_CONF_NO = @NTS_CONF_NO,
         TRADE_DT = @TRADE_DT,
         TRADE_DTIME = @TRADE_DTIME,
