@@ -1,2 +1,662 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
+
+exports.getCarCashList = async ({ 
+    carAgent, 
+    page,
+    pageSize,
+    carNo,
+    dealer,
+    dtGubun,
+    startDt,
+    endDt, 
+    dtlCustomerName,
+    dtlCustGubun,
+    dtlEvdcGubun,
+    dtlPrsnGubun,
+    dtlOwnerBrno,
+    dtlOwnerSsn,
+    dtlCtshNo,
+    dtlCarNoBefore,
+    orderItem = '제시일',
+    ordAscDesc = 'desc'
+  }) => {
+    try {
+      const request = pool.request();
+  /*
+      console.log('carAgent:', carAgent);
+      console.log('pageSize:', pageSize);
+      console.log('page:', page);
+  
+      console.log('carNo:', carNo);
+      console.log('dealer:', dealer);
+      console.log('dtGubun:', dtGubun);
+      console.log('startDt:', startDt);
+      console.log('endDt:', endDt);
+      console.log('dtlCustomerName:', dtlCustomerName);
+      console.log('dtlCustGubun:', dtlCustGubun);
+      console.log('dtlEvdcGubun:', dtlEvdcGubun);
+      console.log('dtlPrsnGubun:', dtlPrsnGubun);
+      console.log('dtlOwnerBrno:', dtlOwnerBrno);
+      console.log('dtlOwnerSsn:', dtlOwnerSsn);
+      console.log('dtlCtshNo:', dtlCtshNo);
+      console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('orderItem:', orderItem);
+      console.log('ordAscDesc:', ordAscDesc);
+  */
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("PAGE_SIZE", sql.Int, pageSize);
+      request.input("PAGE", sql.Int, page);
+  
+  
+      if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+      if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+      if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+      if (startDt) request.input("START_DT", sql.VarChar, startDt);
+      if (endDt) request.input("END_DT", sql.VarChar, endDt);
+      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+  
+      // 전체 카운트 조회
+      const countQuery = `
+      SELECT COUNT(*) as totalCount
+                FROM dbo.CJB_CAR_PUR A
+                   , dbo.CJB_CASH_RECPT B
+                   , dbo.CJB_GOODS_FEE C
+              WHERE C.CAR_REG_ID = A.CAR_REG_ID
+                AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+                AND A.AGENT_ID = @CAR_AGENT
+                AND A.CAR_DEL_YN = 'N'
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+      `;
+    
+      const dataQuery = `
+      SELECT B.NTS_CONF_NO     -- 국세청 승인 번호
+           , B.TRADE_DT
+           , B.TRADE_SCT_NM     -- 거래 구분  (승인, 취소)
+           , B.TRADE_TP_NM      -- 거래 유형  (소득공제, 지출증빙)
+           , B.TRADE_AMT   -- 거래 금액
+           , B.RCGN_NO               -- 식별 번호
+           , B.CUST_NM               -- 고객명
+           , B.ORD_GOODS_NM          -- 주문 상품명(품명)
+           , B.GOODS_FEE_SEQ
+           , A.AGENT_ID
+           , A.CAR_REG_ID               
+           , A.CAR_STAT_CD             
+           , A.AGENT_ID                
+           , A.DLR_ID                  
+           , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+      FROM dbo.CJB_CAR_PUR A
+         , dbo.CJB_CASH_RECPT B
+         , dbo.CJB_GOODS_FEE C
+      WHERE A.CAR_REG_ID = C.CAR_REG_ID
+        AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+        AND A.AGENT_ID = '00011'
+        AND A.CAR_DEL_YN = 'N'
+        ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+        ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+        ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+        ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+        ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+        ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+        ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+        ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+        ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+        ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
+        ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
+        ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+      ORDER BY ${orderItem === '제시일' ? 'A.CAR_PUR_DT' : orderItem === '담당딜러' ? 'A.DLR_ID' : orderItem === '고객유형' ? 'A.OWNR_TP_CD' : orderItem} ${ordAscDesc}
+      OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
+      FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
+  
+      // 두 쿼리를 동시에 실행
+      const [countResult, dataResult] = await Promise.all([
+        request.query(countQuery),
+        request.query(dataQuery)
+      ]);
+  
+      const totalCount = countResult.recordset[0].totalCount;
+      const totalPages = Math.ceil(totalCount / pageSize);
+  
+      return {
+        carlist: dataResult.recordset,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalCount: totalCount,
+          totalPages: totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      };
+  
+    } catch (err) {
+      console.error("Error fetching car pur list:", err);
+      throw err;
+    }
+  };
+  
+  // 제시 차량 합계 조회
+  exports.getCarCashSummary = async ({  
+    carAgent, 
+    page,
+    pageSize,
+    carNo,
+    dealer,
+    dtGubun,
+    startDt,
+    endDt, 
+    dtlCustomerName,
+    dtlCustGubun,
+    dtlEvdcGubun,
+    dtlPrsnGubun,
+    dtlOwnerBrno,
+    dtlOwnerSsn,
+    dtlCtshNo,
+    dtlCarNoBefore,
+    orderItem = '제시일',
+    ordAscDesc = 'desc'
+  }) => {
+    try {
+      const request = pool.request();
+  
+      console.log('carAgent:', carAgent);
+      console.log('pageSize:', pageSize);
+      console.log('page:', page);
+  
+      console.log('carNo:', carNo);
+      console.log('dealer:', dealer);
+      console.log('dtGubun:', dtGubun);
+      console.log('startDt:', startDt);
+      console.log('endDt:', endDt);
+      console.log('dtlCustomerName:', dtlCustomerName);
+      console.log('dtlCustGubun:', dtlCustGubun);
+      console.log('dtlEvdcGubun:', dtlEvdcGubun);
+      console.log('dtlPrsnGubun:', dtlPrsnGubun);
+      console.log('dtlOwnerBrno:', dtlOwnerBrno);
+      console.log('dtlOwnerSsn:', dtlOwnerSsn);
+      console.log('dtlCtshNo:', dtlCtshNo);
+      console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('orderItem:', orderItem);
+      console.log('ordAscDesc:', ordAscDesc);
+  
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("PAGE_SIZE", sql.Int, pageSize);
+      request.input("PAGE", sql.Int, page);
+  
+      if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+      if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+      if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
+      if (startDt) request.input("START_DT", sql.VarChar, startDt);
+      if (endDt) request.input("END_DT", sql.VarChar, endDt);
+      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
+      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
+      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
+      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
+      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
+      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
+      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+  
+      const query = `SELECT '소득공제제' AS PRSN_SCT_CD
+                          , COUNT(B.CASH_MGMTKEY) CNT
+                          , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(B.VAT), 0) VAT
+                        FROM CJB_CAR_PUR A
+                           , dbo.CJB_CASH_RECPT B
+                           , dbo.CJB_GOODS_FEE C
+                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
+                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'
+                          AND B.TRADE_SCT_NM = '소득공제'                          -- 거래 구분 명
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      UNION ALL
+                      SELECT '지출증빙' AS PRSN_SCT_CD
+                          , COUNT(B.CASH_MGMTKEY) CNT
+                          , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(B.VAT), 0) VAT
+                        FROM CJB_CAR_PUR A
+                           , dbo.CJB_CASH_RECPT B
+                           , dbo.CJB_GOODS_FEE C
+                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
+                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'
+                          AND B.TRADE_SCT_NM = '지출증빙'                          -- 거래 구분 명
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      UNION ALL
+                      SELECT '합계' AS PRSN_SCT_CD
+                          , COUNT(B.CASH_MGMTKEY) CNT
+                          , ISNULL(SUM(B.TRADE_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(B.SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(B.VAT), 0) VAT
+                        FROM CJB_CAR_PUR A
+                           , dbo.CJB_CASH_RECPT B
+                           , dbo.CJB_GOODS_FEE C
+                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
+                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+        `;
+  
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching car pur sum:", err);
+      throw err;
+    }
+  };
+  
+  // 제시 차량 상세 조회
+  exports.getCarCashDetail = async ({ car_regid }) => {
+    try {
+      const request = pool.request();
+      request.input("CAR_REGID", sql.VarChar, car_regid);   
+  
+      const query = `SELECT B.CASH_MGMTKEY                  -- 현금 관리키             
+                            B.NTS_CONF_NO                   -- 국세청 승인 번호        
+                            B.TRADE_DT                      -- 거래 일자               
+                            B.TRADE_DTIME                   -- 거래 일시               
+                            B.TRADE_SHP_NM                  -- 거래 형태 명            
+                            B.TRADE_SCT_NM                  -- 거래 구분 명            
+                            B.TRADE_TP_NM                   -- 거래 유형 명            
+                            B.TAX_SHP_NM                    -- 과세 형태 명            
+                            B.TRADE_AMT                     -- 거래 금액               
+                            B.SUP_PRC                       -- 공급가                  
+                            B.VAT                           -- 부가세                  
+                            B.SRVC                          -- 봉사료                  
+                            B.MERS_BRNO                     -- 가맹점 사업자등록번     
+                            B.MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호
+                            B.MERS_MTL_NM                   -- 가맹점 상호 명          
+                            B.MERS_PRES_NM                  -- 가맹점 대표자           
+                            B.MERS_ADDR                     -- 가맹점 주소             
+                            B.MERS_PHON                     -- 가맹점 전화번호         
+                            B.RCGN_NO                       -- 식별 번호               
+                            B.CUST_NM                       -- 고객 명                 
+                            B.ORD_GOODS_NM                  -- 주문 상품 명            
+                            B.ORD_NO                        -- 주문 번호               
+                            B.CUST_EMAIL                    -- 고객 이메일             
+                            B.CUST_HP                       -- 고객 핸드폰             
+                            B.CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부 
+                            B.CNCL_CAUS_CD                  -- 취소 사유 코드          
+                            B.MEMO                          -- 메모                    
+                            B.EMAIL_TIT_NM                  -- 이메일 제목 명          
+                            B.GOODS_FEE_SEQ                 -- 비용 순번               
+                            B.AGENT_ID                      -- T                 
+                            B.REG_DTIME                     -- 등록 일시               
+                            B.REGR_ID                       -- 등록자 ID               
+                            B.MOD_DTIME                     -- 수정 일시               
+                            B.MODR_ID                       -- 수정자 ID               
+                        FROM CJB_CAR_PUR A
+                           , dbo.CJB_CASH_RECPT B
+                           , dbo.CJB_GOODS_FEE C
+                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
+                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
+                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_DEL_YN = 'N'   
+                          AND A.CAR_REG_ID = @CAR_REGID `;
+  
+      console.log('query:', query);
+  
+      const result = await request.query(query);
+      return result.recordset[0];
+    } catch (err) {
+      console.error("Error fetching car pur detail:", err);
+      throw err;
+    }
+  };
+
+  
+// 제시 직접 등록
+exports.insertCarPur = async ({
+    cashMgmtkey,                  // 현금 관리키             
+    ntsConfNo,                    // 국세청 승인 번호        
+    tradeDt,                      // 거래 일자               
+    tradeDtime,                   // 거래 일시               
+    tradeShpNm,                   // 거래 형태 명            
+    tradeSctNm,                   // 거래 구분 명            
+    tradeTpNm,                    // 거래 유형 명            
+    taxShpNm,                     // 과세 형태 명            
+    tradeAmt,                     // 거래 금액               
+    supPrc,                       // 공급가                  
+    vat,                          // 부가세                  
+    srvc,                         // 봉사료                  
+    mersBrno,                     // 가맹점 사업자등록번     
+    mersMrplBizRcgnno,           // 가맹점 종사업장 식별번호
+    mersMtlNm,                    // 가맹점 상호 명          
+    mersPresNm,                   // 가맹점 대표자           
+    mersAddr,                     // 가맹점 주소             
+    mersPhon,                     // 가맹점 전화번호         
+    rcgnNo,                       // 식별 번호               
+    custNm,                       // 고객 명                 
+    ordGoodsNm,                   // 주문 상품 명            
+    ordNo,                        // 주문 번호               
+    custEmail,                    // 고객 이메일             
+    custHp,                       // 고객 핸드폰             
+    custNtcchrTrnsYn,            // 고객 알림문자 전송 여부 
+    cnclCausCd,                  // 취소 사유 코드          
+    memo,                        // 메모                    
+    emailTitNm,                  // 이메일 제목 명          
+    goodsFeeSeq,                 // 비용 순번               
+    agentId,                     // T                 
+    regDtime,                    // 등록 일시               
+    regrId,                      // 등록자 ID               
+    modDtime,                    // 수정 일시               
+}) => {
+  try {
+    const request = pool.request();
+
+    console.log("usrId:", usrId);
+
+    // car_reg_id 값도 미리 만들기
+    request.input("carAgent", sql.VarChar, carAgent); 
+    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
+    const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
+
+    request.input("CASH_MGMT_KEY", sql.VarChar, cashMgmtkey);
+    request.input("NTS_CONF_NO", sql.VarChar, ntsConfNo);
+    request.input("TRADE_DT", sql.VarChar, tradeDt);
+    request.input("TRADE_DTIME", sql.VarChar, tradeDtime);
+    request.input("TRADE_SHP_NM", sql.VarChar, tradeShpNm);
+    request.input("TRADE_SCT_NM", sql.VarChar, tradeSctNm);
+    request.input("TRADE_TP_NM", sql.VarChar, tradeTpNm);
+    request.input("TAX_SHP_NM", sql.VarChar, taxShpNm);
+    request.input("TRADE_AMT", sql.Decimal, tradeAmt);
+    request.input("SUP_PRC", sql.Decimal, supPrc);
+    request.input("VAT", sql.Decimal, vat);
+    request.input("SRVC", sql.VarChar, srvc);
+    request.input("MERS_BRNO", sql.VarChar, mersBrno);
+    request.input("MERS_MRPL_BIZ_RCGN_NO", sql.VarChar, mersMrplBizRcgnno);
+    request.input("MERS_MTL_NM", sql.VarChar, mersMtlNm);
+    request.input("MERS_PRES_NM", sql.VarChar, mersPresNm);
+    request.input("MERS_ADDR", sql.VarChar, mersAddr);
+    request.input("MERS_PHON", sql.VarChar, mersPhon);
+    request.input("RCGN_NO", sql.VarChar, rcgnNo);
+    request.input("CUST_NM", sql.VarChar, custNm);
+    request.input("ORD_GOODS_NM", sql.VarChar, ordGoodsNm);
+    request.input("ORD_NO", sql.VarChar, ordNo);
+    request.input("CUST_EMAIL", sql.VarChar, custEmail);
+    request.input("CUST_HP", sql.VarChar, custHp);
+    request.input("CUST_NTCCHR_TRNS_YN", sql.VarChar, custNtcchrTrnsYn);
+    request.input("CNCL_CAUS_CD", sql.VarChar, cnclCausCd);
+    request.input("MEMO", sql.VarChar, memo);
+    request.input("EMAIL_TIT_NM", sql.VarChar, emailTitNm);
+    request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
+    request.input("AGENT_ID", sql.VarChar, agentId);
+    request.input("REG_DTIME", sql.VarChar, regDtime);
+    request.input("REGR_ID", sql.VarChar, regrId);
+    request.input("MOD_DTIME", sql.VarChar, modDtime);
+
+    const query1 = `INSERT INTO dbo.CJB_CASH_RECPT (
+                          CASH_MGMTKEY                  -- 현금 관리키                
+                        , NTS_CONF_NO                   -- 국세청 승인 번호           
+                        , TRADE_DT                      -- 거래 일자                  
+                        , TRADE_DTIME                   -- 거래 일시                  
+                        , TRADE_SHP_NM                  -- 거래 형태 명               
+                        , TRADE_SCT_NM                  -- 거래 구분 명               
+                        , TRADE_TP_NM                   -- 거래 유형 명               
+                        , TAX_SHP_NM                    -- 과세 형태 명               
+                        , TRADE_AMT                     -- 거래 금액                  
+                        , SUP_PRC                       -- 공급가                     
+                        , VAT                           -- 부가세                     
+                        , SRVC                          -- 봉사료                     
+                        , MERS_BRNO                     -- 가맹점 사업자등록번        
+                        , MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호   
+                        , MERS_MTL_NM                   -- 가맹점 상호 명             
+                        , MERS_PRES_NM                  -- 가맹점 대표자              
+                        , MERS_ADDR                     -- 가맹점 주소                
+                        , MERS_PHON                     -- 가맹점 전화번호            
+                        , RCGN_NO                       -- 식별 번호                  
+                        , CUST_NM                       -- 고객 명                    
+                        , ORD_GOODS_NM                  -- 주문 상품 명               
+                        , ORD_NO                        -- 주문 번호                  
+                        , CUST_EMAIL                    -- 고객 이메일                
+                        , CUST_HP                       -- 고객 핸드폰                
+                        , CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부    
+                        , CNCL_CAUS_CD                  -- 취소 사유 코드             
+                        , MEMO                          -- 메모                       
+                        , EMAIL_TIT_NM                  -- 이메일 제목 명             
+                        , GOODS_FEE_SEQ                 -- 비용 순번                  
+                        , AGENT_ID                      -- 상사 ID                       
+                        , REG_DTIME                     -- 등록 일시                  
+                        , REGR_ID                       -- 등록자 ID                  
+                        , MOD_DTIME                     -- 수정 일시                  
+                        , MODR_ID                       -- 수정자 ID        
+                  ) VALUES (
+                    @CASH_MGMT_KEY,
+                    @NTS_CONF_NO,
+                    @TRADE_DT,
+                    @TRADE_DTIME,
+                    @TRADE_SHP_NM,
+                    @TRADE_SCT_NM,
+                    @TRADE_TP_NM,
+                    @TAX_SHP_NM,
+                    @TRADE_AMT,
+                    @SUP_PRC,
+                    @VAT,
+                    @SRVC,
+                    @MERS_BRNO,
+                    @MERS_MRPL_BIZ_RCGN_NO,
+                    @MERS_MTL_NM,
+                    @MERS_PRES_NM,
+                    @MERS_ADDR,
+                    @MERS_PHON,
+                    @RCGN_NO,
+                    @CUST_NM,
+                    @ORD_GOODS_NM,
+                    @ORD_NO,
+                    @CUST_EMAIL,
+                    @CUST_HP,
+                    @CUST_NTCCHR_TRNS_YN,
+                    @CNCL_CAUS_CD,
+                    @MEMO,
+                    @EMAIL_TIT_NM,
+                    @GOODS_FEE_SEQ,
+                    @AGENT_ID,
+                    @REG_DTIME,
+                    @REGR_ID,
+                    @MOD_DTIME,
+                    @MODR_ID
+
+                  )`;
+
+
+
+    // 차량판매
+    const query2 = `UPDATE dbo.CJB_GOODS_FEE
+                    SET CASH_RECPT_RCGN_NO = @CASH_RECPT_RCGN_NO
+                    WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ;
+                    `;      
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error inserting car pur:", err);
+    throw err;
+  }
+};
+
+
+
+// 제시 수정 등록 
+exports.updateCarCash = async ({ 
+    cashMgmtkey,                  // 현금 관리키             
+    ntsConfNo,                    // 국세청 승인 번호        
+    tradeDt,                      // 거래 일자               
+    tradeDtime,                   // 거래 일시               
+    tradeShpNm,                   // 거래 형태 명            
+    tradeSctNm,                   // 거래 구분 명            
+    tradeTpNm,                    // 거래 유형 명            
+    taxShpNm,                     // 과세 형태 명            
+    tradeAmt,                     // 거래 금액               
+    supPrc,                       // 공급가                  
+    vat,                          // 부가세                  
+    srvc,                         // 봉사료                  
+    mersBrno,                     // 가맹점 사업자등록번     
+    mersMrplBizRcgnno,           // 가맹점 종사업장 식별번호
+    mersMtlNm,                    // 가맹점 상호 명          
+    mersPresNm,                   // 가맹점 대표자           
+    mersAddr,                     // 가맹점 주소             
+    mersPhon,                     // 가맹점 전화번호         
+    rcgnNo,                       // 식별 번호               
+    custNm,                       // 고객 명                 
+    ordGoodsNm,                   // 주문 상품 명            
+    ordNo,                        // 주문 번호               
+    custEmail,                    // 고객 이메일             
+    custHp,                       // 고객 핸드폰             
+    custNtcchrTrnsYn,            // 고객 알림문자 전송 여부 
+    cnclCausCd,                  // 취소 사유 코드          
+    memo,                        // 메모                    
+    emailTitNm,                  // 이메일 제목 명          
+    goodsFeeSeq,                 // 비용 순번               
+    agentId,                     // T                 
+    regDtime,                    // 등록 일시               
+    regrId,                      // 등록자 ID               
+    modDtime,                    // 수정 일시       
+    modrId,                      // 수정자 ID
+}) => {
+try {
+  const request = pool.request();
+  request.input("CAR_REG_ID", sql.VarChar, carRegId);
+  request.input("AGENT_ID", sql.VarChar, carAgent);
+  request.input("DLR_ID", sql.VarChar, dealerId);
+  request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);
+  request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);
+  request.input("CAR_PUR_DT", sql.VarChar, carPurDt);
+  request.input("CAR_REG_DT", sql.VarChar, carRegDt);
+  request.input("CAR_NO", sql.VarChar, carNo);
+  request.input("PUR_BEF_CAR_NO", sql.VarChar, purBefCarNo);
+  request.input("CAR_NM", sql.VarChar, carNm);
+  request.input("PUR_EVDC_CD", sql.VarChar, evdcCd);
+  request.input("OWNR_NM", sql.VarChar, ownrNm);
+  request.input("OWNR_TP_CD", sql.VarChar, ownrTpCd);
+  request.input("OWNR_SSN", sql.VarChar, ownrSsn);
+  request.input("OWNR_BRNO", sql.VarChar, ownrBrno);
+  request.input("OWNR_PHON", sql.VarChar, ownrPhon);
+  request.input("OWNR_ZIP", sql.VarChar, ownrZip);
+  request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);
+  request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);
+  request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);
+  request.input("PUR_AMT", sql.Decimal, purAmt);
+  request.input("PUR_SUP_PRC", sql.Decimal, purSupPrc);
+  request.input("PUR_VAT", sql.Decimal, purVat);
+  request.input("GAIN_TAX", sql.Decimal, gainTax);
+  request.input("AGENT_PUR_CST", sql.Decimal, agentPurCst);
+  request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);
+  request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);
+  request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);
+  request.input("FCT_CNDC_YN", sql.VarChar, fctCndcYn);
+  request.input("PUR_DESC", sql.VarChar, purDesc);
+  request.input("PARK_ZON_CD", sql.VarChar, parkingCd);
+  request.input("PARK_ZON_DESC", sql.VarChar, parkingLocationDesc);
+  request.input("PARK_KEY_NO", sql.VarChar, parkKeyNo);
+  request.input("CTSH_NO", sql.VarChar, ctshNo);
+  request.input("REGR_ID", sql.VarChar, usrId);
+  request.input("MODR_ID", sql.VarChar, usrId);
+
+  const query1 = `
+    UPDATE CJB_CASH_RECPT
+    SET NTS_CONF_NO = @NTS_CONF_NO,
+        TRADE_DT = @TRADE_DT,
+        TRADE_DTIME = @TRADE_DTIME,
+        TRADE_SHP_NM = @TRADE_SHP_NM,
+        TRADE_SCT_NM = @TRADE_SCT_NM,
+        TRADE_TP_NM = @TRADE_TP_NM,
+        TAX_SHP_NM = @TAX_SHP_NM,
+        TRADE_AMT = @TRADE_AMT,
+        SUP_PRC = @SUP_PRC,
+        VAT = @VAT,
+        SRVC = @SRVC,
+        MERS_BRNO = @MERS_BRNO,
+        MERS_MRPL_BIZ_RCGN_NO = @MERS_MRPL_BIZ_RCGN_NO,
+        MERS_MTL_NM = @MERS_MTL_NM,
+        MERS_PRES_NM = @MERS_PRES_NM,
+        MERS_ADDR = @MERS_ADDR,
+        MERS_PHON = @MERS_PHON,
+        RCGN_NO = @RCGN_NO,
+        CUST_NM = @CUST_NM,
+        ORD_GOODS_NM = @ORD_GOODS_NM,
+        ORD_NO = @ORD_NO,
+        CUST_EMAIL = @CUST_EMAIL,
+        CUST_HP = @CUST_HP,
+        CUST_NTCCHR_TRNS_YN = @CUST_NTCCHR_TRNS_YN,
+        CNCL_CAUS_CD = @CNCL_CAUS_CD,
+        MEMO = @MEMO,
+        EMAIL_TIT_NM = @EMAIL_TIT_NM,
+        GOODS_FEE_SEQ = @GOODS_FEE_SEQ,
+        AGENT_ID = @AGENT_ID,
+        REG_DTIME = @REG_DTIME,
+        REGR_ID = @REGR_ID,
+        MOD_DTIME = @MOD_DTIME,
+        MODR_ID = @MODR_ID
+    WHERE CASH_MGMTKEY = @CASH_MGMTKEY;
+  `;  
+
+  const query2 = `
+    UPDATE CJB_GOODS_FEE
+    SET CASH_RECPT_RCGN_NO = @CASH_RECPT_RCGN_NO
+      , MOD_DTIME = GETDATE()
+    WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ;
+  `;
+
+  await Promise.all([request.query(query1), request.query(query2)]);
+
+} catch (err) {
+  console.error("Error updating car pur:", err);
+  throw err;
+}
+};

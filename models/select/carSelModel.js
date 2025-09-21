@@ -6,7 +6,7 @@ const pool = require("../../config/db");
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// 매도비 목록 조회
+// 차량 판매매도 목록 조회
 exports.getCarSelList = async ({ 
     carAgent, 
     page,
@@ -297,7 +297,40 @@ exports.getCarSelList = async ({
   
   
 // 차량 판매 정보 수정
-exports.updateCarSel = async ({ carRegId, carSaleDt, saleRegDt, agentId, dlrId, saleTpCd, buyerNm, buyerTpCd, buyerSsn, buyerBrno, buyerPhon, buyerZip, buyerAddr1, buyerAddr2, saleAmt, saleSupPrc, saleVat, agentSelCost, perfInfeAmt, txblIssuYn, selcstInclusYn, selEvdcCd, selEvdcCont, selEvdcDt, adjFinYn, selFile1, selFile2, selFile3, selFile4, selFile5, saleDesc, totFeeAmt, realFeeAmt, saleCrIssuYn, modrId }) => {
+exports.updateCarSel = async ({ 
+  carRegId, 
+  carSaleDt, 
+  saleRegDt, 
+  agentId, 
+  dlrId, 
+  saleTpCd, 
+  buyerNm, 
+  buyerTpCd, 
+  buyerSsn, 
+  buyerBrno, 
+  buyerPhon, 
+  buyerZip, 
+  buyerAddr1, 
+  buyerAddr2, 
+  saleAmt, 
+  saleSupPrc, 
+  saleVat, 
+  saleCarNo, 
+  agentSelCost, 
+  perfInfeAmt, 
+  txblIssuYn, 
+  selcstInclusYn, 
+  selEvdcCd, 
+  selEvdcCont, 
+  selEvdcDt, 
+  adjFinYn, 
+  attachedFiles, 
+  saleDesc, 
+  totFeeAmt, 
+  realFeeAmt, 
+  saleCrIssuYn, 
+  modrId 
+}) => {
     try {
       const request = pool.request();
   
@@ -318,6 +351,7 @@ exports.updateCarSel = async ({ carRegId, carSaleDt, saleRegDt, agentId, dlrId, 
       request.input("SALE_AMT", sql.Decimal, saleAmt);
       request.input("SALE_SUP_PRC", sql.Decimal, saleSupPrc);
       request.input("SALE_VAT", sql.Decimal, saleVat);
+      request.input("SALE_CAR_NO", sql.VarChar, saleCarNo);
       request.input("AGENT_SEL_COST", sql.Decimal, agentSelCost);
       request.input("PERF_INFE_AMT", sql.Decimal, perfInfeAmt);
       request.input("TXBL_ISSU_YN", sql.VarChar, txblIssuYn);
@@ -326,51 +360,96 @@ exports.updateCarSel = async ({ carRegId, carSaleDt, saleRegDt, agentId, dlrId, 
       request.input("SEL_EVDC_CONT", sql.VarChar, selEvdcCont);
       request.input("SEL_EVDC_DT", sql.VarChar, selEvdcDt);
       request.input("ADJ_FIN_YN", sql.VarChar, adjFinYn);
-      request.input("SEL_FILE1", sql.VarChar, selFile1);
-      request.input("SEL_FILE2", sql.VarChar, selFile2);
-      request.input("SEL_FILE3", sql.VarChar, selFile3);
-      request.input("SEL_FILE4", sql.VarChar, selFile4);
-      request.input("SEL_FILE5", sql.VarChar, selFile5);
-      request.input("SALE_DESC", sql.VarChar, saleDesc);
+      request.input("ATTACHED_FILES", sql.VarChar, attachedFiles);
       request.input("TOT_FEE_AMT", sql.Decimal, totFeeAmt);
       request.input("REAL_FEE_AMT", sql.Decimal, realFeeAmt);
       request.input("SALE_CR_ISSU_YN", sql.VarChar, saleCrIssuYn);
+      request.input("SALE_DESC", sql.VarChar, saleDesc);
       request.input("MODR_ID", sql.VarChar, modrId);
   
-      const query = `UPDATE dbo.CJB_CAR_SEL
-                        SET   CAR_SALE_DT = @carSaleDt,
-                              SALE_REG_DT = @saleRegDt,
-                              AGENT_ID = @agentId,
-                              DLR_ID = @dlrId,
-                              SALE_TP_CD = @saleTpCd,
-                              BUYER_NM = @buyerNm,
-                              BUYER_TP_CD = @buyerTpCd,
-                              BUYER_SSN = @buyerSsn,
-                              BUYER_BRNO = @buyerBrno,
-                              BUYER_PHON = @buyerPhon,
-                              BUYER_ZIP = @buyerZip,
-                              BUYER_ADDR1 = @buyerAddr1,
-                              BUYER_ADDR2 = @buyerAddr2,
-                              SALE_AMT = @saleAmt,
-                              SALE_SUP_PRC = @saleSupPrc,
-                              SALE_VAT = @saleVat,
-                              AGENT_SEL_COST = @agentSelCost,
-                              PERF_INFE_AMT = @perfInfeAmt,
-                              TXBL_ISSU_YN = @txblIssuYn,
-                              SELCST_INCLUS_YN = @selcstInclusYn,
-                              SEL_EVDC_CD = @selEvdcCd,
-                              SEL_EVDC_CONT = @selEvdcCont,
-                              SEL_EVDC_DT = @selEvdcDt,
-                              ADJ_FIN_YN = @adjFinYn,
-                              TOT_FEE_AMT = @totFeeAmt,
-                              REAL_FEE_AMT = @realFeeAmt,
-                              SALE_CR_ISSU_YN = @saleCrIssuYn,
-                              MOD_DTIME = GETDATE(),
-                              MODR_ID = @modrId
+      const query1 = `UPDATE dbo.CJB_CAR_SEL
+                        SET   CAR_SALE_DT = @carSaleDt,       -- 차량 판매 일자
+                              SALE_REG_DT = @saleRegDt,      -- 매출 등록 일자
+                              AGENT_ID = @agentId,       -- 상사 ID
+                              DLR_ID = @dlrId,          -- 담당딜러 ID (판매)
+                              SALE_TP_CD = @saleTpCd,   -- 판매유형코드
+                              BUYER_NM = @buyerNm,       -- 매입자명
+                              BUYER_TP_CD = @buyerTpCd,   -- 매입자 유형코드
+                              BUYER_SSN = @buyerSsn,      -- 매입자 주민번호
+                              BUYER_BRNO = @buyerBrno,    -- 매입자 사업자번호
+                              BUYER_PHON = @buyerPhon,    -- 매입자 전화번호
+                              BUYER_ZIP = @buyerZip,      -- 매입자 우편번호
+                              BUYER_ADDR1 = @buyerAddr1,    -- 매입자 주소
+                              BUYER_ADDR2 = @buyerAddr2,    -- 매입자 상세주소
+                              SALE_AMT = @saleAmt,          -- 매도 금액
+                              SALE_SUP_PRC = @saleSupPrc,   -- 매도 공급가액
+                              SALE_VAT = @saleVat,          -- 매도 부가세
+                              SALE_CAR_NO = @saleCarNo,        -- 판매 차량 번호
+                              AGENT_SEL_COST = @agentSelCost, -- 상사 매도 비용
+                              PERF_INFE_AMT = @perfInfeAmt, -- 성능 보험료 금액
+                              TXBL_ISSU_YN = @txblIssuYn,    -- 세금 발행 여부
+                              SELCST_INCLUS_YN = @selcstInclusYn, -- 세무비 포함 여부
+                              SEL_EVDC_CD = @selEvdcCd,      -- 증빙종류
+                              SEL_EVDC_CONT = @selEvdcCont,  -- 증빙내용
+                              SEL_EVDC_DT = @selEvdcDt,      -- 증빙일자
+                              ADJ_FIN_YN = @adjFinYn,        -- 정산산 완료 여부
+                              TOT_FEE_AMT = @totFeeAmt,      -- 총 비용
+                              REAL_FEE_AMT = @realFeeAmt,    -- 실제 비용
+                              SALE_CR_ISSU_YN = @saleCrIssuYn, -- 차량 판매 증서 발행 여부
+                              SALE_DESC = @saleDesc,          -- 매도 설명
+                              MOD_DTIME = GETDATE(),         -- 수정 일자
+                              MODR_ID = @modrId               -- 수정자
                         WHERE  CAR_REG_ID = @CAR_REG_ID;`;
   
       await request.query(query);     
+
+      
+      attachedFiles.forEach(async (file) => {
+
+        console.log("file:", file.name);
+        console.log("file:", file.url);
+
+        const fileRequest = pool.request();
+
+        fileRequest.input("CAR_REG_ID", sql.VarChar, newCarRegId);
+        fileRequest.input("FILE_NM", sql.VarChar, file.name);
+        fileRequest.input("FILE_PATH", sql.VarChar, file.url);
+        fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
+        fileRequest.input("FILE_KND_NM", sql.VarChar, 'P');
+        fileRequest.input("AGENT_ID", sql.VarChar, carAgent);
+        fileRequest.input("REGR_ID", sql.VarChar, usrId);
+        fileRequest.input("MODR_ID", sql.VarChar, usrId);
+
+        await fileRequest.query(`INSERT INTO CJB_FILE_INFO (
+                                            AGENT_ID,
+                                            FILE_SCT_CD,
+                                            FILE_KND_NM,
+                                            FILE_NM,
+                                            FILE_PATH,
+                                            CAR_REG_ID,
+                                            REGR_ID,
+                                            MODR_ID) VALUES (
+                                            @AGENT_ID, 
+                                            @FILE_SCT_CD, 
+                                            @FILE_KND_NM, 
+                                            @FILE_NM, 
+                                            @FILE_PATH, 
+                                            @CAR_REG_ID, 
+                                            @REGR_ID, 
+                                            @MODR_ID)`);
+
+      });
   
+
+          // 차량판매
+    const query2 = `UPDATE dbo.CJB_CAR_PUR
+                    SET 
+                    REGR_ID = @REGR_ID
+                    MODR_ID = @MODR_ID
+                    WHERE CAR_REG_ID = @CAR_REG_ID;`;
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
     } catch (err) {
       console.error("Error updating car sel info:", err);
       throw err;
@@ -379,24 +458,24 @@ exports.updateCarSel = async ({ carRegId, carSaleDt, saleRegDt, agentId, dlrId, 
   
   
 // 판매매도 삭제
-exports.deleteCarSel = async ({car_regid, flag_type}) => {
+exports.deleteCarSel = async ({carRegId, flag_type}) => {
   try {
     const request = pool.request();
-    request.input("CAR_REGID", sql.VarChar, car_regid);
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
 
     let query = "";
 
     if(flag_type == "1") {
 
       query = `DELETE CJB_CAR_SEL
-                        WHERE CAR_REG_ID = @CAR_REGID
+                        WHERE CAR_REG_ID = @CAR_REG_ID
                         AND CAR_DEL_YN = 'N'
             `;  
     } else {
       query = `UPDATE CJB_CAR_SEL
                         SET CAR_DEL_YN = 'Y'
                           , CAR_DEL_DT = GETDATE()
-                        WHERE CAR_REG_ID = @CAR_REGID;
+                        WHERE CAR_REG_ID = @CAR_REG_ID;
             `;  
     }
 

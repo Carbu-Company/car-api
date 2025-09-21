@@ -222,3 +222,134 @@ exports.getCustomerList = async ({ carAgent, search }) => {
     throw err;
   }
 };
+
+
+
+exports.getCarList = async ({ 
+  carAgent, 
+  page,
+  pageSize,
+  carNo,
+  dealer,
+  orderItem = '제시일',
+  ordAscDesc = 'desc'
+}) => {
+  try {
+    const request = pool.request();
+/*
+    console.log('carAgent:', carAgent);
+    console.log('pageSize:', pageSize);
+    console.log('page:', page);
+
+    console.log('carNo:', carNo);
+    console.log('dealer:', dealer);
+    console.log('orderItem:', orderItem);
+    console.log('ordAscDesc:', ordAscDesc);
+*/
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("PAGE_SIZE", sql.Int, pageSize);
+    request.input("PAGE", sql.Int, page);
+
+
+    if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
+    if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
+
+
+    // 전체 카운트 조회
+    const countQuery = `
+    SELECT COUNT(*) as totalCount
+              FROM dbo.CJB_CAR_PUR A
+            WHERE AGENT_ID = @CAR_AGENT
+              AND CAR_DEL_YN = 'N'
+              ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+              ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+    `;
+  
+    const dataQuery = `SELECT CAR_REG_ID               
+       , CAR_REG_DT              
+       , CAR_DEL_DT              
+       , CAR_STAT_CD             
+       , CAR_DEL_YN              
+       , AGENT_ID                
+       , DLR_ID                  
+       , (SELECT USR_NM FROM CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+       , CAR_KND_CD              
+       , PRSN_SCT_CD             
+       , CAR_PUR_DT              
+       , CAR_LOAN_CNT            
+       , CAR_LOAN_AMT            
+       , CAR_NO               
+       , PUR_BEF_CAR_NO   
+       , CAR_NEW_YN              
+       , CAR_NM                  
+       , CAR_CAT_NM              
+       , MFCP_NM                 
+       , CAR_MNFT_DT             
+       , RUN_DSTN                
+       , CAR_YOM
+       , PUR_EVDC_CD                 
+       , OWNR_NM                 
+       , OWNR_TP_CD             
+       , OWNR_SSN                
+       , OWNR_BRNO               
+       , OWNR_PHON               
+       , OWNR_ZIP                
+       , OWNR_ADDR1              
+       , OWNR_ADDR2     
+       , SUBSTRING(OWNR_EMAIL, 1, CHARINDEX('@', OWNR_EMAIL) - 1) AS OWNR_EMAIL
+       , SUBSTRING(OWNR_EMAIL, CHARINDEX('@', OWNR_EMAIL) + 1, LEN(OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
+       , PUR_AMT                 
+       , PUR_SUP_PRC             
+       , PUR_VAT                 
+       , GAIN_TAX                
+       , AGENT_PUR_CST           
+       , PURACSH_RCV_YN          
+       , TXBL_ISSU_DT            
+       , PUR_DESC                
+       , TOT_PUR_FEE             
+       , TOT_PAY_FEE             
+       , TOT_CMRC_COST_FEE       
+       , CUST_NO                 
+       , PRSN_NO                 
+       , PARK_ZON_CD             
+       , PARK_ZON_DESC           
+       , PARK_KEY_NO             
+       , REG_DTIME               
+       , REGR_ID                 
+       , MOD_DTIME               
+       , MODR_ID             
+                FROM dbo.CJB_CAR_PUR A
+              WHERE AGENT_ID = @CAR_AGENT
+                AND CAR_DEL_YN = 'N'
+                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+              ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
+              OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
+              FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
+
+    // 두 쿼리를 동시에 실행
+    const [countResult, dataResult] = await Promise.all([
+      request.query(countQuery),
+      request.query(dataQuery)
+    ]);
+
+    const totalCount = countResult.recordset[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      carlist: dataResult.recordset,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+
+  } catch (err) {
+    console.error("Error fetching car pur list:", err);
+    throw err;
+  }
+};
