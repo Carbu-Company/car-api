@@ -1,6 +1,12 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 현금영수증 2.0
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 현금영수증 목록 조회 
 exports.getCarCashList = async ({ 
     carAgent, 
     page,
@@ -153,7 +159,7 @@ exports.getCarCashList = async ({
     }
   };
   
-  // 제시 차량 합계 조회
+  // 현금영수증 합계 조회
   exports.getCarCashSummary = async ({  
     carAgent, 
     page,
@@ -301,7 +307,7 @@ exports.getCarCashList = async ({
     }
   };
   
-  // 제시 차량 상세 조회
+  // 현금영수증 상세 조회
   exports.getCarCashDetail = async ({ car_regid }) => {
     try {
       const request = pool.request();
@@ -361,7 +367,7 @@ exports.getCarCashList = async ({
   };
 
   
-// 제시 직접 등록
+// 현금영수증 직접 등록
 exports.insertCarPur = async ({
     cashMgmtkey,                  // 현금 관리키             
     ntsConfNo,                    // 국세청 승인 번호        
@@ -532,7 +538,7 @@ exports.insertCarPur = async ({
 
 
 
-// 제시 수정 등록 
+// 현금영수증 수정 등록 
 exports.updateCarCash = async ({ 
     cashMgmtkey,                  // 현금 관리키             
     ntsConfNo,                    // 국세청 승인 번호        
