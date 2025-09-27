@@ -567,7 +567,7 @@ exports.insertGoodsFee = async ({
   
       const query2 = `
         UPDATE dbo.CJB_CAR_PUR 
-        SET TOT_GOODS_FEE = TOT_GOODS_FEE + @EXPD_AMT 
+        SET tot_cmrc_cost_fee = tot_cmrc_cost_fee + @EXPD_AMT 
         WHERE CAR_REG_ID = @CAR_REG_ID;`;
   
       await Promise.all([request.query(query1), request.query(query2)]);
