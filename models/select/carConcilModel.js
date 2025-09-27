@@ -6,8 +6,7 @@ const pool = require("../../config/db");
 // 알선 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 알선 목록 조
-// 현금영수증 목록 조회 
+// 알선 목록 조회 
 exports.getCarConcilList = async ({ 
     carAgent, 
     page,
@@ -162,7 +161,7 @@ exports.getCarConcilList = async ({
     }
   };
   
-  // 현금영수증 합계 조회
+  // 알선 합계 조회
   exports.getCarConcilSummary = async ({  
     carAgent, 
     page,
@@ -312,11 +311,12 @@ exports.getCarConcilList = async ({
     }
   };
   
-  // 현금영수증 상세 조회
-  exports.getCarCashDetail = async ({ car_regid }) => {
+  // 알선 상세 조회
+  exports.getCarConcilDetail = async ({ car_regid, carAgent  }) => {
     try {
       const request = pool.request();
       request.input("CAR_REGID", sql.VarChar, car_regid);   
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
   
       const query = `SELECT B.CASH_MGMTKEY                  -- 현금 관리키             
                             B.NTS_CONF_NO                   -- 국세청 승인 번호        

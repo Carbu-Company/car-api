@@ -136,10 +136,10 @@ router.post("/updateBuyFeeSum", carController.updateBuyFeeSum);
 // 상품화비 
 //***************************************************************************************** */
 
-// 상품화비 목록 조회
+// 상품화비용 리스트 조회
 router.post("/getGoodsFeeList", carController.getGoodsFeeList);
 
-// 상품화비 목록 조회
+// 차량별 리스트 조회
 router.post("/getGoodsFeeCarSumList", carController.getGoodsFeeCarSumList);
 
 // 상품화비 상세 리스트 조회
@@ -166,8 +166,39 @@ router.post("/getCarLoanSumList", carController.getCarLoanSumList);
 // 이자납입리스트 조회
 router.post("/getCarLoanList", carController.getCarLoanList);
 
-// 캐피탈사별 이용현황 조회
-router.get("/getCarLoanSummary", carController.getCarLoanSummary);
+// 재고 금융 합계
+router.post("/getCarLoanSummary", carController.getCarLoanSummary);
+
+// 재고금융 등록
+router.post("/insertCarLoan", carController.insertCarLoan);
+
+// 재고금융 수정 등록
+router.post("/updateCarLoan", carController.updateCarLoan);
+
+// 재고금융 삭제 
+router.get("/deleteCarLoan", carController.deleteCarLoan);
+
+// 재고금융 상사 등록
+router.post("/insertAgentLoanCorp", carController.insertAgentLoanCorp);
+
+// 재고금융 상사 수정 등록
+router.post("/updateAgentLoanCorp", carController.updateAgentLoanCorp);
+
+// 재고금융 상사 삭제 
+router.get("/deleteAgentLoanCorp", carController.deleteAgentLoanCorp);
+
+
+
+//***************************************************************************************** */
+// 알선 2.0
+//***************************************************************************************** */
+
+// 재고금융 등록/리스트 조회
+router.post("/getCarConcilList", carController.getCarConcilList);
+
+// 이자납입리스트 조회
+router.post("/getCarConcilSummary", carController.getCarConcilSummary);
+
 
 //***************************************************************************************** */
 // 재고금융 
@@ -364,61 +395,44 @@ router.post("/getSystemVatPurchaseList", carController.getSystemVatPurchaseList)
 
 
 //***************************************************************************************** */
-// 현금영수증 발행
+// 현금영수증 2.0
 //***************************************************************************************** */
 
 // 현금영수증 발행 목록 데이터 조회
-router.get("/getCashBillList", carController.getCashBillList);
+router.post("/getCarCashList", carController.getCarCashList);
 
-// 현금영수증 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
-router.get("/getCashBillAmount", carController.getCashBillAmount);
+// 현금영수증 합계 조회
+router.post("/getCarCashSummary", carController.getCarCashSummary);
 
-
-//***************************************************************************************** */
-// 현금영수증 발행 리스트 조회
-//***************************************************************************************** */
-
-// 현금영수증 발행 대상 목록 데이터 조회
-router.post("/getReceiptIssueList", carController.getReceiptIssueList);
-
-// 현금영수증 발행 합계 조회
-router.post("/getReceiptIssueSummary", carController.getReceiptIssueSummary);
-
+// 현금영수증 상세 조회
+router.get("/getCarCashDetail", carController.getCarCashDetail);
 
 //***************************************************************************************** */
-// 전자세금계산서 발행 
+// 전자세금계산서 2.0
 //***************************************************************************************** */
 
 // 전자세금계산서 발행 대상 목록 데이터 조회
-router.post("/getTaxInvoiceList", carController.getTaxInvoiceList);
+router.post("/getCarTaxList", carController.getCarTaxList);
 
 // 전자세금계산서 발행 사전 데이터 조회 - 총거래금액, 공급가액, 부가세
-router.post("/getTaxInvoiceAmount", carController.getTaxInvoiceAmount);
+router.post("/getCarTaxSummary", carController.getCarTaxSummary);
 
-
-
-
-//***************************************************************************************** */
-// 전자세금계산서 발행 리스트 조회
-//***************************************************************************************** */
-
-// 전자세금계산서 발행 대상 목록 데이터 조회
-router.post("/getTaxIssueList", carController.getTaxIssueList);
-
-// 전자세금계산서 발행 합계 조회
-router.post("/getTaxIssueSummary", carController.getTaxIssueSummary);
-
+// 전자세금계산서 발행 상세 조회
+router.get("/getCarTaxDetail", carController.getCarTaxDetail);
 
 
 //***************************************************************************************** */
-// 시제(계좌) 
+// 계좌 2.0
 //***************************************************************************************** */
 
-// 시재 관리
-router.post("/getAssetList", carController.getAssetList);
+// 계좌 목록 조회
+router.post("/getCarAcctList", carController.getCarAcctList);
 
-// 계좌정보 조회
-router.get("/getAccountInfo", carController.getAccountInfo);
+// 계좌정보 합계 조회
+router.post("/getCarAcctSummary", carController.getCarAcctSummary);
+
+// 계좌정보 상세 조회
+router.get("/getCarAcctDetail", carController.getCarAcctDetail);
 
 //***************************************************************************************** */
 // DASH BOARD

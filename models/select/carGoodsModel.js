@@ -15,14 +15,14 @@ exports.getGoodsFeeList = async ({   carAgent,
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
+    dtlOldCarNo,
+    dtlNewCarNo,
+    dtlExpdItem,
+    dtlTaxGubun,
+    dtlExpdGubun,
+    dtlExpdEvdc,
+    dtlRmrk,
+    dtlAdjInclusYN,
     orderItem = '제시일',
     ordAscDesc = 'desc' }) => {
     try {
@@ -35,14 +35,14 @@ exports.getGoodsFeeList = async ({   carAgent,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlOldCarNo) request.input("PUR_BEF_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("CAR_NO", sql.VarChar, dtlNewCarNo);
+      if (dtlExpdItem) request.input("EXPD_ITEM_CD", sql.VarChar, dtlExpdItem);
+      if (dtlTaxGubun) request.input("TAX_SCT_CD", sql.VarChar, dtlTaxGubun);
+      if (dtlExpdGubun) request.input("EXPD_SCT_CD", sql.VarChar, dtlExpdGubun);
+      if (dtlExpdEvdc) request.input("EXPD_EVDC_CD", sql.VarChar, dtlExpdEvdc);
+      if (dtlRmrk) request.input("RMRK", sql.VarChar, dtlRmrk);
+      if (dtlAdjInclusYN) request.input("ADJ_INCLUS_YN", sql.VarChar, dtlAdjInclusYN);
   
       // 전체 카운트 조회
       const countQuery = `SELECT COUNT(*) as totalCount
@@ -55,14 +55,14 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
       `;
   
       const dataQuery = `SELECT B.GOODS_FEE_SEQ,           
@@ -71,6 +71,8 @@ exports.getGoodsFeeList = async ({   carAgent,
                                 A.CAR_REG_ID,
                                 A.CAR_NO,         -- 차량번호
                                 A.CAR_NM,         -- 차량명
+                                A.CAR_PUR_DT,     -- 차량구매일
+                                A.PUR_AMT,        -- 차량구매금액
                                 B.EXPD_ITEM_CD,
                                 B.EXPD_ITEM_NM,   -- 비용항목
                                 B.EXPD_SCT_CD,
@@ -105,15 +107,15 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-                      ORDER BY ${orderItem} ${ordAscDesc}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
+                      ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
                       FETCH NEXT @PAGESIZE ROWS ONLY
                       `;
@@ -128,7 +130,7 @@ exports.getGoodsFeeList = async ({   carAgent,
       const totalPages = Math.ceil(totalCount / pageSize);
   
       return {
-        data: dataResult.recordset,
+        carlist: dataResult.recordset,
         pagination: {
           currentPage: page,
           pageSize: pageSize,
@@ -155,14 +157,14 @@ exports.getGoodsFeeList = async ({   carAgent,
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
+    dtlOldCarNo,
+    dtlNewCarNo,
+    dtlExpdItem,
+    dtlTaxGubun,
+    dtlExpdGubun,
+    dtlExpdEvdc,
+    dtlRmrk,
+    dtlAdjInclusYN,
     orderItem = '제시일',
     ordAscDesc = 'desc'
     }) => {
@@ -176,14 +178,14 @@ exports.getGoodsFeeList = async ({   carAgent,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlOldCarNo) request.input("PUR_BEF_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("CAR_NO", sql.VarChar, dtlNewCarNo);
+      if (dtlExpdItem) request.input("EXPD_ITEM_CD", sql.VarChar, dtlExpdItem);
+      if (dtlTaxGubun) request.input("TAX_SCT_CD", sql.VarChar, dtlTaxGubun);
+      if (dtlExpdGubun) request.input("EXPD_SCT_CD", sql.VarChar, dtlExpdGubun);
+      if (dtlExpdEvdc) request.input("EXPD_EVDC_CD", sql.VarChar, dtlExpdEvdc);
+      if (dtlRmrk) request.input("RMRK", sql.VarChar, dtlRmrk);
+      if (dtlAdjInclusYN) request.input("ADJ_INCLUS_YN", sql.VarChar, dtlAdjInclusYN);
   
       // 전체 카운트 조회
       const countQuery = `
@@ -197,24 +199,32 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-      `;
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
+                                      GROUP BY A.CAR_REG_ID
+                                      ;`;
+
+
+
   
-      const query = `SELECT B.CAR_REG_ID, 
+      const query = `SELECT B.CAR_REG_ID, MIN(A.CAR_NO) CAR_NO,
                             MIN(A.DLR_ID) DLR_ID,
                             (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = MIN(A.DLR_ID)) AS DLR_NM,
                             MIN(A.CAR_NM) CAR_NM,
+                            MIN(A.CAR_PUR_DT) CAR_PUR_DT,
+                            MIN(A.PUR_AMT) PUR_AMT,
                             COUNT(B.CAR_REG_ID) CNT,
                             SUM(B.EXPD_AMT) AS EXPD_AMT,
                             SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC,
-                            SUM(B.EXPD_VAT) AS EXPD_VAT
+                            SUM(B.EXPD_VAT) AS EXPD_VAT,
+                            MIN(A.CAR_STAT_CD) CAR_STAT_CD,
+                            MIN(A.CAR_SEL_DT) CAR_SEL_DT
                       FROM dbo.CJB_CAR_PUR A
                          , dbo.CJB_GOODS_FEE B
                     WHERE 1 = 1
@@ -226,17 +236,21 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
                       GROUP BY B.CAR_REG_ID
                     ;`; 
   
+
+
+                    console.log(query);
+
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
         request.query(query)
@@ -246,7 +260,7 @@ exports.getGoodsFeeList = async ({   carAgent,
       const totalPages = Math.ceil(totalCount / pageSize);  
   
       return {
-        data: dataResult.recordset,
+        carlist: dataResult.recordset,
         pagination: {
           currentPage: page,
           pageSize: pageSize,
@@ -379,14 +393,14 @@ exports.getGoodsFeeList = async ({   carAgent,
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
+    dtlOldCarNo,
+    dtlNewCarNo,
+    dtlExpdItem,
+    dtlTaxGubun,
+    dtlExpdGubun,
+    dtlExpdEvdc,
+    dtlRmrk,
+    dtlAdjInclusYN,
     orderItem = '제시일',
     ordAscDesc = 'desc'
     }) => {
@@ -400,14 +414,14 @@ exports.getGoodsFeeList = async ({   carAgent,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlOldCarNo) request.input("PUR_BEF_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("CAR_NO", sql.VarChar, dtlNewCarNo);
+      if (dtlExpdItem) request.input("EXPD_ITEM_CD", sql.VarChar, dtlExpdItem);
+      if (dtlTaxGubun) request.input("TAX_SCT_CD", sql.VarChar, dtlTaxGubun);
+      if (dtlExpdGubun) request.input("EXPD_SCT_CD", sql.VarChar, dtlExpdGubun);
+      if (dtlExpdEvdc) request.input("EXPD_EVDC_CD", sql.VarChar, dtlExpdEvdc);
+      if (dtlRmrk) request.input("RMRK", sql.VarChar, dtlRmrk);
+      if (dtlAdjInclusYN) request.input("ADJ_INCLUS_YN", sql.VarChar, dtlAdjInclusYN);
   
       // 전체 카운트 조회
       const query = `
@@ -429,14 +443,14 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
               GROUP BY B.TAX_SCT_CD 
       `;
   
