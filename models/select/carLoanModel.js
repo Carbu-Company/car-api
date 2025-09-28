@@ -155,14 +155,12 @@ exports.getCarLoanList = async ({   carAgent,
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
+    dtlNewCarNo,
+    dtlOldCarNo,
+    dtlCapital,
+    dtlLoanMemo,
+    dtlLoanSctGubun,
+    dtlLoanStatGubun,
     orderItem = '제시일',
     ordAscDesc = 'desc'
     }) => {
@@ -176,68 +174,72 @@ exports.getCarLoanList = async ({   carAgent,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, dtlNewCarNo);
+      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlCapital) request.input("LOAN_CORP_CD", sql.VarChar, dtlCapital);
+      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
+      if (dtlLoanSctGubun) request.input("DTL_LOAN_SCT_GUBUN", sql.VarChar, dtlLoanSctGubun);
+      if (dtlLoanStatGubun) request.input("DTL_LOAN_STAT_GUBUN", sql.VarChar, dtlLoanStatGubun);
   
       // 전체 카운트 조회
       const countQuery = `
                         SELECT COUNT(*) as totalCount
-                        FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
+                        FROM dbo.CJB_CAR_PUR A, dbo.CJB_CAR_LOAN B
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
                             AND A.AGENT_ID = @CAR_AGENT
                             AND A.CAR_DEL_YN = 'N'
-                            AND B.DEL_YN = 'N'
-                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
+                ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
       `;
+
+
   
-      const query = `SELECT B.CAR_REG_ID, 
-                            MIN(A.DLR_ID) DLR_ID,
-                            (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = MIN(A.DLR_ID)) AS DLR_NM,
-                            MIN(A.CAR_NM) CAR_NM,
-                            MIN(A.CAR_NO) CAR_NO,
-                            COUNT(B.CAR_REG_ID) CNT,
-                            SUM(B.EXPD_AMT) AS EXPD_AMT,
-                            SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC,
-                            SUM(B.EXPD_VAT) AS EXPD_VAT
+      const query = `SELECT B.LOAN_ID,           
+                                A.DLR_ID DLR_ID,     
+                                (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
+                                A.CAR_REG_ID,
+                                A.CAR_NO,         -- 차량번호
+                                A.CAR_NM,         -- 차량명
+                                A.CAR_PUR_DT,     -- 차량구매일
+                                A.PUR_AMT,        -- 차량구매금액
+                                B.LOAN_CORP_CD,
+                                dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
+                                B.LOAN_AMT,
+                                B.LOAN_DT,         -- 대출 실행 일자
+                                B.LOAN_MM_CNT,
+                                B.DLR_APLY_INTR_RT,
+                                B.MM_INTR_AMT, 
+                                B.LOAN_MM_CNT * B.MM_INTR_AMT AS TOT_INTR_AMT, 
+                                B.TOT_PAY_INTR_AMT, 
+                                B.RCNT_PAY_DTIME,
+                                B.LOAN_SCT_CD, 
+                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM
                       FROM dbo.CJB_CAR_PUR A
-                         , dbo.CJB_GOODS_FEE B
+                         , dbo.CJB_CAR_LOAN B
                     WHERE 1 = 1
                       AND A.AGENT_ID = @CAR_AGENT
                       AND A.CAR_REG_ID = B.CAR_REG_ID
                       AND A.CAR_DEL_YN = 'N'
-                      AND B.DEL_YN = 'N'
-                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-                      GROUP BY B.CAR_REG_ID
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
+                ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
                     ;`; 
-  
+
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
         request.query(query)
@@ -275,14 +277,12 @@ exports.getCarLoanList = async ({   carAgent,
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
+    dtlNewCarNo,
+    dtlOldCarNo,
+    dtlCapital,
+    dtlLoanMemo,
+    dtlLoanSctGubun,
+    dtlLoanStatGubun,
     orderItem = '제시일',
     ordAscDesc = 'desc'
    }) => {
@@ -296,14 +296,13 @@ exports.getCarLoanList = async ({   carAgent,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, dtlCustomerName);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, dtlNewCarNo);
+      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlCapital) request.input("LOAN_CORP_CD", sql.VarChar, dtlCapital);
+      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
+      if (dtlLoanSctGubun) request.input("DTL_LOAN_SCT_GUBUN", sql.VarChar, dtlLoanSctGubun);
+      if (dtlLoanStatGubun) request.input("DTL_LOAN_STAT_GUBUN", sql.VarChar, dtlLoanStatGubun);
+  
   
       // 전체 카운트 조회
       const countQuery = `
@@ -314,14 +313,12 @@ exports.getCarLoanList = async ({   carAgent,
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
+                ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
       `;
   
       // 기본 목록 조회
@@ -338,7 +335,7 @@ exports.getCarLoanList = async ({   carAgent,
                                C.CAR_NM , 
                                C.DLR_NM ,
                                C.LOAN_DT 
-                      FROM dbo.CJB_CAR_PUR A, dbo.CJB_AGENT_LOAN_CORP B
+                      FROM dbo.CJB_AGENT_LOAN_CORP B
                  LEFT JOIN (SELECT K.CAR_REG_ID
                                 , K.CAR_NO 
                                 , K.CAR_NM 
@@ -364,16 +361,15 @@ exports.getCarLoanList = async ({   carAgent,
                 ${dealer ? "AND A.DLR_ID = @DEALER" : ""}
                 ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
                 ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
+                ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
                     ;`; 
-  
+
+ 
       const result = await request.query(query);
       return result.recordset;  
   
