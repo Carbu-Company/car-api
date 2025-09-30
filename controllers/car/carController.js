@@ -1701,6 +1701,18 @@ exports.getDealerList = async (req, res, next) => {
   }
 };
 
+
+// 상사 대출 업체 대출 한도
+exports.getCompanyLoanLimit = async (req, res, next) => {
+  try {
+    const { carAgent } = req.query;
+    const companyLoanLimit = await commonModel.getCompanyLoanLimit({ carAgent });
+    res.status(200).json(companyLoanLimit);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // 공통코드 조회
 exports.getCDList = async (req, res, next) => {
   try {
@@ -1711,7 +1723,6 @@ exports.getCDList = async (req, res, next) => {
     next(err);
   }
 };
-
 
 // 고객 목록 조회
 exports.getCustomerList = async (req, res, next) => {

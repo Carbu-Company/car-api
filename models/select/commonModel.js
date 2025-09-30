@@ -353,3 +353,31 @@ exports.getCarList = async ({
     throw err;
   }
 };
+
+
+
+// 상사 대출 업체 대출 한도
+
+exports.getCompanyLoanLimit = async ({ carAgent }) => { 
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT LOAN_CORP_CD
+                        , LOAN_CORP_NM
+                        , A.TOT_LMT_AMT    -- 총 대출한도액
+                        , A.TOT_LOAN_AMT   -- 총 대출액
+                      FROM dbo.CJB_AGENT_LOAN_CORP A
+                        , dbo.CJB_COMM_CD B
+                    WHERE A.AGENT_ID  = @CAR_AGENT
+                      AND A.LOAN_CORP_CD = B.CD
+                      AND B.GRP_CD = '05'
+                    ORDER BY A.SORT_SEQ;
+                    `;
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching company loan limit:", err);
+    throw err;
+  }
+};
