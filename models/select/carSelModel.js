@@ -24,6 +24,7 @@ exports.getCarSelList = async ({
     dtlOwnerSsn,
     dtlCtshNo,
     dtlCarNoBefore,
+    dtlPurStatGubun, 
     orderItem = '제시일',
     ordAscDesc = 'desc'
   }) => {
@@ -68,7 +69,8 @@ exports.getCarSelList = async ({
       if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
       if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
       if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
-  
+      if (dtlPurStatGubun) request.input("DTL_PUR_STAT_GUBUN", sql.VarChar, dtlPurStatGubun);
+
       // 전체 카운트 조회
       const countQuery = `
             SELECT COUNT(*) as totalCount
@@ -80,18 +82,21 @@ exports.getCarSelList = async ({
                   AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
                 ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
                 ${dealer ? "AND B.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND B.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-      `;
-    
+                ${dtGubun === '01' ? "AND B.CAR_SALE_DT >= @START_DT AND B.CAR_SALE_DT <= @END_DT" : 
+                  dtGubun === '02' ? "AND B.SALE_REG_DT >= @START_DT AND B.SALE_REG_DT <= @END_DT" :
+                  dtGubun === '03' ? "AND B.ADJ_FIN_DT >= @START_DT AND B.ADJ_FIN_DT <= @END_DT" :
+                  dtGubun === '04' ? "AND A.CAR_PUR_DT >= @START_DT AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
+                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
+                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
+                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
+                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
+                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
+                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
+                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
+                ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
+                     ;`;
+
       const dataQuery = `SELECT A.CAR_STAT_CD     -- 제시구분코드
                     , B.SALE_TP_CD      -- 판매유형코드 
                     , B.BUYER_NM        -- 매입자명 
@@ -108,20 +113,26 @@ exports.getCarSelList = async ({
                   AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
                   ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
                   ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                  ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                  ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                  ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                  ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                  ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                  ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                  ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                  ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                  ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                  ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                  ${dtGubun === '01' ? "AND B.CAR_SALE_DT >= @START_DT AND B.CAR_SALE_DT <= @END_DT" : 
+                    dtGubun === '02' ? "AND B.SALE_REG_DT >= @START_DT AND B.SALE_REG_DT <= @END_DT" :
+                    dtGubun === '03' ? "AND B.ADJ_FIN_DT >= @START_DT AND B.ADJ_FIN_DT <= @END_DT" :
+                    dtGubun === '04' ? "AND A.CAR_PUR_DT >= @START_DT AND A.CAR_PUR_DT <= @END_DT" : ""}
+                  ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
+                  ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
+                  ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
+                  ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
+                  ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
+                  ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
+                  ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
+                  ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
+                  ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
                 ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
                 OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
                 FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
-  
+
+
+
+    
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -168,12 +179,13 @@ exports.getCarSelList = async ({
     dtlOwnerSsn,
     dtlCtshNo,
     dtlCarNoBefore,
+    dtlPurStatGubun,
     orderItem = '제시일',
     ordAscDesc = 'desc'
   }) => {
     try {
       const request = pool.request();
-  
+  /*
       console.log('carAgent:', carAgent);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
@@ -191,9 +203,10 @@ exports.getCarSelList = async ({
       console.log('dtlOwnerSsn:', dtlOwnerSsn);
       console.log('dtlCtshNo:', dtlCtshNo);
       console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('dtlPurStatGubun:', dtlPurStatGubun);
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
-  
+  */
       request.input("CAR_AGENT", sql.VarChar, carAgent);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
@@ -210,8 +223,9 @@ exports.getCarSelList = async ({
       if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
       if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
       if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
-  
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);  
+      if (dtlPurStatGubun) request.input("DTL_PUR_STAT_GUBUN", sql.VarChar, dtlPurStatGubun);
+
       const query = `SELECT '상사' AS PRSN_SCT_CD
                           , COUNT(CAR_REG_ID) CNT
                           , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
@@ -219,23 +233,26 @@ exports.getCarSelList = async ({
                           , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
                           , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
                           , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
+                        FROM dbo.CJB_CAR_PUR
                         WHERE AGENT_ID = @CAR_AGENT
                           AND CAR_STAT_CD = '001'
                           AND CAR_DEL_YN = 'N'
                           AND PRSN_SCT_CD = '0'  -- 상사
                           ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                           ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                          ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
+                            dtGubun === '02' ? "AND SALE_REG_DT >= @START_DT AND SALE_REG_DT <= @END_DT" :
+                            dtGubun === '03' ? "AND ADJ_FIN_DT >= @START_DT AND ADJ_FIN_DT <= @END_DT" :
+                            dtGubun === '04' ? "AND CAR_PUR_DT >= @START_DT AND CAR_PUR_DT <= @END_DT" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
+                          ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
                       UNION ALL
                       SELECT '고객위탁' AS PRSN_SCT_CD
                           , COUNT(CAR_REG_ID) CNT
@@ -244,23 +261,27 @@ exports.getCarSelList = async ({
                           , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
                           , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
                           , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
+                        FROM dbo.CJB_CAR_PUR
                         WHERE AGENT_ID = @CAR_AGENT
                           AND CAR_STAT_CD = '001'
                           AND CAR_DEL_YN = 'N'
                           AND PRSN_SCT_CD = '1'  -- 고객위탁
                           ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                           ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                          ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
+                            dtGubun === '02' ? "AND SALE_REG_DT >= @START_DT AND SALE_REG_DT <= @END_DT" :
+                            dtGubun === '03' ? "AND ADJ_FIN_DT >= @START_DT AND ADJ_FIN_DT <= @END_DT" :
+                            dtGubun === '04' ? "AND CAR_PUR_DT >= @START_DT AND CAR_PUR_DT <= @END_DT" : ""}
                           ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
+                          ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
                       UNION ALL
                       SELECT '합계' AS PRSN_SCT_CD
                           , COUNT(CAR_REG_ID) CNT
@@ -269,23 +290,29 @@ exports.getCarSelList = async ({
                           , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
                           , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
                           , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
+                        FROM dbo.CJB_CAR_PUR
                         WHERE AGENT_ID = @CAR_AGENT
                           AND CAR_STAT_CD = '001'
                           AND CAR_DEL_YN = 'N'
                           ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                           ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                          ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
+                            dtGubun === '02' ? "AND SALE_REG_DT >= @START_DT AND SALE_REG_DT <= @END_DT" :
+                            dtGubun === '03' ? "AND ADJ_FIN_DT >= @START_DT AND ADJ_FIN_DT <= @END_DT" :
+                            dtGubun === '04' ? "AND CAR_PUR_DT >= @START_DT AND CAR_PUR_DT <= @END_DT" : ""}
                           ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
+                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
+                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
+                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
+                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
+                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
+                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
+                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
+                          ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
         `;
+
+        console.log('query:', query);
   
       const result = await request.query(query);
       return result.recordset;
