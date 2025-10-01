@@ -226,46 +226,20 @@ exports.getCarSelList = async ({
       if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);  
       if (dtlPurStatGubun) request.input("DTL_PUR_STAT_GUBUN", sql.VarChar, dtlPurStatGubun);
 
-      const query = `SELECT '상사' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM dbo.CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
-                          AND PRSN_SCT_CD = '0'  -- 상사
-                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
-                            dtGubun === '02' ? "AND SALE_REG_DT >= @START_DT AND SALE_REG_DT <= @END_DT" :
-                            dtGubun === '03' ? "AND ADJ_FIN_DT >= @START_DT AND ADJ_FIN_DT <= @END_DT" :
-                            dtGubun === '04' ? "AND CAR_PUR_DT >= @START_DT AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
-                          ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
-                      UNION ALL
-                      SELECT '고객위탁' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM dbo.CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
-                          AND PRSN_SCT_CD = '1'  -- 고객위탁
+      const query = `SELECT CASE WHEN GROUPING(CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END)  = 1 THEN '합계'  
+                                ELSE (CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END) END PRSN_SCT_NM
+                          , COUNT(A.CAR_REG_ID) CNT
+                          , SUM(A.PUR_AMT) PUR_AMT
+                          , SUM(A.CAR_LOAN_AMT)
+                          , SUM(B.SALE_AMT) SALE_AMT
+                          , SUM(B.AGENT_SEL_COST) AGENT_SEL_COST
+                          , SUM(B.PERF_INFE_AMT) PERF_INFE_AMT
+                      FROM dbo.CJB_CAR_PUR A
+                          , dbo.CJB_CAR_SEL B
+                      WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                        AND A.AGENT_ID = '00011'
+                        AND A.CAR_DEL_YN = 'N'
+                        AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
                           ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                           ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                           ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
@@ -282,35 +256,8 @@ exports.getCarSelList = async ({
                           ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
                           ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
                           ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
-                      UNION ALL
-                      SELECT '합계' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM dbo.CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
-                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${dtGubun === '01' ? "AND CAR_SALE_DT >= @START_DT AND CAR_SALE_DT <= @END_DT" : 
-                            dtGubun === '02' ? "AND SALE_REG_DT >= @START_DT AND SALE_REG_DT <= @END_DT" :
-                            dtGubun === '03' ? "AND ADJ_FIN_DT >= @START_DT AND ADJ_FIN_DT <= @END_DT" :
-                            dtGubun === '04' ? "AND CAR_PUR_DT >= @START_DT AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}   -- 소유자 이름
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}     -- 고객유형
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}    -- 매출증빙 구분 (현금영수증,...)
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}   -- 제시구분 (상사매입, 고객위탁)
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}       -- 소유자 사업자번호
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}           -- 소유자 주민번호
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}                  -- 계약서 번호
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""} -- 이전 차량번호
-                          ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
-        `;
+                    GROUP BY ROLLUP (CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END)
+                        ; `;
 
         console.log('query:', query);
   
