@@ -91,12 +91,14 @@ exports.getCarPurList = async ({
          , CAR_REG_DT              
          , CAR_DEL_DT              
          , CAR_STAT_CD             
+         , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
          , CAR_DEL_YN              
          , AGENT_ID                
          , DLR_ID                  
          , (SELECT USR_NM FROM CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
          , CAR_KND_CD              
-         , PRSN_SCT_CD             
+         , PRSN_SCT_CD
+         , CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END PRSN_SCT_NM
          , CAR_PUR_DT              
          , CAR_LOAN_CNT            
          , CAR_LOAN_AMT            
@@ -109,9 +111,11 @@ exports.getCarPurList = async ({
          , CAR_MNFT_DT             
          , RUN_DSTN                
          , CAR_YOM
-         , PUR_EVDC_CD                 
+         , PUR_EVDC_CD                 -- 매출증빙 구분 코드
+         , dbo.CJB_FN_GET_CD_NM('07', A.PUR_EVDC_CD) PUR_EVDC_NM
          , OWNR_NM                 
          , OWNR_TP_CD             
+         , dbo.CJB_FN_GET_CD_NM('04', A.OWNR_TP_CD) OWNR_TP_NM
          , OWNR_SSN                
          , OWNR_BRNO               
          , OWNR_PHON               
@@ -342,13 +346,15 @@ exports.getCarPurList = async ({
                             , CAR_REG_DT            
                             , CAR_DEL_DT            
                             , CAR_STAT_CD           
+                            , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
                             , CAR_DEL_YN            
                             , AGENT_ID              
                             , DLR_ID      
                             , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM          
                             , CAR_KND_CD         
-                            , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.CAR_KND_CD AND GRP_CD = '92') AS CAR_KND_NM
-                            , PRSN_SCT_CD           
+                            , dbo.CJB_FN_GET_CD_NM('92', A.CAR_KND_CD) CAR_KND_NM
+                            , PRSN_SCT_CD     
+                            , CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END PRSN_SCT_NM
                             , CAR_PUR_DT            
                             , CAR_LOAN_CNT          
                             , CAR_LOAN_AMT          
@@ -362,8 +368,10 @@ exports.getCarPurList = async ({
                             , RUN_DSTN              
                             , CAR_YOM               
                             , PUR_EVDC_CD           
+                            , dbo.CJB_FN_GET_CD_NM('07', A.PUR_EVDC_CD) PUR_EVDC_NM
                             , OWNR_NM               
                             , OWNR_TP_CD            
+                            , dbo.CJB_FN_GET_CD_NM('04', A.OWNR_TP_CD) OWNR_TP_NM
                             , OWNR_SSN              
                             , OWNR_BRNO             
                             , OWNR_PHON             

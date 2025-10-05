@@ -97,14 +97,23 @@ exports.getCarSelList = async ({
                 ${dtlPurStatGubun ? "AND CAR_DEL_YN = @DTL_PUR_STAT_GUBUN" : ""}    -- 차량 삭제 여부
                      ;`;
 
-      const dataQuery = `SELECT A.CAR_STAT_CD     -- 제시구분코드
+      const dataQuery = `SELECT A.CAR_STAT_CD     -- 차량 상태 코드
+                    , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
                     , B.SALE_TP_CD      -- 판매유형코드 
+                    , dbo.CJB_FN_GET_CD_NM('03', B.SALE_TP_CD) SALE_TP_NM
+                    , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = B.DLR_ID) AS SEL_DLR_NM
                     , B.BUYER_NM        -- 매입자명 
                     , B.SALE_AMT        -- 매도 금액
                     , B.AGENT_SEL_COST  -- 상사 매도 비용
                     , B.PERF_INFE_AMT   -- 성능 보험료 금액
                     , B.CAR_SALE_DT     -- 차량 판매 일자 
                     , B.SALE_REG_DT     -- 매출 등록 일자
+                    , A.CAR_NO          -- 차량번호
+                    , A.CAR_NM          -- 차량명
+                    , A.CAR_PUR_DT      -- 차량구매일
+                    , A.DLR_ID
+                    , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+                    , A.PUR_AMT         -- 차량구매금액
                 FROM dbo.CJB_CAR_PUR A
                     , dbo.CJB_CAR_SEL B
                 WHERE A.CAR_REG_ID = B.CAR_REG_ID
@@ -131,7 +140,7 @@ exports.getCarSelList = async ({
                 FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
 
 
-
+      console.log('dataQuery:', dataQuery);
     
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
