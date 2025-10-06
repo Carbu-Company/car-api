@@ -15,14 +15,14 @@ exports.getCarTaxList = async ({
     dtGubun,
     startDt,
     endDt, 
-    dtlOldCarNo: dtlOldCarNo,    
-    dtlTaxTargetTpNm: dtlTaxTargetTpNm,
-    dtlNmNoGubun: dtlNmNoGubun,
-    dtlNmNoValue: dtlNmNoValue,
-    dtlCrStat: dtlCrStat,    
-    dtlWriteTpNm: dtlWriteTpNm,
-    dtlNtsNo: dtlNtsNo,
-    dtlMemo: dtlMemo,
+    dtlOldCarNo,    
+    dtlTaxTargetTpNm,
+    dtlNmNoGubun,
+    dtlNmNoValue,
+    dtlCrStat,
+    dtlWriteTpNm,
+    dtlNtsNo,
+    dtlMemo,
     orderItem = '01',
     ordAscDesc = 'desc'
   }) => {
@@ -87,6 +87,8 @@ exports.getCarTaxList = async ({
                 ${dtlNtsNo ? "AND A.NTS_CONF_NO = @NTS_CONF_NO" : ""}
                 ${dtlMemo ? "AND A.MEMO LIKE @MEMO" : ""}
       `;
+
+      //console.log('countQuery:', countQuery);
     
       const dataQuery = `SELECT C.CAR_NO
                         , C.DLR_ID 
@@ -113,29 +115,23 @@ exports.getCarTaxList = async ({
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
-        ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
-        ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-        ${startDt ? `AND ${dtGubun === '1' ? 'A.TRADE_DT' : dtGubun === '2' ? 'B.CAR_SALE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
-        ${endDt ? `AND ${dtGubun === '1' ? 'A.TRADE_DT' : dtGubun === '2' ? 'B.CAR_SALE_DT' : 'C.CAR_PUR_DT'} <= @END_DT` : ""}
-        ${dtlOldCarNo ? "AND C.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-        ${dtlTaxTargetTpNm ? "AND A.TAX_TARGET_TP_NM = @DTL_TAX_TARGET_TP_NM" : ""}
-        ${dtlNmNoGubun ? "AND A.NM_NO_GUBUN = @DTL_NM_NO_GUBUN" : ""}
-        ${dtlNmNoValue ? "AND A.NM_NO_VALUE = @DTL_NM_NO_VALUE" : ""}
-        ${dtlCrStat ? "AND A.CR_STAT = @DTL_CR_STAT" : ""}
-        ${dtlWriteTpNm ? "AND A.WRITE_TP_NM = @DTL_WRITE_TP_NM" : ""}
-        ${dtlNtsNo ? "AND A.NTS_NO = @DTL_NTS_NO" : ""}
-        ${dtlMemo ? "AND A.MEMO LIKE @DTL_MEMO" : ""}
-        ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-        ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-        ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-        ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-        ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
-        ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
-        ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-      ORDER BY ${orderItem === '제시일' ? 'A.CAR_PUR_DT' : orderItem === '담당딜러' ? 'A.DLR_ID' : orderItem === '고객유형' ? 'A.OWNR_TP_CD' : orderItem} ${ordAscDesc}
+        ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+        ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
+        ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
+        ${endDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} <= @START_DT` : ""}
+        ${dtlOldCarNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO" : ""}
+        ${dtlTaxTargetTpNm ? "AND A.TAX_TGT_TP_NM = @TAX_TGT_TP_NM" : ""}
+        ${dtlNmNoGubun ? dtlNmNoGubun === '1' ? "AND (A.BUYR_MTL_NM = @NM_NO_VALUE OR A.BUYR_AEMP_NM = @NM_NO_VALUE)" : dtlNmNoGubun === '2' ? "AND (A.BUYR_BRNO = @NM_NO_VALUE OR A.BUYR_BRNO = @NM_NO_VALUE)" : "" : ""}    -- 2인경우 주민번호 컬럼 으로 ??????
+        ${dtlCrStat && dtlCrStat.length > 0 ? "AND A.TXBL_TRNS_STAT_CD IN (@TXBL_TRNS_STAT_CD)" : ""}
+        ${dtlWriteTpNm ? "AND A.MK_TP_NM = @MK_TP_NM" : ""}
+        ${dtlNtsNo ? "AND A.NTS_CONF_NO = @NTS_CONF_NO" : ""}
+        ${dtlMemo ? "AND A.MEMO LIKE @MEMO" : ""}
+      ORDER BY ${orderItem === '01' ? 'A.MK_DT' : orderItem === '02' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : orderItem === '03' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} ${ordAscDesc}
       OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
       FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
   
+      console.log('dataQuery:', dataQuery);
+
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
