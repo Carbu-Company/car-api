@@ -92,7 +92,7 @@ exports.getCarCashList = async ({
                 ${dtlMemo ? "AND D.MEMO LIKE @MEMO" : ""}
                 ${dtlTradeProcNm ? "AND D.TRADE_PROC_NM LIKE @TRADE_PROC_NM" : ""}
                 ${dtlTradeSctGubun ? "AND D.TRADE_SCT_NM = @TRADE_SCT_NM" : ""}
-                ${dtlCrStat && dtlCrStat.length > 0 ? "AND D.CR_MTS_STAT_CD = @CR_MTS_STAT_CD" : ""}
+                ${dtlCrStat && dtlCrStat.length > 0 ? "AND D.CR_MTS_STAT_CD IN (@CR_MTS_STAT_CD)" : ""}
                 ${dtlRcgnNo ? "AND D.RCGN_NO = @RCGN_NO" : ""}
                 ${dtlNtsConfNo ? "AND D.NTS_CONF_NO = @NTS_CONF_NO" : ""}
       `;
