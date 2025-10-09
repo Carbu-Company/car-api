@@ -130,7 +130,7 @@ exports.getCarTaxList = async ({
       OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
       FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
   
-      console.log('dataQuery:', dataQuery);
+      //console.log('dataQuery:', dataQuery);
 
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
@@ -169,15 +169,15 @@ exports.getCarTaxList = async ({
     dtGubun,
     startDt,
     endDt, 
-    dtlCustomerName,
-    dtlCustGubun,
-    dtlEvdcGubun,
-    dtlPrsnGubun,
-    dtlOwnerBrno,
-    dtlOwnerSsn,
-    dtlCtshNo,
-    dtlCarNoBefore,
-    orderItem = '제시일',
+    dtlOldCarNo,    
+    dtlTaxTargetTpNm,
+    dtlNmNoGubun,
+    dtlNmNoValue,
+    dtlCrStat,
+    dtlWriteTpNm,
+    dtlNtsNo,
+    dtlMemo,
+    orderItem = '01',
     ordAscDesc = 'desc'
   }) => {
     try {
@@ -192,14 +192,14 @@ exports.getCarTaxList = async ({
       console.log('dtGubun:', dtGubun);
       console.log('startDt:', startDt);
       console.log('endDt:', endDt);
-      console.log('dtlCustomerName:', dtlCustomerName);
-      console.log('dtlCustGubun:', dtlCustGubun);
-      console.log('dtlEvdcGubun:', dtlEvdcGubun);
-      console.log('dtlPrsnGubun:', dtlPrsnGubun);
-      console.log('dtlOwnerBrno:', dtlOwnerBrno);
-      console.log('dtlOwnerSsn:', dtlOwnerSsn);
-      console.log('dtlCtshNo:', dtlCtshNo);
-      console.log('dtlCarNoBefore:', dtlCarNoBefore);
+      console.log('dtlOldCarNo:', dtlOldCarNo);
+      console.log('dtlTaxTargetTpNm:', dtlTaxTargetTpNm);
+      console.log('dtlNmNoGubun:', dtlNmNoGubun);
+      console.log('dtlNmNoValue:', dtlNmNoValue);
+      console.log('dtlCrStat:', dtlCrStat);
+      console.log('dtlWriteTpNm:', dtlWriteTpNm);
+      console.log('dtlNtsNo:', dtlNtsNo);
+      console.log('dtlMemo:', dtlMemo);
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   
@@ -212,93 +212,89 @@ exports.getCarTaxList = async ({
       if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlCustomerName) request.input("DTL_CUSTOMER_NAME", sql.VarChar, `%${dtlCustomerName}%`);
-      if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
-      if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
-      if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlOldCarNo) request.input("OLD_CAR_NO", sql.VarChar, `%${dtlOldCarNo}%`);
+      if (dtlTaxTargetTpNm) request.input("TAX_TGT_TP_NM", sql.VarChar, dtlTaxTargetTpNm);
+      if (dtlNmNoGubun) request.input("NM_NO_GUBUN", sql.VarChar, dtlNmNoGubun);
+      if (dtlNmNoValue) request.input("NM_NO_VALUE", sql.VarChar, dtlNmNoValue);
+      if (dtlCrStat && dtlCrStat.length > 0) request.input("TXBL_TRNS_STAT_CD", sql.VarChar, dtlCrStat.join(','));
+      if (dtlWriteTpNm) request.input("MK_TP_NM", sql.VarChar, dtlWriteTpNm);
+      if (dtlNtsNo) request.input("NTS_CONF_NO", sql.VarChar, dtlNtsNo);
+      if (dtlMemo) request.input("MEMO", sql.VarChar, `%${dtlMemo}%`);
   
-      const query = `SELECT '사업자 발급분' AS PRSN_SCT_CD
-                          , COUNT(B.TAX_MGMTKEY) CNT
-                          , ISNULL(SUM(B.TOT_AMT), 0) TRADE_AMT
-                          , ISNULL(SUM(B.TOT_SUP_PRC), 0) SUP_PRC
-                          , ISNULL(SUM(B.TOT_VAT), 0) VAT
-                        FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_TXBL B
-                           , dbo.CJB_GOODS_FEE C
-                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
-                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
-                          AND A.AGENT_ID = @CAR_AGENT
-                          AND A.CAR_DEL_YN = 'N'
-                          AND B.ISSU_SHP_NM = '사업자'                       
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+      const query = `SELECT '사업자 발급분' AS MK_TP_NM
+                          , COUNT(A.TAX_MGMTKEY) TAX_CNT
+                          , COUNT(A.BUYR_BRNO) BUYR_CNT
+                          , ISNULL(SUM(A.TOT_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(A.TOT_VAT), 0) VAT
+                      FROM dbo.CJB_TXBL A
+                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
+                      LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE A.AGENT_ID = @CAR_AGENT
+                      AND A.MK_TP_NM = '사업자'
+                      ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                      ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
+                      ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
+                      ${endDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} <= @START_DT` : ""}
+                      ${dtlOldCarNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO" : ""}
+                      ${dtlTaxTargetTpNm ? "AND A.TAX_TGT_TP_NM = @TAX_TGT_TP_NM" : ""}
+                      ${dtlNmNoGubun ? dtlNmNoGubun === '1' ? "AND (A.BUYR_MTL_NM = @NM_NO_VALUE OR A.BUYR_AEMP_NM = @NM_NO_VALUE)" : dtlNmNoGubun === '2' ? "AND (A.BUYR_BRNO = @NM_NO_VALUE OR A.BUYR_BRNO = @NM_NO_VALUE)" : "" : ""}    -- 2인경우 주민번호 컬럼 으로 ??????
+                      ${dtlCrStat && dtlCrStat.length > 0 ? "AND A.TXBL_TRNS_STAT_CD IN (@TXBL_TRNS_STAT_CD)" : ""}
+                      ${dtlWriteTpNm ? "AND A.MK_TP_NM = @MK_TP_NM" : ""}
+                      ${dtlNtsNo ? "AND A.NTS_CONF_NO = @NTS_CONF_NO" : ""}
+                      ${dtlMemo ? "AND A.MEMO LIKE @MEMO" : ""}
                       UNION ALL
-                      SELECT '주민번호 발급분' AS PRSN_SCT_CD
-                          , COUNT(B.TAX_MGMTKEY) CNT
-                          , ISNULL(SUM(B.TOT_AMT), 0) TRADE_AMT
-                          , ISNULL(SUM(B.TOT_SUP_PRC), 0) SUP_PRC
-                          , ISNULL(SUM(B.TOT_VAT), 0) VAT
-                        FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_TXBL B
-                           , dbo.CJB_GOODS_FEE C
-                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
-                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
-                          AND A.AGENT_ID = @CAR_AGENT
-                          AND A.CAR_DEL_YN = 'N'
-                          AND B.ISSU_SHP_NM = '주민번호'                       
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      SELECT '주민번호 발급분' AS MK_TP_NM
+                          , COUNT(A.TAX_MGMTKEY) TAX_CNT
+                          , COUNT(A.BUYR_BRNO) BUYR_CNT
+                          , ISNULL(SUM(A.TOT_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(A.TOT_VAT), 0) VAT
+                      FROM dbo.CJB_TXBL A
+                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
+                      LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE A.AGENT_ID = @CAR_AGENT
+                      AND A.MK_TP_NM = '주민번호'
+                      ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                      ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
+                      ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
+                      ${endDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} <= @START_DT` : ""}
+                      ${dtlOldCarNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO" : ""}
+                      ${dtlTaxTargetTpNm ? "AND A.TAX_TGT_TP_NM = @TAX_TGT_TP_NM" : ""}
+                      ${dtlNmNoGubun ? dtlNmNoGubun === '1' ? "AND (A.BUYR_MTL_NM = @NM_NO_VALUE OR A.BUYR_AEMP_NM = @NM_NO_VALUE)" : dtlNmNoGubun === '2' ? "AND (A.BUYR_BRNO = @NM_NO_VALUE OR A.BUYR_BRNO = @NM_NO_VALUE)" : "" : ""}    -- 2인경우 주민번호 컬럼 으로 ??????
+                      ${dtlCrStat && dtlCrStat.length > 0 ? "AND A.TXBL_TRNS_STAT_CD IN (@TXBL_TRNS_STAT_CD)" : ""}
+                      ${dtlWriteTpNm ? "AND A.MK_TP_NM = @MK_TP_NM" : ""}
+                      ${dtlNtsNo ? "AND A.NTS_CONF_NO = @NTS_CONF_NO" : ""}
+                      ${dtlMemo ? "AND A.MEMO LIKE @MEMO" : ""}
                       UNION ALL
-                      SELECT '합계' AS PRSN_SCT_CD
-                          , COUNT(B.TAX_MGMTKEY) CNT
-                          , ISNULL(SUM(B.TOT_AMT), 0) TRADE_AMT
-                          , ISNULL(SUM(B.TOT_SUP_PRC), 0) SUP_PRC
-                          , ISNULL(SUM(B.TOT_VAT), 0) VAT
-                        FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_TXBL B
-                           , dbo.CJB_GOODS_FEE C
-                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
-                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
-                          AND A.AGENT_ID = @CAR_AGENT
-                          AND A.CAR_DEL_YN = 'N'
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND A.OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND A.OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND A.CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                      SELECT '합계' AS MK_TP_NM
+                          , COUNT(A.TAX_MGMTKEY) TAX_CNT
+                          , COUNT(A.BUYR_BRNO) BUYR_CNT
+                          , ISNULL(SUM(A.TOT_AMT), 0) TRADE_AMT
+                          , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
+                          , ISNULL(SUM(A.TOT_VAT), 0) VAT
+                      FROM dbo.CJB_TXBL A
+                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
+                      LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE A.AGENT_ID = @CAR_AGENT
+                      ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                      ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
+                      ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
+                      ${endDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} <= @START_DT` : ""}
+                      ${dtlOldCarNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO" : ""}
+                      ${dtlTaxTargetTpNm ? "AND A.TAX_TGT_TP_NM = @TAX_TGT_TP_NM" : ""}
+                      ${dtlNmNoGubun ? dtlNmNoGubun === '1' ? "AND (A.BUYR_MTL_NM = @NM_NO_VALUE OR A.BUYR_AEMP_NM = @NM_NO_VALUE)" : dtlNmNoGubun === '2' ? "AND (A.BUYR_BRNO = @NM_NO_VALUE OR A.BUYR_BRNO = @NM_NO_VALUE)" : "" : ""}    -- 2인경우 주민번호 컬럼 으로 ??????
+                      ${dtlCrStat && dtlCrStat.length > 0 ? "AND A.TXBL_TRNS_STAT_CD IN (@TXBL_TRNS_STAT_CD)" : ""}
+                      ${dtlWriteTpNm ? "AND A.MK_TP_NM = @MK_TP_NM" : ""}
+                      ${dtlNtsNo ? "AND A.NTS_CONF_NO = @NTS_CONF_NO" : ""}
+                      ${dtlMemo ? "AND A.MEMO LIKE @MEMO" : ""}
         `;
   
+      console.log('query:', query);
+
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {

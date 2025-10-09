@@ -198,11 +198,17 @@ router.get("/deleteAgentLoanCorp", carController.deleteAgentLoanCorp);
 // 알선 2.0
 //***************************************************************************************** */
 
-// 재고금융 등록/리스트 조회
+// 알선 판매 리스트 조회
 router.post("/getCarConcilList", carController.getCarConcilList);
 
-// 이자납입리스트 조회
+// 알선 판매 합계 조회
 router.post("/getCarConcilSummary", carController.getCarConcilSummary);
+
+// 알선 판매 등록
+router.post("/insertCarConcil", carController.insertCarConcil);
+
+// 알선 판매 상세 조회
+router.get("/getCarConcilDetail", carController.getCarConcilDetail);
 
 
 //***************************************************************************************** */
@@ -312,12 +318,6 @@ router.get("/getSettlementStockFinanceName", carController.getSettlementStockFin
 
 
 
-//***************************************************************************************** */
-// 알선 
-//***************************************************************************************** */
-
-// 알선 목록 조회
-router.post("/getAlsonList", carController.getAlsonList);
 
 //***************************************************************************************** */
 // 운영현황 - 매출관리 

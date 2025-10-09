@@ -1,4 +1,4 @@
-//const carSelectModel = require("../../models/select/carSelectModel");
+const carSelectModel = require("../../models/select/carSelectModel");
 const carAcctModel = require("../../models/select/carAcctModel");
 const carAdjModel = require("../../models/select/carAdjModel");
 const carCashModel = require("../../models/select/carCashModel");
@@ -705,6 +705,27 @@ exports.getCarConcilSummary = async (req, res, next) => {
   }
 };
 
+// 알선 판매 등록
+exports.insertCarConcil = async (req, res, next) => {
+  try {
+    await carConcilModel.insertCarConcil(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 알선 판매 상세 조회
+exports.getCarConcilDetail = async (req, res, next) => {
+  try {
+    const { brkSeq } = req.query;
+    const carConcilDetail = await carConcilModel.getCarConcilDetail({ brkSeq });
+    res.status(200).json(carConcilDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 전자세금계산서 2.0
@@ -909,23 +930,6 @@ exports.getFinanceDetailList = async (req, res, next) => {
 
     const financeDetailCarList = await carSelectModel.getFinanceDetailList({ carRegid });
     res.status(200).json(financeDetailCarList);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 알선
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 알선 목록 조회
-exports.getAlsonList = async (req, res, next) => {
-  try {
-    const { carAgent, page, pageSize } = req.body;
-
-    const alsonList = await carSelectModel.getAlsonList({ carAgent, page, pageSize });
-    res.status(200).json(alsonList);
   } catch (err) {
     next(err);
   }
