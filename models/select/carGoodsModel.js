@@ -189,7 +189,7 @@ exports.getGoodsFeeList = async ({   carAgent,
   
       // 전체 카운트 조회
       const countQuery = `
-                        SELECT COUNT(*) as totalCount
+                        SELECT COUNT(A.CAR_REG_ID) OVER() AS totalCount
                         FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
                             AND A.AGENT_ID = @CAR_AGENT
@@ -210,7 +210,7 @@ exports.getGoodsFeeList = async ({   carAgent,
                                       GROUP BY A.CAR_REG_ID
                                       ;`;
 
-
+      console.log(countQuery);
 
   
       const query = `SELECT B.CAR_REG_ID, MIN(A.CAR_NO) CAR_NO,
@@ -249,7 +249,7 @@ exports.getGoodsFeeList = async ({   carAgent,
   
 
 
-                    console.log(query);
+      console.log(query);
 
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),

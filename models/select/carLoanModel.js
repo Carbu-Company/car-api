@@ -38,20 +38,22 @@ exports.getCarLoanList = async ({   carAgent,
  
       // 전체 카운트 조회
       const countQuery = `SELECT COUNT(*) as totalCount
-                            FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
-                            WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                                AND A.AGENT_ID = @CAR_AGENT
-                                AND A.CAR_DEL_YN = 'N'
-                                AND B.DEL_YN = 'N'
-                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                            FROM dbo.CJB_CAR_PUR A
+                           INNER JOIN dbo.CJB_CAR_LOAN B ON (A.CAR_REG_ID = B.CAR_REG_ID)
+                            LEFT JOIN dbo.CJB_LOAN_INTR_PAY C ON (B.LOAN_ID = C.LOAN_ID)
+                           WHERE 1 = 1
+                             AND A.AGENT_ID = @CAR_AGENT
+                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
                 ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
           `;
+
+      console.log(countQuery);
   
       const query = `SELECT B.LOAN_ID,           
                                 A.DLR_ID DLR_ID,     
@@ -106,7 +108,7 @@ exports.getCarLoanList = async ({   carAgent,
       const totalPages = Math.ceil(totalCount / pageSize);
   
       return {
-        data: dataResult.recordset,
+        loanList: dataResult.recordset,
         pagination: {
           currentPage: page,
           pageSize: pageSize,
@@ -117,7 +119,7 @@ exports.getCarLoanList = async ({   carAgent,
         }
       };
     } catch (err) {
-      console.error("Error fetching goods fee list:", err);
+      console.error("Error fetching car loan list:", err);
       throw err;
     }
   }
@@ -165,7 +167,7 @@ exports.getCarLoanList = async ({   carAgent,
                         FROM dbo.CJB_CAR_PUR A, dbo.CJB_CAR_LOAN B
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
                             AND A.AGENT_ID = @CAR_AGENT
-                            AND A.CAR_DEL_YN = 'N'
+                 --           AND A.CAR_DEL_YN = 'N'
                 ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
                 ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
@@ -178,7 +180,7 @@ exports.getCarLoanList = async ({   carAgent,
                 ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
       `;
 
-
+      console.log(countQuery);
   
       const query = `SELECT B.LOAN_ID,           
                                 A.DLR_ID DLR_ID,     
@@ -218,7 +220,12 @@ exports.getCarLoanList = async ({   carAgent,
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
                 ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
                 ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
-                    ;`; 
+                      ORDER BY ${orderItem === '실행일' ? 'LOAN_DT' : orderItem === '결제일' ? 'INTR_PAY_DT' : orderItem === '이자납입일' ? 'INTR_PAY_DT' : 'LOAN_DT'} ${ordAscDesc}
+                      OFFSET (@PAGE - 1) * @PAGESIZE ROWS
+                      FETCH NEXT @PAGESIZE ROWS ONLY
+                      `;
+
+      console.log(query);
 
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
