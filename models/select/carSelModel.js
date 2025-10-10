@@ -114,6 +114,7 @@ exports.getCarSelList = async ({
                     , A.DLR_ID
                     , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
                     , A.PUR_AMT         -- 차량구매금액
+                    , B.ADJ_FIN_DT      -- 정산일
                 FROM dbo.CJB_CAR_PUR A
                     , dbo.CJB_CAR_SEL B
                 WHERE A.CAR_REG_ID = B.CAR_REG_ID
