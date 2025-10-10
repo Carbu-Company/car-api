@@ -210,6 +210,9 @@ router.post("/insertCarConcil", carController.insertCarConcil);
 // 알선 판매 상세 조회
 router.get("/getCarConcilDetail", carController.getCarConcilDetail);
 
+// 알선 판매 수정
+router.post("/updateCarConcil", carController.updateCarConcil);
+
 
 //***************************************************************************************** */
 // 재고금융 

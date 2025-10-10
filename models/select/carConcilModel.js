@@ -105,6 +105,7 @@ exports.getCarConcilList = async ({
                     , C.EVDC_ISSU_DT
                     , C.BRK_AGENT_NM 
                     , B.BUYER_NM 
+                    , C.BRK_SEQ
                 FROM dbo.CJB_CAR_PUR A
                    , dbo.CJB_CAR_SEL B
                    , dbo.CJB_CAR_SEL_BRK C
@@ -309,9 +310,10 @@ exports.getCarConcilList = async ({
   exports.getCarConcilDetail = async ({ brkSeq }) => {
     try {
       const request = pool.request();
-      request.input("BRK_SEQ", sql.VarChar, brkSeq);   
+      request.input("BRK_SEQ", sql.Int, brkSeq);   
   
-      const query = `SELECT A.BRK_AGENT_ID 
+      const query = `SELECT A.BRK_SEQ
+                          , A.BRK_AGENT_ID 
                           , A.BRK_DLR_ID
                           , A.BRK_AMT 
                           , A.BRK_SUP_PRC 
@@ -326,6 +328,11 @@ exports.getCarConcilList = async ({
                           , A.BRK_SALE_DT
                           , A.REGR_ID
                           , A.MODR_ID
+                          , A.CAR_KND_CD
+                          , A.CAR_NO
+                          , A.CAR_NM
+                          , A.OWNR_NM
+                          , A.OWNR_PHON
                        FROM dbo.CJB_CAR_SEL_BRK A
                       WHERE A.BRK_SEQ = @BRK_SEQ `;
 
@@ -442,6 +449,109 @@ exports.insertCarConcil = async ({
                     @MODR_ID
                   )`;
 
+
+    const query2 = `UPDATE dbo.CJB_CAR_SEL
+                   SET MODR_ID = @MODR_ID
+                   WHERE CAR_REG_ID = @CAR_REG_ID;`;
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error inserting car concil:", err);
+    throw err;
+  }
+};
+
+// 알선 판매 수정
+exports.updateCarConcil = async ({
+  brkSeq,                                                    // 알선 판매 순번
+  carAgent,                                                  // 상사 ID              
+  dealerId,                                                  // 판매딜러 ID
+  tradeItemCd,                                               // 거래항목 코드
+  brkSaleDt,                                                 // 알선판매일  
+  brkAmt,                                                    // 알선금액
+  brkSupPrc,                                                 // 공급가액
+  brkVat,                                                    // 부가세
+  brkDedtAmt,                                                // 공제비용
+  brkTaxAmt,                                                // 세액
+  brkPayAmt,                                                 // 딜러지급액
+  evdcCd,                                                    // 증빙종류 코드
+  carKndCd,                                                  // 차량 유형 코드
+  carNm,                                                     // 차량명
+  carNo,                                                     // 차량번호
+  ownrNm,                                                    // 고객명/상사명
+  ownrPhon,                                                  // 연락처  
+  brkMemo,                                                   // 특이사항
+  usrId,                                                     // 등록자 ID
+  carRegId                                                 // 차량 등록 ID
+}) => {
+  try {
+    const request = pool.request();
+
+    console.log('brkSeq:', brkSeq);
+    console.log('carNo:', carNo);
+    console.log('dealerId:', dealerId);
+    console.log('tradeItemCd:', tradeItemCd);
+    console.log('brkSaleDt:', brkSaleDt);
+    console.log('brkAmt:', brkAmt);
+    console.log('brkSupPrc:', brkSupPrc);
+    console.log('brkVat:', brkVat);
+    console.log('brkDedtAmt:', brkDedtAmt);
+    console.log('brkTaxAmt:', brkTaxAmt);
+    console.log('brkPayAmt:', brkPayAmt);
+    console.log('evdcCd:', evdcCd);
+    console.log('carKndCd:', carKndCd);
+    console.log('carNm:', carNm);
+    console.log('carNo:', carNo);
+    console.log('ownrNm:', ownrNm);
+    console.log('ownrPhon:', ownrPhon);
+    console.log('brkDesc:', brkMemo);
+    console.log('usrId:', usrId);
+    console.log('carRegId:', carRegId);
+
+    request.input("BRK_SEQ", sql.Int, brkSeq);                        // 알선 판매 순번
+
+    request.input("BRK_AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("BRK_DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
+    request.input("BRK_TRADE_ITEM_CD", sql.VarChar, tradeItemCd);              // 거래항목 코드
+    request.input("BRK_SALE_DT", sql.VarChar, brkSaleDt);                      // 알선판매일
+    request.input("BRK_AMT", sql.Int, brkAmt);                                 // 알선금액
+    request.input("BRK_SUP_PRC", sql.Int, brkSupPrc);                         // 공급가액
+    request.input("BRK_VAT", sql.Int, brkVat);                                // 부가세
+    request.input("DEDT_AMT", sql.Int, brkDedtAmt);                          // 공제비용
+    request.input("TAX_AMT", sql.Int, brkTaxAmt);                                // 세액
+    request.input("PAY_AMT", sql.Int, brkPayAmt);                            // 딜러지급액
+    request.input("BRK_EVDC_CD", sql.VarChar, evdcCd);                       // 증빙종류 코드
+    request.input("CAR_KND_CD", sql.VarChar, carKndCd);                      // 차량 종류 코드         
+    request.input("CAR_NO", sql.VarChar, carNo);                                // 차량 번호       
+    request.input("CAR_NM", sql.VarChar, carNm);                               // 차량 명              
+    request.input("OWNR_NM", sql.VarChar, ownrNm);                           // 고객명/상사명
+    request.input("OWNR_PHON", sql.VarChar, ownrPhon);                       // 연락처
+    request.input("BRK_MEMO", sql.VarChar, brkMemo);                       // 특이사항
+    request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID            
+    request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID   
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);                      // 차량 등록 ID
+
+    const query1 = `UPDATE dbo.CJB_CAR_SEL_BRK 
+                   SET  BRK_AGENT_NM = (SELECT AGENT_NM FROM dbo.CJB_AGENT A WHERE A.AGENT_ID = @BRK_AGENT_ID) 
+                      , BRK_AGENT_ID = @BRK_AGENT_ID
+                      , BRK_DLR_NM = (SELECT USR_NM FROM dbo.CJB_USR A WHERE A.USR_ID = @BRK_DLR_ID)
+                      , BRK_DLR_ID = @BRK_DLR_ID
+                      , BRK_AMT = @BRK_AMT
+                      , BRK_SUP_PRC = @BRK_SUP_PRC
+                      , BRK_VAT = @BRK_VAT
+                      , DEDT_AMT = @DEDT_AMT
+                      , TAX_AMT = @TAX_AMT
+                      , PAY_AMT = @PAY_AMT
+                      , BRK_EVDC_CD = @BRK_EVDC_CD
+                      , BRK_MEMO = @BRK_MEMO
+                      , BRK_SALE_DT = @BRK_SALE_DT
+                      , CAR_REG_ID = @CAR_REG_ID
+                      , MODR_ID = @MODR_ID
+                  WHERE BRK_SEQ = @BRK_SEQ`;
+
+                  console.log('query1:', query1);
+                  
 
     const query2 = `UPDATE dbo.CJB_CAR_SEL
                    SET MODR_ID = @MODR_ID

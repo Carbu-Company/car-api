@@ -135,7 +135,7 @@ exports.getCarCashList = async ({
         ${dtlCrStat && dtlCrStat.length > 0 ? "AND D.CR_MTS_STAT_CD = @CR_MTS_STAT_CD" : ""}
         ${dtlRcgnNo ? "AND D.RCGN_NO = @RCGN_NO" : ""}
         ${dtlNtsConfNo ? "AND D.NTS_CONF_NO = @NTS_CONF_NO" : ""}
-      ORDER BY ${orderItem === '01' ? 'D.TRADE_DT' : orderItem === '02' ? 'B.CAR_SALE_DT' : orderItem === '03' ? 'A.CAR_PUR_DT' : orderItem} ${ordAscDesc}
+      ORDER BY ${orderItem === '01' ? 'D.TRADE_DT' : orderItem === '02' ? 'B.DLR_ID' : orderItem === '03' ? 'A.CAR_PUR_DT' : orderItem} ${ordAscDesc}
       OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
       FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
 
