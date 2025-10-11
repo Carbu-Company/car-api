@@ -442,6 +442,10 @@ router.post("/getCarAcctSummary", carController.getCarAcctSummary);
 // 계좌정보 상세 조회
 router.get("/getCarAcctDetail", carController.getCarAcctDetail);
 
+// 계좌정보 목록 조회
+router.get("/getAgentAcctList", carController.getAgentAcctList);
+
+
 //***************************************************************************************** */
 // DASH BOARD
 //***************************************************************************************** */

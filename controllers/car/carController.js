@@ -680,6 +680,28 @@ exports.getCarAcctDetail = async (req, res, next) => {
   }
 };
 
+// 계좌정보 상세 조회
+exports.getCarAcctDetail = async (req, res, next) => {
+  try {
+    const { carRegid } = req.query;
+    const carAcctDetail = await carAcctModel.getCarAcctDetail({ carRegid });
+    res.status(200).json(carAcctDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 계좌정보 목록 조회
+exports.getAgentAcctList = async (req, res, next) => {
+  try {
+    const { carAgent } = req.query;
+    const agentAcctList = await carAcctModel.getAgentAcctList({ carAgent });
+    res.status(200).json(agentAcctList);
+  } catch (err) {
+    next(err);
+  }
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 알선 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
