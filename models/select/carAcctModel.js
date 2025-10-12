@@ -85,7 +85,8 @@ exports.getCarAcctList = async ({
       `;
     
       const dataQuery = `
-                SELECT CONVERT(CHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME
+                SELECT B.ACCT_DTL_SEQ
+                    , CONVERT(CHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME
                     , B.TRADE_SCT_NM
                     , B.ACCT_NO 
                     , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = C.DLR_ID)  + ' / ' + C.SALE_CAR_NO + ' / ' + D.CAR_NM AS CAR_INFO_NM
@@ -260,10 +261,15 @@ exports.getCarAcctList = async ({
   };
   
   // 현금영수증 상세 조회
-  exports.getCarAcctDetail = async ({ car_regid }) => {
+  exports.getCarAcctDetail = async ({ acctDtlSeq }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, car_regid);   
+
+
+      console.log('*********acctDtlSeq:***************', acctDtlSeq);
+      request.input("ACCT_DTL_SEQ", sql.Int, acctDtlSeq);   
+
+      console.log('acctDtlSeq:', acctDtlSeq);
   
       const query = `SELECT A.BNK_CD
                           , A.ACCT_NO
@@ -280,8 +286,7 @@ exports.getCarAcctList = async ({
                         FROM dbo.CJB_ACCT A
                            , dbo.CJB_ACCT_DTL B
                         WHERE A.ACCT_NO = B.ACCT_NO
-                          AND A.USE_YN = 'Y'   
-                          AND A.ACCT_NO = @ACCT_NO `;
+                          AND B.ACCT_DTL_SEQ = @ACCT_DTL_SEQ `;
   
       console.log('query:', query);
   
@@ -313,28 +318,6 @@ exports.getCarAcctList = async ({
       throw err;
     }
   }
-
-  // 계좌정보 상세 조회
-  exports.getCarAcctDetail = async ({ carRegid }) => {
-    try {
-      const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, carRegid);
-
-      const query = `SELECT  A.ACCT_NO
-                          , A.ACCT_NM
-                          , A.MAST_YN
-                          , A.USE_YN
-                        FROM dbo.CJB_ACCT A
-                        WHERE A.ACCT_NO = @CAR_REGID `;
-
-      const result = await request.query(query);
-      return result.recordset[0] || null;
-    } catch (err) {
-      console.error("Error fetching car acct detail:", err);
-      throw err;
-    }
-  }
-
 
   // 계좌정보 상세 저장
   exports.insertCarAcctDetail = async ({ 

@@ -227,8 +227,8 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_TP_NM = '소득공제'
-                AND D.TRADE_PROC_NM = '승인'
+                AND A.TRADE_TP_NM = '소득공제'
+                AND A.TRADE_PROC_NM = '승인'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -254,8 +254,8 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_TP_NM = '소득공제'
-                AND D.TRADE_PROC_NM = '취소'
+                AND A.TRADE_TP_NM = '소득공제'
+                AND A.TRADE_PROC_NM = '취소'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -281,8 +281,8 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_TP_NM = '지출증빙'
-                AND D.TRADE_PROC_NM = '승인'
+                AND A.TRADE_TP_NM = '지출증빙'
+                AND A.TRADE_PROC_NM = '승인'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -308,8 +308,8 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_TP_NM = '지출증빙'
-                AND D.TRADE_PROC_NM = '취소'
+                AND A.TRADE_TP_NM = '지출증빙'
+                AND A.TRADE_PROC_NM = '취소'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -335,7 +335,7 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_PROC_NM = '승인'
+                AND A.TRADE_PROC_NM = '승인'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -361,7 +361,7 @@ exports.getCarCashList = async ({
                               LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
-                AND D.TRADE_PROC_NM = '취소'
+                AND A.TRADE_PROC_NM = '취소'
                 ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}

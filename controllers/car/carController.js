@@ -684,8 +684,11 @@ exports.getCarAcctSummary = async (req, res, next) => {
 // 계좌정보 상세 조회
 exports.getCarAcctDetail = async (req, res, next) => {
   try {
-    const { carRegid } = req.query;
-    const carAcctDetail = await carAcctModel.getCarAcctDetail({ carRegid });
+    const { acctDtlSeq } = req.query;
+
+
+    console.log('*********acctDtlSeq:', acctDtlSeq);
+    const carAcctDetail = await carAcctModel.getCarAcctDetail({ acctDtlSeq });
     res.status(200).json(carAcctDetail);
   } catch (err) {
     next(err);

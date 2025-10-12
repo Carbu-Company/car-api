@@ -431,8 +431,9 @@ exports.getAgentInfo = async ({ carAgent }) => {
     const query = `SELECT AGENT_NM  AS COMNAME
                         , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
                         , BRNO
-                        , PRES_NM
-                        , EMAIL
+                        , PRES_NM 
+                        , SUBSTRING(EMAIL, 1, CHARINDEX('@', EMAIL) - 1) AS EMAIL_ID
+                        , SUBSTRING(EMAIL, CHARINDEX('@', EMAIL) + 1, LEN(EMAIL)) AS EMAIL_DOMAIN
                         , AGRM_AGR_YN
                         , FIRM_YN
                         , AGENT_STAT_CD
