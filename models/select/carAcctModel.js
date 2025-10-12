@@ -86,7 +86,7 @@ exports.getCarAcctList = async ({
     
       const dataQuery = `
                 SELECT B.ACCT_DTL_SEQ
-                    , CONVERT(CHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME
+                    , CONVERT(VARCHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME
                     , B.TRADE_SCT_NM
                     , B.ACCT_NO 
                     , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = C.DLR_ID)  + ' / ' + C.SALE_CAR_NO + ' / ' + D.CAR_NM AS CAR_INFO_NM
@@ -271,14 +271,16 @@ exports.getCarAcctList = async ({
 
       console.log('acctDtlSeq:', acctDtlSeq);
   
-      const query = `SELECT A.BNK_CD
-                          , A.ACCT_NO
-                          , A.ACCT_NM
+      const query = `SELECT A.BNK_CD       -- 은행코드
+                          , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.BNK_CD) BNK_NM  -- 은행명
+                          , A.ACCT_NO      -- 계좌번호
+                          , A.ACCT_NM      -- 계좌명
+                          , A.ACCT_HLDR    -- 예금주
                           , A.MAST_YN
                           , B.TID
                           , B.TRADE_DT
                           , B.TRADE_SN
-                          , B.TRADE_DTIME
+                          , CONVERT(VARCHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME 
                           , B.IAMT
                           , B.OAMT
                           , B.BLNC
