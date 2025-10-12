@@ -1798,9 +1798,21 @@ exports.getCDList = async (req, res, next) => {
 // 고객 목록 조회
 exports.getCustomerList = async (req, res, next) => {
   try {
-    const { carAgent, search } = req.query;
-    const customerList = await commonModel.getCustomerList({ carAgent, search });
+    const { carAgent, custNm } = req.query;
+    const customerList = await commonModel.getCustomerList({ carAgent, custNm });
     res.status(200).json(customerList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 상사정보관리 조회
+exports.getAgentInfo = async (req, res, next) => {
+  try {
+    const { carAgent } = req.query;
+    const agentInfo = await commonModel.getAgentInfo({ carAgent });
+    res.status(200).json(agentInfo);
   } catch (err) {
     next(err);
   }
