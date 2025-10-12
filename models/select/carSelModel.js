@@ -313,7 +313,8 @@ exports.updateCarSel = async ({
   totFeeAmt, 
   realFeeAmt, 
   saleCrIssuYn, 
-  modrId 
+  modrId,
+  buyerCustomers
 }) => {
     try {
       const request = pool.request();
@@ -385,9 +386,7 @@ exports.updateCarSel = async ({
                               MODR_ID = @modrId               -- 수정자
                         WHERE  CAR_REG_ID = @CAR_REG_ID;`;
   
-      await request.query(query);     
-
-      
+      // 첨부파일
       attachedFiles.forEach(async (file) => {
 
         console.log("file:", file.name);
@@ -395,7 +394,7 @@ exports.updateCarSel = async ({
 
         const fileRequest = pool.request();
 
-        fileRequest.input("CAR_REG_ID", sql.VarChar, newCarRegId);
+        fileRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
         fileRequest.input("FILE_NM", sql.VarChar, file.name);
         fileRequest.input("FILE_PATH", sql.VarChar, file.url);
         fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
@@ -404,7 +403,7 @@ exports.updateCarSel = async ({
         fileRequest.input("REGR_ID", sql.VarChar, usrId);
         fileRequest.input("MODR_ID", sql.VarChar, usrId);
 
-        await fileRequest.query(`INSERT INTO CJB_FILE_INFO (
+        await fileRequest.query(`INSERT INTO dbo.CJB_FILE_INFO (
                                             AGENT_ID,
                                             FILE_SCT_CD,
                                             FILE_KND_NM,
@@ -424,7 +423,59 @@ exports.updateCarSel = async ({
 
       });
   
+      // 매입자 고객 정보
+      buyerCustomers.forEach(async (cust) => {
 
+        console.log("cust:", cust.customerName);
+        console.log("cust:", cust.residentNumber);
+        console.log("cust:", cust.businessNumber);
+        console.log("cust:", cust.phone);
+        console.log("cust:", cust.zip);
+        console.log("cust:", cust.address);
+        console.log("cust:", cust.memo);
+        console.log("cust:", cust.shareRate);
+
+        const custRequest = pool.request();
+
+        custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
+        custRequest.input("BUY_SEQ", sql.Int, cust.index + 1);
+        custRequest.input("CUST_NM", sql.VarChar, cust.customerName);
+        custRequest.input("CUST_SSN", sql.VarChar, cust.residentNumber);
+        custRequest.input("CUST_BRNO", sql.VarChar, cust.businessNumber);
+        custRequest.input("CUST_PHON", sql.VarChar, cust.phone);
+        custRequest.input("CUST_ZIP", sql.VarChar, cust.zip);
+        custRequest.input("CUST_ADDR", sql.VarChar, cust.address);
+        custRequest.input("CUST_MEMO", sql.VarChar, cust.memo);
+        custRequest.input("BUY_SHR_RT", sql.VarChar, cust.shareRate);
+        custRequest.input("REGR_ID", sql.VarChar, usrId);
+        custRequest.input("MODR_ID", sql.VarChar, usrId);
+
+        await custRequest.query(`INSERT INTO dbo.CJB_CAR_BUY_CUST (
+                                            CAR_REG_ID,
+                                            BUY_SEQ,
+                                            CUST_SSN,
+                                            CUST_BRNO,
+                                            CUST_PHON,
+                                            CUST_ZIP,
+                                            CUST_ADDR,
+                                            CUST_MEMO,
+                                            BUY_SHR_RT,
+                                            REGR_ID,
+                                            MODR_ID) VALUES (
+                                            @CAR_REG_ID, 
+                                            @BUY_SEQ, 
+                                            @CUST_SSN, 
+                                            @CUST_BRNO, 
+                                            @CUST_PHON, 
+                                            @CUST_ZIP, 
+                                            @CUST_ADDR, 
+                                            @CUST_MEMO, 
+                                            @BUY_SHR_RT, 
+                                            @REGR_ID, 
+                                            @MODR_ID)`);
+
+      });
+  
           // 차량판매
     const query2 = `UPDATE dbo.CJB_CAR_PUR
                     SET 

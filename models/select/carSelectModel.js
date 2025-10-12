@@ -3812,27 +3812,24 @@ exports.getCompanyInfo = async ({ carAgent }) => {
     const request = pool.request();
     request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-    const query = `SELECT COMNAME,
-                          DBO.SMJ_FN_DATEFMT('D', REGDATE) AS REGDATE,
-                          ENDDATE,
-                          EMPKNAME,
-                          AG_TEL,
-                          AG_FAX,
-                          AG_ZIP,
-                          AG_ADDR1,
-                          AG_ADDR2,
-                          BRNO,
-                          AG_BUY_TAX15,
-                          AG_VAT_1PRO,
-                          AG_FEE_BACK,
-                          AG_AUTH_TEL,
-                          AG_SMS_ADJ_D,
-                          AG_SMS_ADJ_A
-                    FROM   SMJ_AGENT A,
-                          SMJ_USER B
-                    WHERE  A.AGENT = B.AGENT
-                          AND EMPGRADE = '9'
-                          AND A.AGENT = @CAR_AGENT`;
+    const query = `SELECT AGENT_NM  AS COMNAME
+                        , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
+                        , BRNO
+                        , PRES_NM
+                        , EMAIL
+                        , AGRM_AGR_YN
+                        , FIRM_YN
+                        , AGENT_STAT_CD
+                        , PHON
+                        , FAX
+                        , ZIP
+                        , ADDR1
+                        , ADDR2
+                        , FEE_SCT_CD
+                        , CMBT_AGENT_CD
+                        , CMBT_AGENT_STAT_NM
+                    FROM dbo.CJB_AGENT A
+                    WHERE A.AGENT = @CAR_AGENT`;
     const result = await request.query(query);
     return result.recordset[0];
   } catch (err) {
