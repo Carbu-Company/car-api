@@ -178,6 +178,9 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
 
   
 // 고객 목록 조회
+
+
+/*
 exports.getCustomerList = async ({ carAgent, search }) => {
   try {
     const request = pool.request();
@@ -223,6 +226,44 @@ exports.getCustomerList = async ({ carAgent, search }) => {
   }
 };
 
+
+*/
+
+exports.getCustomerList = async ({ carAgent, custNm }) => {
+  try {
+
+    const request = pool.request();
+
+    console.log('carAgent:', carAgent);
+    console.log('custNm:', custNm);
+
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CUST_NM", sql.VarChar, custNm);
+
+    const query = `SELECT CUST_NO
+                        , CUST_NM
+                        , CUST_TP_CD
+                        , CUST_PHON
+                        , CUST_EMAIL
+                        , SSN
+                        , BRNO
+                        , ZIP
+                        , ADDR1
+                        , ADDR2
+                        , MOD_DTIME
+                        FROM  dbo.CJB_CUST A
+                        WHERE AGENT_ID = @CAR_AGENT
+                          AND CUST_NM LIKE '%' + @CUST_NM + '%'
+                        ORDER BY CUST_NM;
+    `;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching customer list:", err);
+    throw err;
+  }
+};
 
 
 exports.getCarList = async ({ 
@@ -377,6 +418,39 @@ exports.getCompanyLoanLimit = async ({ carAgent }) => {
     return result.recordset;
   } catch (err) {
     console.error("Error fetching company loan limit:", err);
+    throw err;
+  }
+};
+
+// 상사정보관리 조회
+exports.getAgentInfo = async ({ carAgent }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_AGENT", sql.VarChar, carAgent);
+
+    const query = `SELECT AGENT_NM  AS COMNAME
+                        , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
+                        , BRNO
+                        , PRES_NM
+                        , EMAIL
+                        , AGRM_AGR_YN
+                        , FIRM_YN
+                        , AGENT_STAT_CD
+                        , dbo.SMJ_FN_GETCDNAME('06', AGENT_STAT_CD) AS AGENT_STAT_CD_NM
+                        , PHON
+                        , FAX
+                        , ZIP
+                        , ADDR1
+                        , ADDR2
+                        , FEE_SCT_CD
+                        , CMBT_AGENT_CD
+                        , CMBT_AGENT_STAT_NM
+                    FROM dbo.CJB_AGENT A
+                    WHERE A.AGENT = @CAR_AGENT`;
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching agent info:", err);
     throw err;
   }
 };
