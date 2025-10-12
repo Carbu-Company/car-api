@@ -472,3 +472,66 @@ exports.deleteCarSel = async ({carRegId, flag_type}) => {
     throw err;
   }
 };
+
+
+exports.insertCarBuyCust = async ({
+  carRegId,
+  buySeq,
+  custNm,
+  custSsn,
+  custBrno, 
+  custPhon,
+  custZip,
+  custAddr,
+  custMemo,
+  regrId,
+  modrId
+}) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("BUY_SEQ", sql.Int, buySeq); // Default to 1 for new record
+    request.input("CUST_NM", sql.VarChar, custNm);
+    request.input("CUST_SSN", sql.VarChar, custSsn);
+    request.input("CUST_BRNO", sql.VarChar, custBrno);
+    request.input("CUST_PHON", sql.VarChar, custPhon);
+    request.input("CUST_ZIP", sql.VarChar, custZip);
+    request.input("CUST_ADDR", sql.VarChar, custAddr);
+    request.input("CUST_MEMO", sql.VarChar, custMemo);
+    request.input("REGR_ID", sql.VarChar, regrId);
+    request.input("MODR_ID", sql.VarChar, modrId);
+
+    const query = `INSERT INTO dbo.CJB_CAR_BUY_CUST (
+      CAR_REG_ID,
+      BUY_SEQ,
+      CUST_NM,
+      CUST_SSN,
+      CUST_BRNO,
+      CUST_PHON,
+      CUST_ZIP,
+      CUST_ADDR,
+      CUST_MEMO,
+      REGR_ID,
+      MODR_ID
+    ) VALUES (
+      @CAR_REG_ID,
+      @BUY_SEQ,
+      @CUST_NM,
+      @CUST_SSN,
+      @CUST_BRNO,
+      @CUST_PHON,
+      @CUST_ZIP,
+      @CUST_ADDR,
+      @CUST_MEMO,
+      @REGR_ID,
+      @MODR_ID
+    );`;
+
+    await request.query(query);
+
+  } catch (err) {
+    console.error("Error inserting car buy cust:", err);
+    throw err;
+  }
+  
+};

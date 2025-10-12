@@ -100,6 +100,10 @@ router.post("/updateCarSel", carController.updateCarSel);
 // 판매매도 삭제 
 router.get("/deleteCarSel", carController.deleteCarSel);
 
+// 판매매도 고객 등록
+router.post("/insertCarBuyCust", carController.insertCarBuyCust);
+
+
 //***************************************************************************************** */
 // 매입 매도비 
 //***************************************************************************************** */
