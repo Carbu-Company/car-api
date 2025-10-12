@@ -446,9 +446,9 @@ exports.getAgentInfo = async ({ carAgent }) => {
                         , CMBT_AGENT_CD
                         , CMBT_AGENT_STAT_NM
                     FROM dbo.CJB_AGENT A
-                    WHERE A.AGENT = @CAR_AGENT`;
+                    WHERE A.AGENT_ID = @CAR_AGENT`;
     const result = await request.query(query);
-    return result.recordset[0];
+    return result.recordset;
   } catch (err) {
     console.error("Error fetching agent info:", err);
     throw err;
