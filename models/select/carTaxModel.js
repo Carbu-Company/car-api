@@ -393,10 +393,8 @@ exports.getCarTaxList = async ({
     }
   };
 
-
-
   
-// 제시 직접 등록
+// 전자세금계산서 등록
 exports.insertCarTax = async ({
     taxMgmtkey,                   // 세금 관리키                  
     agentId,                      // 상사 ID                      
@@ -451,16 +449,9 @@ exports.insertCarTax = async ({
   try {
     const request = pool.request();
 
-    console.log("usrId:", usrId);
-
-    // car_reg_id 값도 미리 만들기
-    request.input("carAgent", sql.VarChar, carAgent); 
-    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
-    const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
-
     request.input("TAX_MGMTKEY", sql.VarChar, taxMgmtkey);
     request.input("AGENT_ID", sql.VarChar, agentId);
-    request.input("COST_SEQ", sql.Int, costSeq);
+    request.input("COST_SEQ", sql.Int, goodsFeeSeq);
     request.input("MK_DT", sql.VarChar, mkDt);
     request.input("TRADE_DTIME", sql.VarChar, tradeDtime);
     request.input("DEL_DTIME", sql.VarChar, delDtime);

@@ -334,3 +334,128 @@ exports.getCarAcctList = async ({
       throw err;
     }
   }
+
+
+  // 계좌정보 상세 저장
+  exports.insertCarAcctDetail = async ({ 
+    carAgent, 
+    acctNo, 
+    tid, 
+    tradeDt, 
+    tradeSn, 
+    tradeDtime, 
+    tradeSctNm,
+    iamt, 
+    oamt, 
+    blnc, 
+    note1, 
+    note2, 
+    note3, 
+    note4, 
+    regrId, 
+    modrId 
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("ACCT_NO", sql.VarChar, acctNo);     
+      request.input("TID", sql.VarChar, tid);
+      request.input("TRADE_DT", sql.VarChar, tradeDt);
+      request.input("TRADE_SN", sql.VarChar, tradeSn);
+      request.input("TRADE_DTIME", sql.VarChar, tradeDtime);
+      request.input("TRADE_SCT_NM", sql.VarChar, tradeSctNm);
+      request.input("IAMT", sql.VarChar, iamt);
+      request.input("OAMT", sql.VarChar, oamt);
+      request.input("BLNC", sql.VarChar, blnc);
+      request.input("NOTE1", sql.VarChar, note1);
+      request.input("NOTE2", sql.VarChar, note2);
+      request.input("NOTE3", sql.VarChar, note3);
+      request.input("NOTE4", sql.VarChar, note4);
+      request.input("REGR_ID", sql.VarChar, regrId);
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      const query = `
+        INSERT INTO dbo.CJB_ACCT_DTL
+          ( ACCT_NO,
+            TID,
+            TRADE_DT,
+            TRADE_SN,
+            TRADE_DTIME,
+            TRADE_SCT_NM,
+            TRADE_DTIME,
+            IAMT,
+            OAMT,
+            BLNC,
+            NOTE1,
+            NOTE2,
+            NOTE3,
+            NOTE4,
+            REGR_ID,
+            MODR_ID ) 
+        VALUES 
+          ( @ACCT_NO,
+            @TID,
+            @TRADE_DT,
+            @TRADE_SN,
+            @TRADE_DTIME,
+            @TRADE_SCT_NM,
+            @TRADE_DTIME,
+            @IAMT,
+            @OAMT,
+            @BLNC,
+            @NOTE1,
+            @NOTE2,
+            @NOTE3,
+            @NOTE4,
+            @REGR_ID,
+            @MODR_ID
+          );
+      `;
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error inserting car acct detail:", err);
+      throw err;
+    }
+  }
+
+  // 계좌정보 상세 수정
+  exports.updateCarAcctDetail = async ({ 
+    ACCT_DTL_SEQ, 
+    tradeItemCd, 
+    tradeItemNm, 
+    tradeMemo, 
+    dtlMemo, 
+    modrId 
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("ACCT_DTL_SEQ", sql.VarChar, ACCT_DTL_SEQ);
+      request.input("TRADE_ITEM_CD", sql.VarChar, tradeItemCd);
+      request.input("TRADE_ITEM_NM", sql.VarChar, tradeItemNm);
+      request.input("TRADE_MEMO", sql.VarChar, tradeMemo);
+      request.input("DTL_MEMO", sql.VarChar, dtlMemo);
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      const query = `
+        UPDATE dbo.CJB_ACCT_DTL
+           SET TRADE_ITEM_CD = @TRADE_ITEM_CD,
+               TRADE_ITEM_NM = @TRADE_ITEM_NM,
+               TRADE_MEMO = @TRADE_MEMO,
+               DTL_MEMO = @DTL_MEMO,
+               CAR_REG_ID = @CAR_REG_ID,
+               MOD_DTIME = GETDATE(),
+               MODR_ID = @MODR_ID
+        WHERE 
+          ACCT_DTL_SEQ = @ACCT_DTL_SEQ 
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating car acct detail:", err);
+      throw err;
+    }
+  }

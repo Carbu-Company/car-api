@@ -702,6 +702,30 @@ exports.getAgentAcctList = async (req, res, next) => {
   }
 };
 
+
+// 계좌정보 상세 저장
+exports.insertCarAcctDetail = async (req, res, next) => {
+  try {
+    await carAcctModel.insertCarAcctDetail(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 계좌정보 상세 수정
+exports.updateCarAcctDetail = async (req, res, next) => {
+  try {
+    await carAcctModel.updateCarAcctDetail(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 알선 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
