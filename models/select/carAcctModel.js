@@ -272,7 +272,7 @@ exports.getCarAcctList = async ({
       console.log('acctDtlSeq:', acctDtlSeq);
   
       const query = `SELECT A.BNK_CD       -- 은행코드
-                          , (SELECT CD_NM FROM dbo.CJB_COMM_CD WHERE CD = A.BNK_CD) BNK_NM  -- 은행명
+                          , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
                           , A.ACCT_NO      -- 계좌번호
                           , A.ACCT_NM      -- 계좌명
                           , A.ACCT_HLDR    -- 예금주
@@ -280,6 +280,10 @@ exports.getCarAcctList = async ({
                           , B.TID
                           , B.TRADE_DT
                           , B.TRADE_SN
+                          , B.TRADE_SCT_NM
+                          , B.TRADE_RMRK_NM
+                          , B.TRADE_ITEM_CD
+                          , B.TRADE_ITEM_NM
                           , CONVERT(VARCHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME 
                           , B.IAMT
                           , B.OAMT
