@@ -271,7 +271,8 @@ exports.getCarAcctList = async ({
 
       console.log('acctDtlSeq:', acctDtlSeq);
   
-      const query = `SELECT A.BNK_CD       -- 은행코드
+      const query = `SELECT ACCT_DTL_SEQ     -- 계좌 내역 순번
+                          , A.BNK_CD       -- 은행코드
                           , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
                           , A.ACCT_NO      -- 계좌번호
                           , A.ACCT_NM      -- 계좌명
