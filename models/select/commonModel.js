@@ -74,8 +74,11 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   
       const query = `SELECT USR_ID,
                        USR_NM,
-                       USR_PHON
-                    FROM   dbo.CJB_USR
+                       USR_PHON,
+                       USR_EMAIL,
+                       USR_STAT_CD,
+                       dbo.CJB_FN_GET_CD_NM('24', A.USR_STAT_CD) USR_STAT_NM
+                    FROM   dbo.CJB_USR A
                     WHERE  AGENT_ID = @CAR_AGENT
                            AND AGENT_CD > 0
                            AND dbo.CJB_FN_DATEFMT('D', GETDATE()) BETWEEN USR_STRT_DT AND USR_END_DT

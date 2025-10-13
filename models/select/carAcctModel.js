@@ -311,7 +311,9 @@ exports.getCarAcctList = async ({
       const request = pool.request();
       request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-      const query = `SELECT  A.ACCT_NO
+      const query = `SELECT A.BNK_CD
+                          , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
+                          , A.ACCT_NO
                           , A.ACCT_NM
                           , A.MAST_YN
                         FROM dbo.CJB_ACCT A
