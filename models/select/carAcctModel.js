@@ -412,21 +412,21 @@ exports.getCarAcctList = async ({
 
   // 계좌정보 상세 수정
   exports.updateCarAcctDetail = async ({ 
-    ACCT_DTL_SEQ, 
+    acctDtlSeq, 
     tradeItemCd, 
     tradeItemNm, 
     tradeMemo, 
-    dtlMemo, 
-    modrId 
+    carRegId, 
+    usrId 
   }) => {
     try {
       const request = pool.request();
-      request.input("ACCT_DTL_SEQ", sql.VarChar, ACCT_DTL_SEQ);
+      request.input("ACCT_DTL_SEQ", sql.VarChar, acctDtlSeq);
       request.input("TRADE_ITEM_CD", sql.VarChar, tradeItemCd);
       request.input("TRADE_ITEM_NM", sql.VarChar, tradeItemNm);
       request.input("TRADE_MEMO", sql.VarChar, tradeMemo);
-      request.input("DTL_MEMO", sql.VarChar, dtlMemo);
-      request.input("MODR_ID", sql.VarChar, modrId);
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);
+      request.input("MODR_ID", sql.VarChar, usrId);
 
       const query = `
         UPDATE dbo.CJB_ACCT_DTL
