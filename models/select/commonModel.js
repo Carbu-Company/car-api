@@ -77,7 +77,7 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
                        USR_PHON,
                        USR_EMAIL,
                        USR_STAT_CD,
-                       dbo.CJB_FN_GET_CD_NM('24', A.USR_STAT_CD) USR_STAT_NM
+                       dbo.CJB_FN_GET_CD_NM('25', A.USR_STAT_CD) USR_STAT_NM
                     FROM   dbo.CJB_USR A
                     WHERE  AGENT_ID = @CAR_AGENT
                            AND AGENT_CD > 0
