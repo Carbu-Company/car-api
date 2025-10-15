@@ -180,6 +180,177 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   
 
   
+  // 공통코드 조회
+  exports.getCDAllList = async ({ grpCD }) => {
+    try {
+      const request = pool.request();
+      request.input("GRP_CD", sql.VarChar, grpCD);
+  
+      const query = `SELECT CD
+                          , CD_NM
+                          , CD_NM2
+                          , ADD_CD
+                          , USE_YN
+                          , SORT_SEQ
+                          , FIX_YN
+                          , REGR_ID
+                          , REG_DTIME
+                          , MODR_ID
+                          , MODR_DTIME
+                       FROM dbo.CJB_COMM_CD
+                      WHERE GRP_CD = @GRP_CD
+                      ORDER BY SORT_SEQ;
+      `;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching CD list:", err);
+      throw err;
+    }
+  };
+  
+ 
+  // 공통코드 조회
+  exports.getCDDetail = async ({ cd }) => {
+    try {
+      const request = pool.request();
+      request.input("CD", sql.VarChar, cd);
+  
+      const query = `SELECT CD
+                          , CD_NM
+                          , CD_NM2
+                          , ADD_CD
+                          , USE_YN
+                          , SORT_SEQ
+                          , FIX_YN
+                          , REGR_ID
+                          , REG_DTIME
+                          , MODR_ID
+                          , MODR_DTIME
+                       FROM dbo.CJB_COMM_CD
+                      WHERE CD = @CD
+                      ORDER BY CD;
+      `;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching CD list:", err);
+      throw err;
+    }
+  };
+  
+
+
+  // 계 좌정보 상세 저장
+  exports.inserCd = async ({ 
+    grpCd
+    , cd
+    , addCd
+    , cdNm
+    , useYn
+    , sortSeq
+    , cdNm2
+    , fixYn
+    , usrId
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("GRP_CD", sql.VarChar, grpCd);
+      request.input("CD", sql.VarChar, cd);
+      request.input("ADD_CD", sql.VarChar, addCd);
+      request.input("CD_NM", sql.VarChar, cdNm);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("CD_NM2", sql.VarChar, cdNm2);
+      request.input("FIX_YN", sql.VarChar, fixYn);
+      request.input("REGR_ID", sql.VarChar, usrId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `
+        INSERT INTO dbo.CJB_COMM_CD
+            ( GRP_CD,
+              CD,
+              ADD_CD,
+              CD_NM,
+              USE_YN,
+              SORT_SEQ,
+              CD_NM2,
+              FIX_YN,
+              REGR_ID,
+              MODR_ID ) 
+        VALUES 
+          ( @GRP_CD,
+            @CD,
+            @ADD_CD,
+            @CD_NM,
+            @USE_YN,
+            @SORT_SEQ,
+            @CD_NM2,
+            @FIX_YN,
+            @REGR_ID,
+            @MODR_ID
+          );
+      `;
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error inserting comm cd:", err);
+      throw err;
+    }
+  }
+
+  // 계좌정보 상세 수정
+  exports.updateCd = async ({ 
+    grpCd
+    , cd
+    , addCd
+    , cdNm
+    , useYn
+    , sortSeq
+    , cdNm2
+    , fixYn
+    , usrId
+  }) => {
+    try {
+      const request = pool.request();
+
+      request.input("GRP_CD", sql.VarChar, grpCd);
+      request.input("CD", sql.VarChar, cd);
+      request.input("ADD_CD", sql.VarChar, addCd);
+      request.input("CD_NM", sql.VarChar, cdNm);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("CD_NM2", sql.VarChar, cdNm2);
+      request.input("FIX_YN", sql.VarChar, fixYn);
+      request.input("REGR_ID", sql.VarChar, usrId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `
+        UPDATE dbo.CJB_USR
+           SET ADD_CD = @ADD_CD,
+               CD_NM = @CD_NM,
+               USE_YN = @USE_YN,
+               SORT_SEQ = @SORT_SEQ,
+               CD_NM2 = @CD_NM2,
+               FIX_YN = @FIX_YN,
+               MOD_DTIME = getdate(),
+               MODR_ID = @MODR_ID
+        WHERE GRP_CD = @GRP_CD 
+          AND CD = @CD
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating comm cd:", err);
+      throw err;
+    }
+  }
+
+
+
 // 고객 목록 조회
 
 
@@ -189,7 +360,7 @@ exports.getCustomerList = async ({ carAgent, search }) => {
     const request = pool.request();
     request.input("CAR_AGENT", sql.VarChar, carAgent);
     request.input("SEARCH", sql.VarChar, search);
-    const query = `SELECT CUSTNO,
+    const query = `SELECT CUSTNO,   
                           NAME,
                           CUSTKIND,
                           TELNO1,

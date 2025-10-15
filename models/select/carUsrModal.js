@@ -183,9 +183,7 @@ exports.getUsrList = async ({
     dlrCd,
     loginIp,
     lastLoginDtime,
-    regDtime,
     regrId,
-    modDtime,
     modrId
   }) => {
     try {
@@ -216,9 +214,7 @@ exports.getUsrList = async ({
       request.input("DLR_CD", sql.VarChar, dlrCd);
       request.input("LOGIN_IP", sql.VarChar, loginIp);
       request.input("LAST_LOGIN_DTIME", sql.VarChar, lastLoginDtime);
-      request.input("REG_DTIME", sql.VarChar, regDtime);
       request.input("REGR_ID", sql.VarChar, regrId);
-      request.input("MOD_DTIME", sql.VarChar, modDtime);
       request.input("MODR_ID", sql.VarChar, modrId);
 
       const query = `
@@ -249,9 +245,7 @@ exports.getUsrList = async ({
               DLR_CD,
               LOGIN_IP,
               LAST_LOGIN_DTIME,
-              REG_DTIME,
               REGR_ID,
-              MOD_DTIME,
               MODR_ID ) 
         VALUES 
           ( @USR_ID,
@@ -280,9 +274,7 @@ exports.getUsrList = async ({
             @DLR_CD,
             @LOGIN_IP,
             @LAST_LOGIN_DTIME,
-            @REG_DTIME,
             @REGR_ID,
-            @MOD_DTIME,
             @MODR_ID
           );
       `;
@@ -321,12 +313,7 @@ exports.getUsrList = async ({
     saleFeeSctCd, 
     agentCd, 
     dlrCd, 
-    loginIp, 
-    lastLoginDtime, 
-    regDtime, 
-    regrId, 
-    modDtime, 
-    modrId 
+    modrId
   }) => {
     try {
       const request = pool.request();
@@ -355,11 +342,6 @@ exports.getUsrList = async ({
       request.input("SALE_FEE_SCT_CD", sql.VarChar, saleFeeSctCd);
       request.input("AGENT_CD", sql.VarChar, agentCd);
       request.input("DLR_CD", sql.VarChar, dlrCd);
-      request.input("LOGIN_IP", sql.VarChar, loginIp);
-      request.input("LAST_LOGIN_DTIME", sql.VarChar, lastLoginDtime);
-      request.input("REG_DTIME", sql.VarChar, regDtime);
-      request.input("REGR_ID", sql.VarChar, regrId);
-      request.input("MOD_DTIME", sql.VarChar, modDtime);
       request.input("MODR_ID", sql.VarChar, modrId);
 
       const query = `
@@ -386,9 +368,7 @@ exports.getUsrList = async ({
                DLR_CD = @DLR_CD,
                LOGIN_IP = @LOGIN_IP,
                LAST_LOGIN_DTIME = @LAST_LOGIN_DTIME,
-               REG_DTIME = @REG_DTIME,
-               REGR_ID = @REGR_ID,
-               MOD_DTIME = @MOD_DTIME,
+               MOD_DTIME = getdate(),
                MODR_ID = @MODR_ID
         WHERE 
           USR_ID = @USR_ID 
