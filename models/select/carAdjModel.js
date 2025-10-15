@@ -354,10 +354,57 @@ exports.getCarAdjList = async ({
     mnusAplyYn,
     wttxAplyYn,
     adjFinYn,
-    usrId
+    usrId,
+    adjDetails
   }) => {
     try {
+        
       const request = pool.request();
+
+      // 상세 내역 저장
+
+
+      adjDetails.forEach(async (adjDtl) => {
+
+        console.log("file:", file.name);
+        console.log("file:", file.url);
+
+        const dtlRequest = pool.request();
+
+        dtlRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
+        dtlRequest.input("SCT_CD", sql.VarChar, adjDtl.sctCd);
+        dtlRequest.input("SEQ", sql.VarChar, adjDtl.seq);
+        dtlRequest.input("ITEM_NM", sql.VarChar, adjDtl.itemNm);
+        dtlRequest.input("AMT", sql.VarChar, adjDtl.amt);
+        dtlRequest.input("SUP_PRC", sql.VarChar, adjDtl.supPrc);
+        dtlRequest.input("VAT", sql.VarChar, adjDtl.vat);
+        dtlRequest.input("TAX_YN", sql.VarChar, adjDtl.taxyN);
+        dtlRequest.input("REGR_ID", sql.VarChar, usrId);
+        dtlRequest.input("MODR_ID", sql.VarChar, usrId);
+
+        await fileRequest.query(`INSERT INTO dbo.CJB_ADJ_DTL (
+                                            CAR_REG_ID,
+                                            SCT_CD,
+                                            SEQ,
+                                            ITEM_NM,
+                                            AMT,
+                                            SUP_PRC,
+                                            VAT,
+                                            TAX_YN,
+                                            REGR_ID,
+                                            MODR_ID) VALUES (
+                                            @CAR_REG_ID, 
+                                            @SCT_CD, 
+                                            @SEQ, 
+                                            @ITEM_NM, 
+                                            @AMT, 
+                                            @VAT
+                                            @TAX_YN, 
+                                            @REGR_ID, 
+                                            @MODR_ID)`);
+
+      });
+
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("ADJ_DTIME", sql.VarChar, adjDtime);
       request.input("CAR_SALE_SUM_AMT", sql.Int, carSaleSumAmt);

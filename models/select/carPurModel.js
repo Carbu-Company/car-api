@@ -630,7 +630,7 @@ exports.insertCarPur = async ({
       fileRequest.input("REGR_ID", sql.VarChar, usrId);
       fileRequest.input("MODR_ID", sql.VarChar, usrId);
 
-      await fileRequest.query(`INSERT INTO CJB_FILE_INFO (
+      await fileRequest.query(`INSERT INTO dbo.CJB_FILE_INFO (
                                           AGENT_ID,
                                           FILE_SCT_CD,
                                           FILE_KND_NM,
