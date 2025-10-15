@@ -165,10 +165,10 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
       const query = `SELECT CD
                           , CD_NM
                           , CD_NM2
-                    FROM   dbo.CJB_COMM_CD
-                    WHERE  GRP_CD = @GRP_CD
-                           AND USE_YN = 'Y'
-                    ORDER  BY CD;
+                       FROM dbo.CJB_COMM_CD
+                      WHERE GRP_CD = @GRP_CD
+                        AND USE_YN = 'Y'
+                      ORDER BY CD;
       `;
       const result = await request.query(query);
       return result.recordset;
