@@ -1,7 +1,6 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 상품화비 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,8 +276,8 @@ exports.getGoodsFeeList = async ({   carAgent,
   };
   
   
-  // 차량에 대한 상품화비 상세 조회
-  exports.getGoodsFeeDetailList = async ({ carRegId }) => {
+  // 차량에 대한 상품화비 정보 조회
+  exports.getCarGoodsInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
       request.input("CAR_REG_ID", sql.VarChar, carRegId); 
@@ -334,9 +333,9 @@ exports.getGoodsFeeList = async ({   carAgent,
   // 상품화비 한건에 대한 상세 조회
   exports.getGoodsFeeDetail = async ({ goodsFeeSeq }) => {
     try {
-      const request = pool.request();
+      const request = pool.request();  
   
-      request.input("GOODS_FEE_SEQ", sql.VarChar, goodsFeeSeq); 
+      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq); 
   
       const query = `SELECT B.GOODS_FEE_SEQ,           
                                 A.DLR_ID DLR_ID,     
@@ -376,9 +375,9 @@ exports.getGoodsFeeList = async ({   carAgent,
                        ;`;
   
       const result = await request.query(query);
-      return result.recordset;  
+      return result.recordset[0];  
     } catch (err) {
-      console.error("Error fetching goods fee detail list:", err);
+      console.error("Error fetching goods fee detail:", err);
       throw err;
     }
   };

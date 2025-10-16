@@ -22,7 +22,7 @@ exports.getCarPurList = async ({
     dtlOwnerSsn,
     dtlCtshNo,
     dtlCarNoBefore,
-    orderItem = '제시일',
+    orderItem = '1',   //1: 제시일, 2: 담당딜러, 3: 고객유형, 4: 차량번호
     ordAscDesc = 'desc'
   }) => {
     try {
@@ -62,107 +62,117 @@ exports.getCarPurList = async ({
       if (dtlCustGubun) request.input("DTL_CUST_GUBUN", sql.VarChar, dtlCustGubun);
       if (dtlEvdcGubun) request.input("DTL_EVDC_GUBUN", sql.VarChar, dtlEvdcGubun);
       if (dtlPrsnGubun) request.input("DTL_PRSN_GUBUN", sql.VarChar, dtlPrsnGubun);
-      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, dtlOwnerBrno);
-      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, dtlOwnerSsn);
-      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, dtlCtshNo);
-      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
+      if (dtlOwnerBrno) request.input("DTL_OWNER_BRNO", sql.VarChar, `%${dtlOwnerBrno}%`);
+      if (dtlOwnerSsn) request.input("DTL_OWNER_SSN", sql.VarChar, `%${dtlOwnerSsn}%` );
+      if (dtlCtshNo) request.input("DTL_CTSH_NO", sql.VarChar, `%${dtlCtshNo}%` );
+      if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, `%${dtlCarNoBefore}%`);
   
       // 전체 카운트 조회
       const countQuery = `
       SELECT COUNT(*) as totalCount
                 FROM dbo.CJB_CAR_PUR A
-              WHERE AGENT_ID = @CAR_AGENT
-                AND CAR_DEL_YN = 'N'
-                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                    , dbo.CJB_CAR_SEL B
+              WHERE A.AGENT_ID = @CAR_AGENT
+                AND A.CAR_REG_ID = B.CAR_REG_ID
+                AND A.CAR_DEL_YN = 'N'
+                AND A.CAR_STAT_CD = '001'  -- 매입 ( 제시 차량 )
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO LIKE @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN LIKE @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
       `;
+
+      //console.log('countQuery:', countQuery);
     
-      const dataQuery = `SELECT CAR_REG_ID               
-         , CAR_REG_DT              
-         , CAR_DEL_DT              
-         , CAR_STAT_CD             
+      const dataQuery = `SELECT A.CAR_REG_ID               
+         , A.CAR_REG_DT              
+         , A.CAR_DEL_DT              
+         , A.CAR_STAT_CD             
          , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
-         , CAR_DEL_YN              
-         , AGENT_ID                
-         , DLR_ID                  
+         , A.CAR_DEL_YN              
+         , A.AGENT_ID                
+         , A.DLR_ID                  
          , (SELECT USR_NM FROM CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
-         , CAR_KND_CD              
-         , PRSN_SCT_CD
+         , A.CAR_KND_CD              
+         , A.PRSN_SCT_CD
          , CASE WHEN PRSN_SCT_CD = '0' THEN '상사매입' ELSE '고객위탁' END PRSN_SCT_NM
-         , CAR_PUR_DT              
-         , CAR_LOAN_CNT            
-         , CAR_LOAN_AMT            
-         , CAR_NO               
-         , PUR_BEF_CAR_NO   
-         , CAR_NEW_YN              
-         , CAR_NM                  
-         , CAR_CAT_NM              
-         , MFCP_NM                 
-         , CAR_MNFT_DT             
-         , RUN_DSTN                
-         , CAR_YOM
-         , PUR_EVDC_CD                 -- 매출증빙 구분 코드
+         , A.CAR_PUR_DT              
+         , A.CAR_LOAN_CNT            
+         , A.CAR_LOAN_AMT            
+         , A.CAR_NO               
+         , A.PUR_BEF_CAR_NO   
+         , A.CAR_NEW_YN              
+         , A.CAR_NM                  
+         , A.CAR_CAT_NM              
+         , A.MFCP_NM                 
+         , A.CAR_MNFT_DT             
+         , A.RUN_DSTN                
+         , A.CAR_YOM
+         , A.PUR_EVDC_CD                 -- 매출증빙 구분 코드
          , dbo.CJB_FN_GET_CD_NM('07', A.PUR_EVDC_CD) PUR_EVDC_NM
-         , OWNR_NM                 
-         , OWNR_TP_CD             
+         , A.OWNR_NM                 
+         , A.OWNR_TP_CD             
          , dbo.CJB_FN_GET_CD_NM('04', A.OWNR_TP_CD) OWNR_TP_NM
-         , OWNR_SSN                
-         , OWNR_BRNO               
-         , OWNR_PHON               
-         , OWNR_ZIP                
-         , OWNR_ADDR1              
-         , OWNR_ADDR2     
-         , SUBSTRING(OWNR_EMAIL, 1, CHARINDEX('@', OWNR_EMAIL) - 1) AS OWNR_EMAIL
-         , SUBSTRING(OWNR_EMAIL, CHARINDEX('@', OWNR_EMAIL) + 1, LEN(OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
-         , PUR_AMT                 
-         , PUR_SUP_PRC             
-         , PUR_VAT                 
-         , GAIN_TAX                
-         , AGENT_PUR_CST           
-         , PURACSH_RCV_YN          
-         , TXBL_ISSU_DT            
-         , PUR_DESC                
-         , TOT_PUR_FEE             
-         , TOT_PAY_FEE             
-         , TOT_CMRC_COST_FEE       
-         , CUST_NO                 
-         , PRSN_NO                 
-         , PARK_ZON_CD             
-         , PARK_ZON_DESC           
-         , PARK_KEY_NO             
-         , REG_DTIME               
-         , REGR_ID                 
-         , MOD_DTIME               
-         , MODR_ID             
+         , A.OWNR_SSN                
+         , A.OWNR_BRNO               
+         , A.OWNR_PHON               
+         , A.OWNR_ZIP                
+         , A.OWNR_ADDR1              
+         , A.OWNR_ADDR2     
+         , SUBSTRING(A.OWNR_EMAIL, 1, CHARINDEX('@', A.OWNR_EMAIL) - 1) AS OWNR_EMAIL
+         , SUBSTRING(A.OWNR_EMAIL, CHARINDEX('@', A.OWNR_EMAIL) + 1, LEN(A.OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
+         , A.PUR_AMT                 
+         , A.PUR_SUP_PRC             
+         , A.PUR_VAT                 
+         , A.GAIN_TAX                
+         , A.AGENT_PUR_CST           
+         , A.PURACSH_RCV_YN          
+         , A.TXBL_ISSU_DT            
+         , A.PUR_DESC                
+         , A.TOT_PUR_FEE             
+         , A.TOT_PAY_FEE             
+         , A.TOT_CMRC_COST_FEE       
+         , A.CUST_NO                 
+         , A.PRSN_NO                 
+         , A.PARK_ZON_CD             
+         , A.PARK_ZON_DESC           
+         , A.PARK_KEY_NO             
+         , A.REG_DTIME               
+         , A.REGR_ID                 
+         , A.MOD_DTIME               
+         , A.MODR_ID             
                   FROM dbo.CJB_CAR_PUR A
-                WHERE AGENT_ID = @CAR_AGENT
-                  AND CAR_DEL_YN = 'N'
-                  ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                  ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                  ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                  ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                  ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                  ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                  ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                  ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                  ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                  ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                  ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                  ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
-                ORDER BY ${orderItem === '제시일' ? 'CAR_PUR_DT' : orderItem === '담당딜러' ? 'DLR_ID' : orderItem === '고객유형' ? 'OWNR_TP_CD' : orderItem} ${ordAscDesc}
+                      , dbo.CJB_CAR_SEL B
+                WHERE A.AGENT_ID = @CAR_AGENT
+                  AND A.CAR_REG_ID = B.CAR_REG_ID
+                  AND A.CAR_DEL_YN = 'N'
+                  AND A.CAR_STAT_CD = '001'  -- 매입 ( 제시 차량 )
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                ${dtlOwnerBrno ? "AND A.OWNR_BRNO LIKE @DTL_OWNER_BRNO" : ""}
+                ${dtlOwnerSsn ? "AND A.OWNR_SSN LIKE @DTL_OWNER_SSN" : ""}
+                ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
+                ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
+                ORDER BY ${orderItem === '1' ? 'A.CAR_PUR_DT' : orderItem === '2' ? 'A.DLR_ID' : orderItem === '3' ? 'A.PRSN_SCT_CD' : orderItem === '4' ? 'A.OWNR_TP_CD' : 'A.OWNR_TP_CD'} ${ordAscDesc}
                 OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
                 FETCH NEXT @PAGE_SIZE ROWS ONLY;`;
   
+      //console.log('dataQuery:', dataQuery);
+
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -253,80 +263,87 @@ exports.getCarPurList = async ({
       if (dtlCarNoBefore) request.input("DTL_CAR_NO_BEFORE", sql.VarChar, dtlCarNoBefore);
   
       const query = `SELECT '상사' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
+                          , COUNT(A.CAR_REG_ID) CNT
+                          , ISNULL(SUM(A.PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(A.PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(A.PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(A.CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(A.AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM dbo.CJB_CAR_PUR A
+                            , dbo.CJB_CAR_SEL B
+                        WHERE A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.CAR_STAT_CD = '001'
+                          AND A.CAR_DEL_YN = 'N'
                           AND PRSN_SCT_CD = '0'  -- 상사
-                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                        ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                        ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND A.OWNR_BRNO LIKE @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND A.OWNR_SSN LIKE @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
                       UNION ALL
                       SELECT '고객위탁' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
-                          AND PRSN_SCT_CD = '1'  -- 고객위탁
-                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                          , COUNT(A.CAR_REG_ID) CNT
+                          , ISNULL(SUM(A.PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(A.PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(A.PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(A.CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(A.AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM dbo.CJB_CAR_PUR A
+                            , dbo.CJB_CAR_SEL B
+                        WHERE A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.CAR_STAT_CD = '001'
+                          AND A.CAR_DEL_YN = 'N'
+                          AND A.PRSN_SCT_CD = '1'  -- 고객위탁
+                        ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                        ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND A.OWNR_BRNO LIKE @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND A.OWNR_SSN LIKE @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
                       UNION ALL
                       SELECT '합계' AS PRSN_SCT_CD
-                          , COUNT(CAR_REG_ID) CNT
-                          , ISNULL(SUM(PUR_AMT), 0) PUR_AMT
-                          , ISNULL(SUM(PUR_SUP_PRC), 0) PUR_SUP_PRC
-                          , ISNULL(SUM(PUR_VAT), 0) PUR_VAT
-                          , ISNULL(SUM(CAR_LOAN_AMT), 0) CAR_LOAN_AMT
-                          , ISNULL(SUM(AGENT_PUR_CST), 0) AGENT_PUR_CST
-                        FROM CJB_CAR_PUR
-                        WHERE AGENT_ID = @CAR_AGENT
-                          AND CAR_STAT_CD = '001'
-                          AND CAR_DEL_YN = 'N'
-                          ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                          ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                          ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                          ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
-                          ${dtlCustomerName ? "AND OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
-                          ${dtlCustGubun ? "AND OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
-                          ${dtlEvdcGubun ? "AND PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
-                          ${dtlPrsnGubun ? "AND PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
-                          ${dtlOwnerBrno ? "AND OWNR_BRNO = @DTL_OWNER_BRNO" : ""}
-                          ${dtlOwnerSsn ? "AND OWNR_SSN = @DTL_OWNER_SSN" : ""}
-                          ${dtlCtshNo ? "AND CTSH_NO = @DTL_CTSH_NO" : ""}
-                          ${dtlCarNoBefore ? "AND PUR_BEF_CAR_NO = @DTL_CAR_NO_BEFORE" : ""}
+                          , COUNT(A.CAR_REG_ID) CNT
+                          , ISNULL(SUM(A.PUR_AMT), 0) PUR_AMT
+                          , ISNULL(SUM(A.PUR_SUP_PRC), 0) PUR_SUP_PRC
+                          , ISNULL(SUM(A.PUR_VAT), 0) PUR_VAT
+                          , ISNULL(SUM(A.CAR_LOAN_AMT), 0) CAR_LOAN_AMT
+                          , ISNULL(SUM(A.AGENT_PUR_CST), 0) AGENT_PUR_CST
+                        FROM dbo.CJB_CAR_PUR A
+                            , dbo.CJB_CAR_SEL B
+                        WHERE A.AGENT_ID = @CAR_AGENT
+                          AND A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.CAR_STAT_CD = '001'
+                          AND A.CAR_DEL_YN = 'N'
+                        ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                        ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
+                        ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
+                        ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
+                        ${dtlPrsnGubun ? "AND A.PRSN_SCT_CD = @DTL_PRSN_GUBUN" : ""}
+                        ${dtlOwnerBrno ? "AND A.OWNR_BRNO LIKE @DTL_OWNER_BRNO" : ""}
+                        ${dtlOwnerSsn ? "AND A.OWNR_SSN LIKE @DTL_OWNER_SSN" : ""}
+                        ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
+                        ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
         `;
-  
+      
+      console.log('query:', query);
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
@@ -335,11 +352,11 @@ exports.getCarPurList = async ({
     }
   };
   
-  // 제시 차량 상세 조회
-  exports.getCarPurDetail = async ({ car_regid }) => {
+  // 제시 차량 정보 조회
+  exports.getCarPurInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, car_regid);   
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);   
   
       const query = `SELECT                  
                             CAR_REG_ID              
@@ -405,8 +422,8 @@ exports.getCarPurList = async ({
                             , REGR_ID               
                             , MOD_DTIME             
                             , MODR_ID               
-                              FROM CJB_CAR_PUR A     
-                            WHERE  CAR_REG_ID    = @CAR_REGID `;
+                              FROM dbo.CJB_CAR_PUR A     
+                            WHERE  A.CAR_REG_ID    = @CAR_REG_ID `;
   
       console.log('query:', query);
   

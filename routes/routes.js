@@ -73,7 +73,7 @@ router.post("/getCarPurList", carController.getCarPurList);
 router.post("/getCarPurSummary", carController.getCarPurSummary);
 
 // 제시 차량 상세 조회
-router.get("/getCarPurDetail", carController.getCarPurDetail);    
+router.get("/getCarPurInfo", carController.getCarPurInfo);    
 
 // 제시 등록
 router.post("/insertCarPur", carController.insertCarPur);
@@ -94,6 +94,9 @@ router.post("/getCarSelList", carController.getCarSelList);
 
 // 판매매도 차량 합계 조회
 router.post("/getCarSelSummary", carController.getCarSelSummary);
+
+// 차량 판매 정보 조회
+router.get("/getCarSelInfo", carController.getCarSelInfo);
 
 // 판매매도 수정 등록
 router.post("/updateCarSel", carController.updateCarSel);
@@ -143,7 +146,7 @@ router.post("/insertSellFee", carController.insertSellFee);
 router.post("/updateBuyFeeSum", carController.updateBuyFeeSum);
 
 //***************************************************************************************** */
-// 상품화비 
+// 상품화비 2.0
 //***************************************************************************************** */
 
 // 상품화비용 리스트 조회
@@ -153,7 +156,7 @@ router.post("/getGoodsFeeList", carController.getGoodsFeeList);
 router.post("/getGoodsFeeCarSumList", carController.getGoodsFeeCarSumList);
 
 // 상품화비 상세 리스트 조회
-router.get("/getGoodsFeeDetailList", carController.getGoodsFeeDetailList);
+router.get("/getCarGoodsInfo", carController.getCarGoodsInfo);
 
 // 상품화비 상세 조회
 router.get("/getGoodsFeeDetail", carController.getGoodsFeeDetail);
@@ -178,6 +181,9 @@ router.post("/getCarLoanList", carController.getCarLoanList);
 
 // 재고 금융 합계
 router.post("/getCarLoanSummary", carController.getCarLoanSummary);
+
+// 차량 대출 정보 조회
+router.get("/getCarLoanInfo", carController.getCarLoanInfo);
 
 // 재고금융 등록
 router.post("/insertCarLoan", carController.insertCarLoan);
@@ -213,7 +219,7 @@ router.post("/getCarConcilSummary", carController.getCarConcilSummary);
 router.post("/insertCarConcil", carController.insertCarConcil);
 
 // 알선 판매 상세 조회
-router.get("/getCarConcilDetail", carController.getCarConcilDetail);
+router.get("/getCarConcilInfo", carController.getCarConcilInfo);
 
 // 알선 판매 수정
 router.post("/updateCarConcil", carController.updateCarConcil);
@@ -418,7 +424,7 @@ router.post("/getCarCashList", carController.getCarCashList);
 router.post("/getCarCashSummary", carController.getCarCashSummary);
 
 // 현금영수증 상세 조회
-router.get("/getCarCashDetail", carController.getCarCashDetail);
+router.get("/getCarCashInfo", carController.getCarCashInfo);
 
 //***************************************************************************************** */
 // 전자세금계산서 2.0
@@ -431,7 +437,10 @@ router.post("/getCarTaxList", carController.getCarTaxList);
 router.post("/getCarTaxSummary", carController.getCarTaxSummary);
 
 // 전자세금계산서 발행 상세 조회
-router.get("/getCarTaxDetail", carController.getCarTaxDetail);
+router.get("/getCarTaxInfo", carController.getCarTaxInfo);
+
+// 전자세금계산서 항목 상세 조회
+router.get("/getCarTaxItemInfo", carController.getCarTaxItemInfo);
 
 
 //***************************************************************************************** */
@@ -467,11 +476,11 @@ router.post("/getCarAdjList", carController.getCarAdjList);
 // 정산 합계 조회
 router.post("/getCarAdjSummary", carController.getCarAdjSummary);
 
-// 정산 상세 조회
-router.get("/getCarAdjDetail", carController.getCarAdjDetail);
+// 정산 조회
+router.get("/getCarAdjInfo", carController.getCarAdjInfo);
 
-// 정산 목록 조회
-router.get("/getAdjDtlList", carController.getAdjDtlList);
+// 정산 상세 목록 조회
+router.get("/getCarAdjDtlList", carController.getCarAdjDtlList);
 
 // 정산 저장
 router.post("/insertCarAdj", carController.insertCarAdj);
@@ -480,10 +489,10 @@ router.post("/insertCarAdj", carController.insertCarAdj);
 router.post("/updateCarAdj", carController.updateCarAdj);
 
 // 정산 삭제
-router.post("/deleteAdj", carController.deleteAdj);
+router.get("/deleteCarAdj", carController.deleteCarAdj);
 
 // 정산 상세 삭제
-router.post("/deleteAdjDtl", carController.deleteAdjDtl);
+router.get("/deleteCarAdjDtl", carController.deleteCarAdjDtl);
 
 //***************************************************************************************** */
 // 상사 2.0
@@ -493,10 +502,10 @@ router.post("/deleteAdjDtl", carController.deleteAdjDtl);
 router.post("/getCarAgentList", carController.getCarAgentList);
 
 // 상사 목록
-router.post("/getCarAdjSummary", carController.getCarAdjSummary);
+router.post("/getCarAgentSummary", carController.getCarAgentSummary);
 
 // 상사 목록
-router.post("/getCarAgentDetail", carController.getCarAgentDetail);
+router.get("/getCarAgentInfo", carController.getCarAgentInfo);
 
 // 상사 목록
 router.post("/insertCarAgent", carController.insertCarAgent);
@@ -505,7 +514,8 @@ router.post("/insertCarAgent", carController.insertCarAgent);
 router.post("/updateCarAgent", carController.updateCarAgent);
 
 // 상사 목록
-router.post("/deleteAgent", carController.deleteAgent);
+router.get("/deleteCarAgent", carController.deleteCarAgent);
+
 
 //***************************************************************************************** */
 // DASH BOARD

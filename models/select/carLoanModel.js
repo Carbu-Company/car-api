@@ -364,7 +364,27 @@ exports.getCarLoanList = async ({   carAgent,
       throw err;
     }
   };
-  
+
+
+  // 차량 대출 정보 조회
+  exports.getCarLoanInfo = async ({ carRegId }) => {
+    try {
+      const request = pool.request();
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);
+      const query = `SELECT A.LOAN_AMT
+                        , A.LOAN_CORP_INTR_RT 
+                        , A.LOAN_DT
+                        , A.TOT_PAY_INTR_AMT
+                    FROM dbo.CJB_CAR_LOAN A
+                    WHERE  A.CAR_REG_ID = @CAR_REG_ID
+                    ;`;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching car loan info:", err);
+      throw err;
+    }
+  };
     
   // 재고 금융 등록
   exports.insertAgentLoanCorp = async ({

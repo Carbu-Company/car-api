@@ -260,7 +260,7 @@ exports.getCarAdjList = async ({
   };
   
   // 정산 상세 조회
-  exports.getCarAdjDetail = async ({ carRegId }) => {
+  exports.getCarAdjInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
 
@@ -303,7 +303,7 @@ exports.getCarAdjList = async ({
   };
 
   // 정산 상세 목록 조회
-  exports.getAdjDtlList = async ({ carRegId }) => {
+  exports.getCarAdjDtlList = async ({ carRegId }) => {
     try {
       const request = pool.request();
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
@@ -330,7 +330,7 @@ exports.getCarAdjList = async ({
     }
   }
 
-  // 정산 저장 (상세 포함)
+  // 정산 저장 (정산 상세 포함)
   exports.insertCarAdj = async ({ 
     carRegId, 
     adjDtime, 
@@ -507,7 +507,7 @@ exports.getCarAdjList = async ({
     }
   }
 
-  // 계좌정보 상세 수정
+  // 정산 수정 (정산 상세 포함)
   exports.updateCarAdj = async ({ 
     carRegId, 
     adjDtime, 
@@ -653,7 +653,7 @@ exports.getCarAdjList = async ({
 
 
 // 정산 삭제
-exports.deleteAdj = async ({carRegId}) => {
+exports.deleteCarAdj = async ({carRegId}) => {
   try {
     const request = pool.request();
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
@@ -669,23 +669,18 @@ exports.deleteAdj = async ({carRegId}) => {
     await Promise.all([request.query(query1), request.query(query2)]);
 
   } catch (err) {
-    console.error("Error deleting car pur:", err);
+    console.error("Error deleting car adj:", err);
     throw err;
   }
 };
 
 // 정산 삭제
-exports.deleteAdjDtl = async ({carRegId, sctCd, seq}) => {
+exports.deleteCarAdjDtl = async ({carRegId, sctCd, seq}) => {
   try {
     const request = pool.request();
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
     request.input("SCT_CD", sql.VarChar, sctCd);
     request.input("SEQ", sql.VarChar, seq);
-
-    query1 = `UPDATE dbo.CJB_ADJ
-                 SET CAR_SALE_SUM_AMT = @CAR_SALE_SUM_AMT
-               WHERE CAR_REG_ID = @CAR_REG_ID
-        `;  
 
     query1 = `DELETE dbo.CJB_ADJ_DTL
                WHERE CAR_REG_ID = @CAR_REG_ID
@@ -693,10 +688,15 @@ exports.deleteAdjDtl = async ({carRegId, sctCd, seq}) => {
                  AND SEQ = @SEQ
         `;  
 
+    query2 = `UPDATE dbo.CJB_ADJ
+                SET CAR_SALE_SUM_AMT = CAR_SALE_SUM_AMT - (SELECT AMT FROM dbo.CJB_ADJ_DTL WHERE CAR_REG_ID = @CAR_REG_ID AND SCT_CD = @SCT_CD AND SEQ = @SEQ)
+              WHERE CAR_REG_ID = @CAR_REG_ID
+    `;  
+
     await Promise.all([request.query(query1), request.query(query2)]);
 
   } catch (err) {
-    console.error("Error deleting car pur:", err);
+    console.error("Error deleting car adj dtl:", err);
     throw err;
   }
 };

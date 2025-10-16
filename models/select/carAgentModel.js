@@ -411,7 +411,7 @@ exports.getCarAgentList = async ({
 
 
 // 상사 삭제 (상태 변경)
-exports.deleteAgent = async ({agentId, usrId}) => {
+exports.deleteCarAgent = async ({agentId, usrId}) => {
   try {
     const request = pool.request();
     request.input("AGENT_ID", sql.VarChar, agentId);

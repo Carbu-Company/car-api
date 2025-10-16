@@ -304,53 +304,51 @@ exports.getCarTaxList = async ({
   };
   
   // 세금계산서 상세 조회
-  exports.getCarTaxDetail = async ({ car_regid }) => {
+  exports.getCarTaxInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, car_regid);   
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);   
   
-      const query = `SELECT B.CASH_MGMTKEY                  -- 현금 관리키             
-                            B.NTS_CONF_NO                   -- 국세청 승인 번호        
-                            B.TRADE_DT                      -- 거래 일자               
-                            B.TRADE_DTIME                   -- 거래 일시               
-                            B.TRADE_SHP_NM                  -- 거래 형태 명            
-                            B.TRADE_SCT_NM                  -- 거래 구분 명            
-                            B.TRADE_TP_NM                   -- 거래 유형 명            
-                            B.TAX_SHP_NM                    -- 과세 형태 명            
-                            B.TRADE_AMT                     -- 거래 금액               
-                            B.SUP_PRC                       -- 공급가                  
-                            B.VAT                           -- 부가세                  
-                            B.SRVC                          -- 봉사료                  
-                            B.MERS_BRNO                     -- 가맹점 사업자등록번     
-                            B.MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호
-                            B.MERS_MTL_NM                   -- 가맹점 상호 명          
-                            B.MERS_PRES_NM                  -- 가맹점 대표자           
-                            B.MERS_ADDR                     -- 가맹점 주소             
-                            B.MERS_PHON                     -- 가맹점 전화번호         
-                            B.RCGN_NO                       -- 식별 번호               
-                            B.CUST_NM                       -- 고객 명                 
-                            B.ORD_GOODS_NM                  -- 주문 상품 명            
-                            B.ORD_NO                        -- 주문 번호               
-                            B.CUST_EMAIL                    -- 고객 이메일             
-                            B.CUST_HP                       -- 고객 핸드폰             
-                            B.CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부 
-                            B.CNCL_CAUS_CD                  -- 취소 사유 코드          
-                            B.MEMO                          -- 메모                    
-                            B.EMAIL_TIT_NM                  -- 이메일 제목 명          
-                            B.GOODS_FEE_SEQ                 -- 비용 순번               
-                            B.AGENT_ID                      -- T                 
-                            B.REG_DTIME                     -- 등록 일시               
-                            B.REGR_ID                       -- 등록자 ID               
-                            B.MOD_DTIME                     -- 수정 일시               
-                            B.MODR_ID                       -- 수정자 ID               
+      const query = `SELECT C.CASH_MGMTKEY                  -- 현금 관리키             
+                            C.NTS_CONF_NO                   -- 국세청 승인 번호        
+                            C.TRADE_DT                      -- 거래 일자               
+                            C.TRADE_DTIME                   -- 거래 일시               
+                            C.TRADE_SHP_NM                  -- 거래 형태 명            
+                            C.TRADE_SCT_NM                  -- 거래 구분 명            
+                            C.TRADE_TP_NM                   -- 거래 유형 명            
+                            C.TAX_SHP_NM                    -- 과세 형태 명            
+                            C.TRADE_AMT                     -- 거래 금액               
+                            C.SUP_PRC                       -- 공급가                  
+                            C.VAT                           -- 부가세                  
+                            C.SRVC                          -- 봉사료                  
+                            C.MERS_BRNO                     -- 가맹점 사업자등록번     
+                            C.MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호
+                            C.MERS_MTL_NM                   -- 가맹점 상호 명          
+                            C.MERS_PRES_NM                  -- 가맹점 대표자           
+                            C.MERS_ADDR                     -- 가맹점 주소             
+                            C.MERS_PHON                     -- 가맹점 전화번호         
+                            C.RCGN_NO                       -- 식별 번호               
+                            C.CUST_NM                       -- 고객 명                 
+                            C.ORD_GOODS_NM                  -- 주문 상품 명            
+                            C.ORD_NO                        -- 주문 번호               
+                            C.CUST_EMAIL                    -- 고객 이메일             
+                            C.CUST_HP                       -- 고객 핸드폰             
+                            C.CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부 
+                            C.CNCL_CAUS_CD                  -- 취소 사유 코드          
+                            C.MEMO                          -- 메모                    
+                            C.EMAIL_TIT_NM                  -- 이메일 제목 명          
+                            C.GOODS_FEE_SEQ                 -- 비용 순번               
+                            C.AGENT_ID                      -- 상사 ID                 
+                            C.REG_DTIME                     -- 등록 일시               
+                            C.REGR_ID                       -- 등록자 ID               
+                            C.MOD_DTIME                     -- 수정 일시               
+                            C.MODR_ID                       -- 수정자 ID               
                         FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_TXBL B
-                           , dbo.CJB_GOODS_FEE C
-                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
-                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
-                          AND A.AGENT_ID = @CAR_AGENT
-                          AND A.CAR_DEL_YN = 'N'   
-                          AND A.CAR_REG_ID = @CAR_REGID `;
+                           , dbo.CJB_GOODS_FEE B                           
+                           , dbo.CJB_TXBL C
+                        WHERE B.CAR_REG_ID = A.CAR_REG_ID
+                          AND C.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ
+                          AND A.CAR_REG_ID = @CAR_REG_ID `;
   
       console.log('query:', query);
   
@@ -363,10 +361,10 @@ exports.getCarTaxList = async ({
   };
 
   // 세금계산서 항목 상세 조회
-  exports.getCarTaxItemDetail = async ({ car_regid }) => {
+  exports.getCarTaxItemInfo = async ({ taxMgmtkey }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, car_regid);   
+      request.input("TAX_MGMTKEY", sql.VarChar, taxMgmtkey);   
   
       const query = `SELECT A.TXBL_DTL_SN                     -- 세금계산서 상세 일련번호
                             , A.TAX_MGMTKEY                   -- 세금 관리키             
@@ -378,9 +376,9 @@ exports.getCarTaxList = async ({
                             , A.SUP_PRC                       -- 공급가                  
                             , A.TAXAMT                        -- 세액                    
                             , A.NOTE                          -- 비고               
-                        FROM dbo.CJB_TXBL_ITEM A
-                           , dbo.CJB_TXBL B
-                        WHERE A.TAX_MGMTKEY = B.TAX_MGMTKEY
+                        FROM dbo.CJB_TXBL A
+                           , dbo.CJB_TXBL_ITEM B
+                        WHERE B.TAX_MGMTKEY = A.TAX_MGMTKEY
                           AND A.TAX_MGMTKEY = @TAX_MGMTKEY `;
   
       console.log('query:', query);
@@ -785,8 +783,6 @@ try {
     WHERE TAX_MGMTKEY = @TAX_MGMTKEY;
   `;  
 
-
-
    const query2 = `
         UPDATE CJB_GOODS_FEE
         SET CASH_RECPT_RCGN_NO = @CASH_RECPT_RCGN_NO
@@ -796,9 +792,7 @@ try {
 
    const query3 = `DELETE FROM CJB_TXBL_ITEM WHERE TAX_MGMTKEY = @TAX_MGMTKEY; `
    
-   
    await Promise.all([request.query(query1), request.query(query2), request.query(query3)]);
-
 
    attachedItems.forEach(async (item) => {
 

@@ -340,7 +340,55 @@ exports.getCarSelList = async ({
     }
   };
   
-  
+
+
+// 차량 판매매도 목록 조회
+exports.getCarSelInfo = async ({ carRegId }) => {
+  try {
+
+    const request = pool.request();
+    
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+
+    const dataQuery = `SELECT A.CAR_REG_ID
+                  , A.CAR_STAT_CD     -- 차량 상태 코드
+                  , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
+                  , B.SALE_TP_CD      -- 판매유형코드 
+                  , dbo.CJB_FN_GET_CD_NM('03', B.SALE_TP_CD) SALE_TP_NM
+                  , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = B.DLR_ID) AS SEL_DLR_NM
+                  , B.BUYER_NM        -- 매입자명 
+                  , B.SALE_AMT        -- 매도 금액
+                  , B.AGENT_SEL_COST  -- 상사 매도 비용
+                  , B.PERF_INFE_AMT   -- 성능 보험료 금액
+                  , B.CAR_SALE_DT     -- 차량 판매 일자 
+                  , B.SALE_REG_DT     -- 매출 등록 일자
+                  , A.CAR_NO          -- 차량번호
+                  , A.CAR_NM          -- 차량명
+                  , A.CAR_PUR_DT      -- 차량구매일
+                  , A.DLR_ID
+                  , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+                  , A.PUR_AMT         -- 차량구매금액
+                  , B.ADJ_FIN_DT      -- 정산일
+              FROM dbo.CJB_CAR_PUR A
+                 , dbo.CJB_CAR_SEL B
+              WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                AND A.CAR_DEL_YN = 'N'
+                AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
+                AND A.CAR_REG_ID = @CAR_REG_ID
+                ;`;
+
+      console.log('dataQuery:', dataQuery);
+
+      const result = await request.query(dataQuery);
+      return result.recordset[0];
+
+  } catch (err) {
+    console.error("Error fetching car sel info:", err);
+    throw err;
+  }
+};
+
+
 // 차량 판매 정보 수정
 exports.updateCarSel = async ({ 
   carRegId, 
@@ -585,7 +633,7 @@ exports.deleteCarSel = async ({carRegId, flag_type}) => {
   }
 };
 
-
+// 매입자 고객 정보 등록
 exports.insertCarBuyCust = async ({
   carRegId,
   buySeq,
@@ -601,6 +649,7 @@ exports.insertCarBuyCust = async ({
 }) => {
   try {
     const request = pool.request();
+
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
     request.input("BUY_SEQ", sql.Int, buySeq); // Default to 1 for new record
     request.input("CUST_NM", sql.VarChar, custNm);

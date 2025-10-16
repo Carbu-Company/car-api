@@ -152,7 +152,7 @@ exports.getCarConcilList = async ({
       };
   
     } catch (err) {
-      console.error("Error fetching car pur list:", err);
+      console.error("Error fetching car concil list:", err);
       throw err;
     }
   };
@@ -301,16 +301,16 @@ exports.getCarConcilList = async ({
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
-      console.error("Error fetching car pur sum:", err);
+      console.error("Error fetching car concil summary:", err);
       throw err;
     }
   };
   
   // 알선 상세 조회
-  exports.getCarConcilDetail = async ({ brkSeq }) => {
+  exports.getCarConcilInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
-      request.input("BRK_SEQ", sql.Int, brkSeq);   
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);   
   
       const query = `SELECT A.BRK_SEQ
                           , A.BRK_AGENT_ID 
@@ -334,15 +334,14 @@ exports.getCarConcilList = async ({
                           , A.OWNR_NM
                           , A.OWNR_PHON
                        FROM dbo.CJB_CAR_SEL_BRK A
-                      WHERE A.BRK_SEQ = @BRK_SEQ `;
+                      WHERE A.CAR_REG_ID = @CAR_REG_ID `;
 
-  
-      console.log('query:', query);
+        //console.log('query:', query);
   
       const result = await request.query(query);
       return result.recordset[0];
     } catch (err) {
-      console.error("Error fetching car pur detail:", err);
+      console.error("Error fetching car concil info:", err);
       throw err;
     }
   };

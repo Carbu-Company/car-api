@@ -388,53 +388,52 @@ exports.getCarCashList = async ({
   };
   
   // 현금영수증 상세 조회
-  exports.getCarCashDetail = async ({ car_regid }) => {
+  exports.getCarCashInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REGID", sql.VarChar, car_regid);   
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);   
   
-      const query = `SELECT B.CASH_MGMTKEY                  -- 현금 관리키             
-                            B.NTS_CONF_NO                   -- 국세청 승인 번호        
-                            B.TRADE_DT                      -- 거래 일자               
-                            B.TRADE_DTIME                   -- 거래 일시               
-                            B.TRADE_SHP_NM                  -- 거래 형태 명            
-                            B.TRADE_SCT_NM                  -- 거래 구분 명            
-                            B.TRADE_TP_NM                   -- 거래 유형 명            
-                            B.TAX_SHP_NM                    -- 과세 형태 명            
-                            B.TRADE_AMT                     -- 거래 금액               
-                            B.SUP_PRC                       -- 공급가                  
-                            B.VAT                           -- 부가세                  
-                            B.SRVC                          -- 봉사료                  
-                            B.MERS_BRNO                     -- 가맹점 사업자등록번     
-                            B.MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호
-                            B.MERS_MTL_NM                   -- 가맹점 상호 명          
-                            B.MERS_PRES_NM                  -- 가맹점 대표자           
-                            B.MERS_ADDR                     -- 가맹점 주소             
-                            B.MERS_PHON                     -- 가맹점 전화번호         
-                            B.RCGN_NO                       -- 식별 번호               
-                            B.CUST_NM                       -- 고객 명                 
-                            B.ORD_GOODS_NM                  -- 주문 상품 명            
-                            B.ORD_NO                        -- 주문 번호               
-                            B.CUST_EMAIL                    -- 고객 이메일             
-                            B.CUST_HP                       -- 고객 핸드폰             
-                            B.CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부 
-                            B.CNCL_CAUS_CD                  -- 취소 사유 코드          
-                            B.MEMO                          -- 메모                    
-                            B.EMAIL_TIT_NM                  -- 이메일 제목 명          
-                            B.GOODS_FEE_SEQ                 -- 비용 순번               
-                            B.AGENT_ID                      -- T                 
-                            B.REG_DTIME                     -- 등록 일시               
-                            B.REGR_ID                       -- 등록자 ID               
-                            B.MOD_DTIME                     -- 수정 일시               
-                            B.MODR_ID                       -- 수정자 ID               
+      const query = `SELECT  C.CASH_MGMTKEY                  -- 현금 관리키             
+                           , C.NTS_CONF_NO                   -- 국세청 승인 번호        
+                           , C.TRADE_DT                      -- 거래 일자                
+                           , C.TRADE_DTIME                   -- 거래 일시                
+                           , C.TRADE_SHP_NM                  -- 거래 형태 명             
+                           , C.TRADE_SCT_NM                  -- 거래 구분 명             
+                           , C.TRADE_TP_NM                   -- 거래 유형 명             
+                           , C.TAX_SHP_NM                    -- 과세 형태 명             
+                           , C.TRADE_AMT                     -- 거래 금액                
+                           , C.SUP_PRC                       -- 공급가                   
+                           , C.VAT                           -- 부가세                   
+                           , C.SRVC                          -- 봉사료                   
+                           , C.MERS_BRNO                     -- 가맹점 사업자            
+                           , C.MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업등록번      
+                           , C.MERS_MTL_NM                   -- 가맹점 상호 맛?식별번호              ?                                     호                                                                                                      전송 여부                                                   
+                           , C.MERS_PRES_NM                  -- 가맹점 대표자?                           
+                           , C.MERS_ADDR                     -- 가맹점 주소                               
+                           , C.MERS_PHON                     -- 가맹점 전화번                             
+                           , C.RCGN_NO                       -- 식별 번호               
+                           , C.CUST_NM                       -- 고객 명                 
+                           , C.ORD_GOODS_NM                  -- 주문 상품 명            
+                           , C.ORD_NO                        -- 주문 번호               
+                           , C.CUST_EMAIL                    -- 고객 이메일  
+                           , C.CUST_HP                       -- 고객 핸드폰  
+                           , C.CUST_NTCCHR_TRNS_YN           -- 고객 알림문자
+                           , C.CNCL_CAUS_CD                  -- 취소 사유 코?
+                           , C.MEMO                          -- 메모         
+                           , C.EMAIL_TIT_NM                  -- 이메일 제목 ?
+                           , C.GOODS_FEE_SEQ                 -- 비용 순번    
+                           , C.AGENT_ID                      -- T            
+                           , C.REG_DTIME                     -- 등록 일시    
+                           , C.REGR_ID                       -- 등록자 ID    
+                           , C.MOD_DTIME                     -- 수정 일시    
+                           , C.MODR_ID                       -- 수정자 ID          
                         FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_CASH_RECPT B
-                           , dbo.CJB_GOODS_FEE C
-                        WHERE A.CAR_REG_ID = C.CAR_REG_ID
-                          AND B.GOODS_FEE_SEQ = C.GOODS_FEE_SEQ
-                          AND A.AGENT_ID = @CAR_AGENT
+                           , dbo.CJB_GOODS_FEE B
+                           , dbo.CJB_CASH_RECPT C
+                        WHERE B.CAR_REG_ID = A.CAR_REG_ID
+                          AND C.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ
                           AND A.CAR_DEL_YN = 'N'   
-                          AND A.CAR_REG_ID = @CAR_REGID `;
+                          AND A.CAR_REG_ID = @CAR_REG_ID `;
   
       console.log('query:', query);
   
