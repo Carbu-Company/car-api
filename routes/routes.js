@@ -458,6 +458,56 @@ router.post("/updateCarAcctDetail", carController.updateCarAcctDetail);
 
 
 //***************************************************************************************** */
+// 정산 2.0
+//***************************************************************************************** */
+
+// 정산 목록 조회
+router.post("/getCarAdjList", carController.getCarAdjList);
+
+// 정산 합계 조회
+router.post("/getCarAdjSummary", carController.getCarAdjSummary);
+
+// 정산 상세 조회
+router.get("/getCarAdjDetail", carController.getCarAdjDetail);
+
+// 정산 목록 조회
+router.get("/getAdjDtlList", carController.getAdjDtlList);
+
+// 정산 저장
+router.post("/insertCarAdj", carController.insertCarAdj);
+
+// 정산 수정
+router.post("/updateCarAdj", carController.updateCarAdj);
+
+// 정산 삭제
+router.post("/deleteAdj", carController.deleteAdj);
+
+// 정산 상세 삭제
+router.post("/deleteAdjDtl", carController.deleteAdjDtl);
+
+//***************************************************************************************** */
+// 상사 2.0
+//***************************************************************************************** */
+
+// 상사 목록
+router.post("/getCarAgentList", carController.getCarAgentList);
+
+// 상사 목록
+router.post("/getCarAdjSummary", carController.getCarAdjSummary);
+
+// 상사 목록
+router.post("/getCarAgentDetail", carController.getCarAgentDetail);
+
+// 상사 목록
+router.post("/insertCarAgent", carController.insertCarAgent);
+
+// 상사 목록
+router.post("/updateCarAgent", carController.updateCarAgent);
+
+// 상사 목록
+router.post("/deleteAgent", carController.deleteAgent);
+
+//***************************************************************************************** */
 // DASH BOARD
 //***************************************************************************************** */
 

@@ -164,10 +164,11 @@ exports.getCarLoanList = async ({   carAgent,
       // 전체 카운트 조회
       const countQuery = `
                         SELECT COUNT(*) as totalCount
-                        FROM dbo.CJB_CAR_PUR A, dbo.CJB_CAR_LOAN B
+                        FROM dbo.CJB_CAR_PUR A
+                           , dbo.CJB_CAR_LOAN B
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                            AND A.AGENT_ID = @CAR_AGENT
-                 --           AND A.CAR_DEL_YN = 'N'
+                          AND A.AGENT_ID = @CAR_AGENT
+                 --       AND A.CAR_DEL_YN = 'N'
                 ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
                 ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
@@ -289,8 +290,7 @@ exports.getCarLoanList = async ({   carAgent,
       if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
       if (dtlLoanSctGubun) request.input("DTL_LOAN_SCT_GUBUN", sql.VarChar, dtlLoanSctGubun);
       if (dtlLoanStatGubun) request.input("DTL_LOAN_STAT_GUBUN", sql.VarChar, dtlLoanStatGubun);
-  
-  
+    
       // 전체 카운트 조회
       const countQuery = `
                         SELECT COUNT(*) as totalCount
