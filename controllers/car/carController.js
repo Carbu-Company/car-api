@@ -1,4 +1,4 @@
-const carSelectModel = require("../../models/select/carSelectModel");
+const carSelectModel = require("../../models/select/delete_carSelectModel");
 const carAcctModel = require("../../models/select/carAcctModel");
 const carAdjModel = require("../../models/select/carAdjModel");
 const carAgentModel = require("../../models/select/carAgentModel");
