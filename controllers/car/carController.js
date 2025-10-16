@@ -1023,6 +1023,7 @@ exports.getCarTaxItemInfo = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1050,10 +1051,10 @@ exports.getCarCashSummary = async (req, res, next) => {
 };
 
 // 현금영수증 상세 조회
-exports.getCarCashDetail = async (req, res, next) => {
+exports.getCarCashInfo = async (req, res, next) => {
   try {
     const { car_regid } = req.query;  
-    const carCashDetail = await carCashModel.getCarCashDetail({ car_regid });
+    const carCashDetail = await carCashModel.getCarCashInfo({ car_regid });
     res.status(200).json(carCashDetail);
   } catch (err) {
     next(err);
