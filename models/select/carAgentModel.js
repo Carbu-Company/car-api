@@ -162,7 +162,22 @@ exports.getCarAgentList = async ({
                             , 0 O_CNT
                             , 0 OAMT
                         FROM dbo.CJB_AGENT A
-                        WHERE 1 = 1
+                       WHERE 1 = 1
+                         AND A.REG_DTIME >  DATEADD(day, 0, CONVERT(date, GETDATE()))
+                        $${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
+                        ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
+                        ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
+                        ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
+                        ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
+                      UNION ALL
+                      SELECT  0 I_CNT
+                            , 0 IAMT
+                            , COUNT(B.ACCT_DTL_SEQ) O_CNT
+                            , ISNULL(SUM(CONVERT(int, ISNULL(B.OAMT, '0'))), 0) AS OAMT
+                        FROM dbo.CJB_AGENT A
+                       WHERE 1 = 1
+                         AND A.REG_DTIME >= DATEADD(day, -1, CONVERT(date, GETDATE())) 
+                         AND A.REG_DTIME <  DATEADD(day, 0, CONVERT(date, GETDATE()))
                         ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
                         ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
                         ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
@@ -175,7 +190,6 @@ exports.getCarAgentList = async ({
                             , ISNULL(SUM(CONVERT(int, ISNULL(B.OAMT, '0'))), 0) AS OAMT
                         FROM dbo.CJB_AGENT A
                        WHERE 1 = 1
-                         AND B.TRADE_SCT_NM = '출금'
                         ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
                         ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
                         ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
