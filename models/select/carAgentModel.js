@@ -154,47 +154,39 @@ exports.getCarAgentList = async ({
       if (cmbtAgentCd) request.input("CMBT_AGENT_CD", sql.VarChar, `%${cmbtAgentCd}%`);
   
       const query = `SELECT SUM(I_CNT) AS I_CNT
-                          , SUM(IAMT) AS IAMT
                           , SUM(O_CNT) AS O_CNT
-                          , SUM(OAMT) AS OAMT 
-                       FROM (SELECT COUNT(B.ACCT_DTL_SEQ) AS I_CNT
-                            , ISNULL(SUM(CONVERT(int, ISNULL(B.IAMT, '0'))), 0) AS IAMT
-                            , 0 O_CNT
-                            , 0 OAMT
-                        FROM dbo.CJB_AGENT A
-                       WHERE 1 = 1
-                         AND A.REG_DTIME >  DATEADD(day, 0, CONVERT(date, GETDATE()))
-                        $${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                        ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                        ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                        ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                        ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
-                      UNION ALL
-                      SELECT  0 I_CNT
-                            , 0 IAMT
-                            , COUNT(B.ACCT_DTL_SEQ) O_CNT
-                            , ISNULL(SUM(CONVERT(int, ISNULL(B.OAMT, '0'))), 0) AS OAMT
-                        FROM dbo.CJB_AGENT A
-                       WHERE 1 = 1
-                         AND A.REG_DTIME >= DATEADD(day, -1, CONVERT(date, GETDATE())) 
-                         AND A.REG_DTIME <  DATEADD(day, 0, CONVERT(date, GETDATE()))
-                        ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                        ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                        ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                        ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                        ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
-                      UNION ALL
-                      SELECT  0 I_CNT
-                            , 0 IAMT
-                            , COUNT(B.ACCT_DTL_SEQ) O_CNT
-                            , ISNULL(SUM(CONVERT(int, ISNULL(B.OAMT, '0'))), 0) AS OAMT
-                        FROM dbo.CJB_AGENT A
-                       WHERE 1 = 1
-                        ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                        ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                        ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                        ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                        ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
+                       FROM (SELECT COUNT(A.AGENT_CD) AS I_CNT
+                                  , COUNT(A.AGENT_CD) AS O_CNT
+                              FROM dbo.CJB_AGENT A
+                             WHERE 1 = 1
+                               AND A.REG_DTIME > DATEADD(day, 0, CONVERT(date, GETDATE()))
+                              $${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
+                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
+                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
+                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
+                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
+                            UNION ALL
+                            SELECT  COUNT(A.AGENT_CD) AS I_CNT
+                                  , COUNT(A.AGENT_CD) AS O_CNT
+                               FROM dbo.CJB_AGENT A
+                             WHERE 1 = 1
+                              AND A.REG_DTIME >= DATEADD(day, -1, CONVERT(date, GETDATE())) 
+                              AND A.REG_DTIME <  DATEADD(day, 0, CONVERT(date, GETDATE()))
+                              ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
+                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
+                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
+                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
+                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
+                            UNION ALL
+                            SELECT  COUNT(A.AGENT_CD) AS I_CNT
+                                  , COUNT(A.AGENT_CD) AS O_CNT
+                              FROM dbo.CJB_AGENT A
+                            WHERE 1 = 1
+                              ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
+                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
+                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
+                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
+                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
                       ) A`;
         
       
@@ -208,15 +200,12 @@ exports.getCarAgentList = async ({
     }
   };
   
-  // 현금영수증 상세 조회
-  exports.getCarAdjDetail = async ({ carRegId }) => {
+  // 상사 상세 조회
+  exports.getCarAgentDetail = async ({ carRegId }) => {
     try {
       const request = pool.request();
 
-
-      console.log('*********acctDtlSeq:***************', acctDtlSeq);
       request.input("carRegId", sql.VarChar, carRegId);   
-
       console.log('carRegId:', carRegId);
   
       const query = `SELECT ACCT_DTL_SEQ     -- 계좌 내역 순번
@@ -238,8 +227,8 @@ exports.getCarAgentList = async ({
                           , B.OAMT
                           , B.BLNC
                           , B.NOTE1
-                        FROM dbo.CJB_ADJ A
-                        WHERE CAR_REG_ID = @CAR_REG_ID `;
+                        FROM dbo.CJB_AGENT A
+                        WHERE AGENT_CD = @AGENT_CD `;
   
       console.log('query:', query);
   
@@ -251,193 +240,90 @@ exports.getCarAgentList = async ({
     }
   };
 
-  // 계좌정보 목록 조회
-  exports.getAgentAcctList = async ({ carAgent }) => {
-    try {
-      const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
 
-      const query = `SELECT A.BNK_CD
-                          , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
-                          , A.ACCT_NO
-                          , A.ACCT_NM
-                          , A.MAST_YN
-                        FROM dbo.CJB_ACCT A
-                        WHERE A.USE_YN = 'Y'   
-                          AND A.AGENT_ID = @CAR_AGENT `;
-
-      const result = await request.query(query);
-      return result.recordset;
-    } catch (err) {
-      console.error("Error fetching agent acct list:", err);
-      throw err;
-    }
-  }
-
-  // 정산 저장 (상세 포함)
-  exports.insertCarAdj = async ({ 
-    carRegId, 
-    adjDtime, 
-    carSaleSumAmt,
-    carSaleSumSupPrc,
-    carSaleSumVat,
-    carPurAmt,
-    carPurSupPrc,
-    carPurVat,
-    cmrcCostSumAmt,
-    cmrcCostSumSupPrc,
-    cmrcCostSumVat,
-    adjStdAmt,
-    adjStdSupPrc,
-    adjStdVat,
-    debtSumAmt,
-    stoffSumAmt,
-    incmAmt,
-    intx,
-    lctx,
-    hghforIssuCst,
-    mtreInsuCst,
-    realPayAmt,
-    realMorcAmt,
-    mnusAplyYn,
-    wttxAplyYn,
-    adjFinYn,
-    usrId,
-    adjDetails
+  // 상사 저장 
+  exports.insertCarAgent = async ({ 
+    agentNm, 
+    brno, 
+    presNm, 
+    email, 
+    agrmAgrYn, 
+    firmYn,
+    agentStatCd,
+    phon,
+    fax,
+    zip,
+    addr1,
+    addr2,
+    feeSctCd,
+    cmbtAgentCd,
+    cmbtAgentStatNm,
+    usrId
   }) => {
     try {
-        
+
       const request = pool.request();
 
-      // 상세 내역 저장
+      // car_reg_id 값도 미리 만들기
+      const newAgentId = await request.query(`SELECT dbo.CJB_FN_AGENT() as AGENT_ID`);
+      const AgentId = newAgentId.recordset[0].AGENT_ID;
 
-      adjDetails.forEach(async (adjDtl) => {
-
-        console.log("file:", file.name);
-        console.log("file:", file.url);
-
-        const dtlRequest = pool.request();
-
-        dtlRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
-        dtlRequest.input("SCT_CD", sql.VarChar, adjDtl.sctCd);
-        dtlRequest.input("SEQ", sql.VarChar, adjDtl.seq);
-        dtlRequest.input("ITEM_NM", sql.VarChar, adjDtl.itemNm);
-        dtlRequest.input("AMT", sql.VarChar, adjDtl.amt);
-        dtlRequest.input("SUP_PRC", sql.VarChar, adjDtl.supPrc);
-        dtlRequest.input("VAT", sql.VarChar, adjDtl.vat);
-        dtlRequest.input("TAX_YN", sql.VarChar, adjDtl.taxyN);
-        dtlRequest.input("REGR_ID", sql.VarChar, usrId);
-        dtlRequest.input("MODR_ID", sql.VarChar, usrId);
-
-        await dtlRequest.query(`INSERT INTO dbo.CJB_ADJ_DTL (
-                                            CAR_REG_ID,
-                                            SCT_CD,
-                                            SEQ,
-                                            ITEM_NM,
-                                            AMT,
-                                            SUP_PRC,
-                                            VAT,
-                                            TAX_YN,
-                                            REGR_ID,
-                                            MODR_ID) VALUES (
-                                            @CAR_REG_ID, 
-                                            @SCT_CD, 
-                                            @SEQ, 
-                                            @ITEM_NM, 
-                                            @AMT, 
-                                            @VAT
-                                            @TAX_YN, 
-                                            @REGR_ID, 
-                                            @MODR_ID)`);
-
-      });
-
-      request.input("CAR_REG_ID", sql.VarChar, carRegId);
-      request.input("ADJ_DTIME", sql.VarChar, adjDtime);
-      request.input("CAR_SALE_SUM_AMT", sql.Int, carSaleSumAmt);
-      request.input("CAR_SALE_SUM_SUP_PRC", sql.Int, carSaleSumSupPrc);
-      request.input("CAR_SALE_SUM_VAT", sql.Int, carSaleSumVat);
-      request.input("CAR_PUR_AMT", sql.Int, carPurAmt);
-      request.input("CAR_PUR_SUP_PRC", sql.Int, carPurSupPrc);
-      request.input("CAR_PUR_VAT", sql.Int, carPurVat);
-      request.input("CMRC_COST_SUM_AMT", sql.Int, cmrcCostSumAmt);
-      request.input("CMRC_COST_SUM_SUP_PRC", sql.Int, cmrcCostSumSupPrc);
-      request.input("CMRC_COST_SUM_VAT", sql.Int, cmrcCostSumVat);
-      request.input("ADJ_STD_AMT", sql.Int, adjStdAmt);
-      request.input("ADJ_STD_SUP_PRC", sql.Int, adjStdSupPrc);
-      request.input("ADJ_STD_VAT", sql.Int, adjStdVat);
-      request.input("DEBT_SUM_AMT", sql.Int, debtSumAmt);
-      request.input("STOFF_SUM_AMT", sql.Int, stoffSumAmt);
-      request.input("INCM_AMT", sql.Int,incmAmt,);
-      request.input("INTX", sql.Int, intx);
-      request.input("LCTX", sql.Int, lctx);
-      request.input("HGHFOR_INSU_CST", sql.Int, hghforIssuCst);
-      request.input("MTRE_INSU_CST", sql.Int, mtreInsuCst);
-      request.input("REAL_PAY_AMT", sql.Int, realPayAmt);
-      request.input("REAL_MORC_AMT", sql.Int, realMorcAmt);
-      request.input("MNUS_APLY_YN", sql.VarChar, mnusAplyYn);
-      request.input("WTTX_APLY_YN", sql.VarChar, wttxAplyYn);
-      request.input("ADJ_FIN_YN", sql.VarChar, adjFinYn);
+      request.input("AGENT_ID", sql.VarChar, AgentId);
+      request.input("AGENT_NM", sql.VarChar, agentNm);
+      request.input("BRNO", sql.VarChar, brno);
+      request.input("PRES_NM", sql.VarChar, presNm);
+      request.input("EMAIL", sql.VarChar, email);
+      request.input("AGRM_AGR_YN", sql.VarChar, agrmAgrYn);
+      request.input("FIRM_YN", sql.VarChar, firmYn);
+      request.input("AGENT_STAT_CD", sql.VarChar, agentStatCd);
+      request.input("PHON", sql.VarChar, phon);
+      request.input("FAX", sql.VarChar, fax);
+      request.input("ZIP", sql.VarChar, zip);
+      request.input("ADDR1", sql.VarChar, addr1);
+      request.input("ADDR2", sql.VarChar, addr2);
+      request.input("FEE_SCT_CD", sql.VarChar, feeSctCd);
+      request.input("CMBT_AGENT_CD", sql.VarChar, cmbtAgentCd);
+      request.input("CMBT_AGENT_STAT_CD", sql.VarChar, cmbtAgentStatNm);
       request.input("REGR_ID", sql.VarChar, usrId);
       request.input("MODR_ID", sql.VarChar, usrId);
 
       const query = `
-        INSERT INTO dbo.CJB_ADJ
-          ( CAR_REG_ID,
-            ADJ_DTIME,
-            CAR_SALE_SUM_AMT,
-            CAR_SALE_SUM_SUP_PRC,
-            CAR_SALE_SUM_VAT,
-            CAR_PUR_AMT,
-            CAR_PUR_SUP_PRC,
-            CAR_PUR_VAT,
-            CMRC_COST_SUM_AMT,
-            CMRC_COST_SUM_SUP_PRC,
-            CMRC_COST_SUM_VAT,
-            ADJ_STD_AMT,
-            ADJ_STD_SUP_PRC,
-            ADJ_STD_VAT,
-            DEBT_SUM_AMT,
-            STOFF_SUM_AMT,
-            INCM_AMT,
-            INTX,
-            LCTX,
-            HGHFOR_INSU_CST,
-            MTRE_INSU_CST,
-            REAL_PAY_AMT,
-            REAL_MORC_AMT,
-            MNUS_APLY_YN,
-            WTTX_APLY_YN,
-            ADJ_FIN_YN,
+        INSERT INTO dbo.CJB_AGENT
+          ( AGENT_CD,
+            AGENT_NM,
+            BRNO,
+            PRES_NM,
+            EMAIL,
+            AGRM_AGR_YN,
+            FIRM_YN,
+            AGENT_STAT_CD,
+            PHON,
+            FAX,
+            ZIP,
+            ADDR1,
+            ADDR2,
+            FEE_SCT_CD,
+            CMBT_AGENT_CD,
+            CMBT_AGENT_STAT_CD,
             REGR_ID,
             MODR_ID ) 
         VALUES 
-          ( @CAR_REG_ID,
-            @ADJ_DTIME,
-            @CAR_SALE_SUM_AMT,
-            @CAR_SALE_SUM_SUP_PRC,
-            @CAR_SALE_SUM_VAT,
-            @CAR_PUR_AMT,
-            @CAR_PUR_SUP_PRC,
-            @CAR_PUR_VAT,
-            @CMRC_COST_SUM_AMT,
-            @CMRC_COST_SUM_SUP_PRC,
-            @CMRC_COST_SUM_VAT,
-            @ADJ_STD_AMT,
-            @ADJ_STD_SUP_PRC,
-            @ADJ_STD_VAT,
-            @DEBT_SUM_AMT,
-            @STOFF_SUM_AMT,
-            @INCM_AMT,
-            @INTX,
-            @LCTX,
-            @HGHFOR_INSU_CST,
-            @MTRE_INSU_CST,
-            @REAL_PAY_AMT,
-            @REAL_MORC_AMT,
-            @MNUS_APLY_YN,
-            @WTTX_APLY_YN,
-            @ADJ_FIN_YN,
+          ( @AGENT_CD,
+            @AGENT_NM,
+            @BRNO,
+            @PRES_NM,
+            @EMAIL,
+            @AGRM_AGR_YN,
+            @FIRM_YN,
+            @AGENT_STAT_CD,
+            @PHON,
+            @FAX,
+            @ZIP,
+            @ADDR1,
+            @ADDR2,
+            @FEE_SCT_CD,
+            @CMBT_AGENT_CD,
+            @CMBT_AGENT_STAT_CD,
             @REGR_ID,
             @MODR_ID
           );
@@ -446,144 +332,72 @@ exports.getCarAgentList = async ({
 
       return { success: true };
     } catch (err) {
-      console.error("Error inserting car acct detail:", err);
+      console.error("Error inserting car agent:", err);
       throw err;
     }
   }
 
-  // 계좌정보 상세 수정
-  exports.updateCarAdj = async ({ 
-    carRegId, 
-    adjDtime, 
-    carSaleSumAmt,
-    carSaleSumSupPrc,
-    carSaleSumVat,
-    carPurAmt,
-    carPurSupPrc,
-    carPurVat,
-    cmrcCostSumAmt,
-    cmrcCostSumSupPrc,
-    cmrcCostSumVat,
-    adjStdAmt,
-    adjStdSupPrc,
-    adjStdVat,
-    debtSumAmt,
-    stoffSumAmt,
-    incmAmt,
-    intx,
-    lctx,
-    hghforIssuCst,
-    mtreInsuCst,
-    realPayAmt,
-    realMorcAmt,
-    mnusAplyYn,
-    wttxAplyYn,
-    adjFinYn,
-    usrId,
-    adjDetails
+  // 상사 수정
+  exports.updateCarAgent = async ({ 
+    agentId,
+    agentNm, 
+    brno, 
+    presNm, 
+    email, 
+    agrmAgrYn, 
+    firmYn,
+    agentStatCd,
+    phon,
+    fax,
+    zip,
+    addr1,
+    addr2,
+    feeSctCd,
+    cmbtAgentCd,
+    cmbtAgentStatNm,
+    usrId
   }) => {
     try {
       const request = pool.request();
-
-      request.input("CAR_REG_ID", sql.VarChar, carRegId);
-      request.input("ADJ_DTIME", sql.VarChar, adjDtime);
-      request.input("CAR_SALE_SUM_AMT", sql.Int, carSaleSumAmt);
-      request.input("CAR_SALE_SUM_SUP_PRC", sql.Int, carSaleSumSupPrc);
-      request.input("CAR_SALE_SUM_VAT", sql.Int, carSaleSumVat);
-      request.input("CAR_PUR_AMT", sql.Int, carPurAmt);
-      request.input("CAR_PUR_SUP_PRC", sql.Int, carPurSupPrc);
-      request.input("CAR_PUR_VAT", sql.Int, carPurVat);
-      request.input("CMRC_COST_SUM_AMT", sql.Int, cmrcCostSumAmt);
-      request.input("CMRC_COST_SUM_SUP_PRC", sql.Int, cmrcCostSumSupPrc);
-      request.input("CMRC_COST_SUM_VAT", sql.Int, cmrcCostSumVat);
-      request.input("ADJ_STD_AMT", sql.Int, adjStdAmt);
-      request.input("ADJ_STD_SUP_PRC", sql.Int, adjStdSupPrc);
-      request.input("ADJ_STD_VAT", sql.Int, adjStdVat);
-      request.input("DEBT_SUM_AMT", sql.Int, debtSumAmt);
-      request.input("STOFF_SUM_AMT", sql.Int, stoffSumAmt);
-      request.input("INCM_AMT", sql.Int,incmAmt,);
-      request.input("INTX", sql.Int, intx);
-      request.input("LCTX", sql.Int, lctx);
-      request.input("HGHFOR_INSU_CST", sql.Int, hghforIssuCst);
-      request.input("MTRE_INSU_CST", sql.Int, mtreInsuCst);
-      request.input("REAL_PAY_AMT", sql.Int, realPayAmt);
-      request.input("REAL_MORC_AMT", sql.Int, realMorcAmt);
-      request.input("MNUS_APLY_YN", sql.VarChar, mnusAplyYn);
-      request.input("WTTX_APLY_YN", sql.VarChar, wttxAplyYn);
-      request.input("ADJ_FIN_YN", sql.VarChar, adjFinYn);
+      
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("AGENT_NM", sql.VarChar, agentNm);
+      request.input("BRNO", sql.VarChar, brno);
+      request.input("PRES_NM", sql.VarChar, presNm);
+      request.input("EMAIL", sql.VarChar, email);
+      request.input("AGRM_AGR_YN", sql.VarChar, agrmAgrYn);
+      request.input("FIRM_YN", sql.VarChar, firmYn);
+      request.input("AGENT_STAT_CD", sql.VarChar, agentStatCd);
+      request.input("PHON", sql.VarChar, phon);
+      request.input("FAX", sql.VarChar, fax);
+      request.input("ZIP", sql.VarChar, zip);
+      request.input("ADDR1", sql.VarChar, addr1);
+      request.input("ADDR2", sql.VarChar, addr2);
+      request.input("FEE_SCT_CD", sql.VarChar, feeSctCd);
+      request.input("CMBT_AGENT_CD", sql.VarChar, cmbtAgentCd);
+      request.input("CMBT_AGENT_STAT_CD", sql.VarChar, cmbtAgentStatNm);
       request.input("MODR_ID", sql.VarChar, usrId);
 
-      // 상세 내역 삭제
-      dtlDelete.input("CAR_REG_ID", sql.VarChar, carRegId);
-      await dtlDelete.query(`DELETE dbo.CJB_ADJ_DTL  WHERE CAR_REG_ID = @CAR_REG_ID`);
-
-      // 상세 내역 저장
-      adjDetails.forEach(async (adjDtl) => {
-        const dtlRequest = pool.request();
-
-        dtlRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
-        dtlRequest.input("SCT_CD", sql.VarChar, adjDtl.sctCd);
-        dtlRequest.input("SEQ", sql.VarChar, adjDtl.seq);
-        dtlRequest.input("ITEM_NM", sql.VarChar, adjDtl.itemNm);
-        dtlRequest.input("AMT", sql.VarChar, adjDtl.amt);
-        dtlRequest.input("SUP_PRC", sql.VarChar, adjDtl.supPrc);
-        dtlRequest.input("VAT", sql.VarChar, adjDtl.vat);
-        dtlRequest.input("TAX_YN", sql.VarChar, adjDtl.taxyN);
-        dtlRequest.input("REGR_ID", sql.VarChar, usrId);
-        dtlRequest.input("MODR_ID", sql.VarChar, usrId);
-
-        await dtlRequest.query(`INSERT INTO dbo.CJB_ADJ_DTL (
-                                            CAR_REG_ID,
-                                            SCT_CD,
-                                            SEQ,
-                                            ITEM_NM,
-                                            AMT,
-                                            SUP_PRC,
-                                            VAT,
-                                            TAX_YN,
-                                            REGR_ID,
-                                            MODR_ID) VALUES (
-                                            @CAR_REG_ID, 
-                                            @SCT_CD, 
-                                            @SEQ, 
-                                            @ITEM_NM, 
-                                            @AMT, 
-                                            @VAT
-                                            @TAX_YN, 
-                                            @REGR_ID, 
-                                            @MODR_ID)`);
-
-      });
-
       const query = `
-        UPDATE dbo.CJB_ADJ
-           SET ADJ_DTIME = @ADJ_DTIME,
-               CAR_SALE_SUM_AMT = @CAR_SALE_SUM_AMT,
-               CAR_SALE_SUM_SUP_PRC = @CAR_SALE_SUM_SUP_PRC,
-               CAR_SALE_SUM_VAT = @CAR_SALE_SUM_VAT,
-               CAR_PUR_AMT = @CAR_PUR_AMT,
-               CAR_PUR_SUP_PRC = @CAR_PUR_SUP_PRC,
-               CAR_PUR_VAT = @CAR_PUR_VAT,
-               CMRC_COST_SUM_AMT = @CMRC_COST_SUM_AMT,
-               CMRC_COST_SUM_SUP_PRC = @CMRC_COST_SUM_SUP_PRC,
-               CMRC_COST_SUM_VAT = @CMRC_COST_SUM_VAT,
-               ADJ_STD_AMT = @ADJ_STD_AMT,
-               ADJ_STD_SUP_PRC = @ADJ_STD_SUP_PRC,
-               ADJ_STD_VAT = @ADJ_STD_VAT,
-               DEBT_SUM_AMT = @DEBT_SUM_AMT,
-               INCM_AMT = @INCM_AMT,
-               INTX = @INTX,
-               LCTX = @LCTX,
-               HGHFOR_INSU_CST = @HGHFOR_INSU_CST,
-               MTRE_INSU_CST = @MTRE_INSU_CST,
-               REAL_PAY_AMT = @REAL_PAY_AMT,
-               MNUS_APLY_YN = @MNUS_APLY_YN,
-               WTTX_APLY_YN = @WTTX_APLY_YN,
-               ADJ_FIN_YN = @ADJ_FIN_YN,
+        UPDATE dbo.CJB_AGENT
+           SET AGENT_NM = @AGENT_NM,
+               BRNO = @BRNO,
+               PRES_NM = @PRES_NM,
+               EMAIL = @EMAIL,
+               AGRM_AGR_YN = @AGRM_AGR_YN,
+               FIRM_YN = @FIRM_YN,
+               PHON = @PHON,
+               FAX = @FAX,
+               ZIP = @ZIP,
+               ADDR1 = @ADDR1,
+               ADDR2 = @ADDR2,
+               FEE_SCT_CD = @FEE_SCT_CD,
+               CMBT_AGENT_CD = @CMBT_AGENT_CD,
+               CMBT_AGENT_STAT_CD = @CMBT_AGENT_STAT_CD
                MOD_DTIME = GETDATE(),
                MODR_ID = @MODR_ID
         WHERE 
-          CAR_REG_ID = @CAR_REG_ID 
+          AGENT_ID = @AGENT_ID 
       `;
 
       await request.query(query);
@@ -596,21 +410,21 @@ exports.getCarAgentList = async ({
   }
 
 
-// 정산 삭제
-exports.deleteAdj = async ({carRegId}) => {
+// 상사 삭제 (상태 변경)
+exports.deleteAgent = async ({agentId, usrId}) => {
   try {
     const request = pool.request();
-    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("AGENT_ID", sql.VarChar, agentId);
+    request.input("MODR_ID", sql.VarChar, usrId);
 
-    query1 = `DELETE CJB_ADJ
-                    WHERE CAR_REG_ID = @CAR_REG_ID
+    query = `UPDATE dbo.CJB_AGENT
+                 SET AGENT_STAT_CD = '004'
+                   , MOD_DTIME = GETDATE()
+                   , MODR_ID = @MODR_ID
+               WHERE AGENT_ID = @AGENT_ID
         `;  
 
-    query2 = `DELETE CJB_ADJ_DTL
-                    WHERE CAR_REG_ID = @CAR_REG_ID
-        `;  
-
-    await Promise.all([request.query(query1), request.query(query2)]);
+      await request.query(query);
 
   } catch (err) {
     console.error("Error deleting car pur:", err);
