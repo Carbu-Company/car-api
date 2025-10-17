@@ -5,6 +5,7 @@ const carAgentModel = require("../../models/select/carAgentModel");
 const carCashModel = require("../../models/select/carCashModel");
 const carConcilModel = require("../../models/select/carConcilModel");
 const carDashBoardModel = require("../../models/select/carDashBoardModel");
+const carFaqBoardModel = require("../../models/select/carFaqBoardModel");
 const carGoodsModel = require("../../models/select/carGoodsModel");
 const carLoanModel = require("../../models/select/carLoanModel");
 const carPurModel = require("../../models/select/carPurModel");
@@ -146,10 +147,7 @@ exports.getCarPurInfo = async (req, res, next) => {
 // 제시 등록
 exports.insertCarPur = async (req, res, next) => {
   try {
-    const carPurData = req.body;
-    
-    await carPurModel.insertCarPur(carPurData);
-    
+    await carPurModel.insertCarPur(req.body);
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);
@@ -367,6 +365,67 @@ exports.getNoticeStatus = async (req, res, next) => {
 
     const noticeStatus = await carSelectModel.getNoticeStatus({ agent_id });
     res.status(200).json(noticeStatus);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getFaqList = async (req, res, next) => {
+  try {
+    const faqBoard = await carFaqBoardModel.getFaqList(req.body);
+    res.status(200).json(faqBoard);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getFaqDetail = async (req, res, next) => {
+  try {
+    const { faqNo } = req.query;
+
+    const faqBoard = await carFaqBoardModel.getFaqDetail({ faqNo });
+    res.status(200).json(faqBoard);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// faq 등록
+exports.insertFaqBoard = async (req, res, next) => {
+  try {
+    await carFaqBoardModel.insertFaqBoard(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// faq 수정
+exports.updateFaqBoard = async (req, res, next) => {
+  try {
+    await carFaqBoardModel.updateFaqBoard(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 댓글 등록
+exports.insertRplBoard = async (req, res, next) => {
+  try {
+    await carFaqBoardModel.insertRplBoard(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 댓글 수정
+exports.updateRplBoard = async (req, res, next) => {
+  try {
+    await carFaqBoardModel.updateRplBoard(req.body);
+    res.status(200).json({ success: true });
   } catch (err) {
     next(err);
   }
@@ -1990,6 +2049,40 @@ exports.getCDList = async (req, res, next) => {
     next(err);
   }
 };
+
+
+// 공통코드 전체 조회
+exports.getCDAllList = async (req, res, next) => {
+  try {
+    const { grpCD } = req.query;
+    const cdList = await commonModel.getCDAllList({ grpCD });
+    res.status(200).json(cdList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 공통코드 등록
+exports.insertCommCd = async (req, res, next) => {
+  try {
+    await commonModel.insertCommCd(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 공통코드 수정
+exports.updateCommCd = async (req, res, next) => {
+  try {
+    await commonModel.updateCommCd(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 // 고객 목록 조회
 exports.getCustomerList = async (req, res, next) => {

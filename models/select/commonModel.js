@@ -210,7 +210,7 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   };
   
  
-  // 공통코드 조회
+  // 공통코드 상세 조회
   exports.getCDDetail = async ({ cd }) => {
     try {
       const request = pool.request();
@@ -241,8 +241,8 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   
 
 
-  // 계 좌정보 상세 저장
-  exports.inserCd = async ({ 
+  // 공통코드 저장
+  exports.insertCommCd = async ({ 
     grpCd
     , cd
     , addCd
@@ -300,8 +300,8 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
     }
   }
 
-  // 계좌정보 상세 수정
-  exports.updateCd = async ({ 
+  // 공통코드 수정
+  exports.updateCommCd = async ({ 
     grpCd
     , cd
     , addCd
@@ -349,11 +349,7 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
     }
   }
 
-
-
 // 고객 목록 조회
-
-
 /*
 exports.getCustomerList = async ({ carAgent, search }) => {
   try {

@@ -24,6 +24,16 @@ router.post("/login", loginController.loginController);
 // 공통코드 조회
 router.get("/getCDList", carController.getCDList);
 
+// 공통코드 전체 조회
+router.get("/getCDAllList", carController.getCDAllList);
+
+// 공통코드 등록
+router.get("/InsertCommCd", carController.InsertCommCd);
+
+// 공통코드 수정
+router.get("/updateCommCd", carController.updateCommCd);
+
+
 // 딜러 조회
 router.get("/getDealerList", carController.getDealerList);
 
@@ -312,6 +322,28 @@ router.get("/getInquiryStatus", carController.getInquiryStatus);
 // 문의 조회
 router.get("/getNoticeStatus", carController.getNoticeStatus);
 
+
+//***************************************************************************************** */
+// FAQ 게시판
+//***************************************************************************************** */
+
+// faq 조회 (답변 포함)
+router.get("/getFaqList", carController.getFaqList);
+
+// faq 상세 조회 (답변 포함)
+router.get("/getFaqDetail", carController.getFaqDetail);
+
+// faq 등록 
+router.get("/insertFaqBoard", carController.insertFaqBoard);
+
+// faq 수정
+router.get("/updateFaqBoard", carController.updateFaqBoard);
+
+// 댓글 등록 
+router.get("/insertRplBoard", carController.insertRplBoard);
+
+// 댓글 수정 
+router.get("/updateRplBoard", carController.updateRplBoard);
 //***************************************************************************************** */
 // 환경 설정
 //***************************************************************************************** */
@@ -336,6 +368,9 @@ router.post("/getCompanyExpense", carController.getCompanyExpense);
 
 // 상사수입항목설정 조회
 router.post("/getCompanyIncome", carController.getCompanyIncome);
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // POP 팝빌 연동 API

@@ -439,7 +439,7 @@ exports.getCarAcctList = async ({
                CAR_REG_ID = @CAR_REG_ID,
                MOD_DTIME = GETDATE(),
                MODR_ID = @MODR_ID
-        WHERE 
+         WHERE 
           ACCT_DTL_SEQ = @ACCT_DTL_SEQ 
       `;
 
