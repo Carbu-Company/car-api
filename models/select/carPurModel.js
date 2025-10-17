@@ -223,7 +223,7 @@ exports.getCarPurList = async ({
   }) => {
     try {
       const request = pool.request();
-  
+  /*
       console.log('carAgent:', carAgent);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
@@ -243,7 +243,7 @@ exports.getCarPurList = async ({
       console.log('dtlCarNoBefore:', dtlCarNoBefore);
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
-  
+  */
       request.input("CAR_AGENT", sql.VarChar, carAgent);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
@@ -343,7 +343,7 @@ exports.getCarPurList = async ({
                         ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
         `;
       
-      console.log('query:', query);
+      //console.log('query:', query);
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {

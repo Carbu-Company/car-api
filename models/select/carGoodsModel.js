@@ -223,6 +223,8 @@ exports.getGoodsFeeList = async ({   carAgent,
                             SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC,
                             SUM(B.EXPD_VAT) AS EXPD_VAT,
                             MIN(A.CAR_STAT_CD) CAR_STAT_CD,
+                            MIN(A.CAR_STAT_CD),
+                            dbo.CJB_FN_GET_CD_NM('01', MIN(A.CAR_STAT_CD)) CAR_STAT_NM,
                             MIN(A.CAR_SEL_DT) CAR_SEL_DT
                       FROM dbo.CJB_CAR_PUR A
                          , dbo.CJB_GOODS_FEE B
@@ -424,9 +426,7 @@ exports.getGoodsFeeList = async ({   carAgent,
   
       // 전체 카운트 조회
       const query = `
-                        SELECT TAX_SCT_CD
-                              , MIN(CASE WHEN TAX_SCT_CD =  '0' THEN '비과세' 
-                                      ELSE '과세' END) AS TAX_SCT_NM
+                        SELECT '과세' AS TAX_SCT_NM
                               , COUNT(GOODS_FEE_SEQ) CNT
                               , SUM(B.EXPD_AMT) AS EXPD_AMT
                               , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
@@ -438,6 +438,7 @@ exports.getGoodsFeeList = async ({   carAgent,
                             AND B.DEL_YN = 'N'
                             AND A.AGENT_ID = @CAR_AGENT
                             AND A.CAR_REG_ID = B.CAR_REG_ID
+                            AND B.TAX_SCT_CD = '01'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
                 ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
                 ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
@@ -450,8 +451,61 @@ exports.getGoodsFeeList = async ({   carAgent,
                 ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
                 ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
                 ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
-              GROUP BY B.TAX_SCT_CD 
+                UNION ALL
+                        SELECT '비과세' AS TAX_SCT_NM
+                              , COUNT(GOODS_FEE_SEQ) CNT
+                              , SUM(B.EXPD_AMT) AS EXPD_AMT
+                              , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
+                              , SUM(B.EXPD_VAT) AS EXPD_VAT
+                           FROM dbo.CJB_CAR_PUR A
+                              , dbo.CJB_GOODS_FEE B
+                          WHERE 1 = 1
+                            AND A.CAR_DEL_YN = 'N'
+                            AND B.DEL_YN = 'N'
+                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.CAR_REG_ID = B.CAR_REG_ID
+                            AND B.TAX_SCT_CD = '02'
+                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
+                UNION ALL
+                        SELECT '합계' AS TAX_SCT_NM
+                              , COUNT(GOODS_FEE_SEQ) CNT
+                              , SUM(B.EXPD_AMT) AS EXPD_AMT
+                              , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
+                              , SUM(B.EXPD_VAT) AS EXPD_VAT
+                           FROM dbo.CJB_CAR_PUR A
+                              , dbo.CJB_GOODS_FEE B
+                          WHERE 1 = 1
+                            AND A.CAR_DEL_YN = 'N'
+                            AND B.DEL_YN = 'N'
+                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.CAR_REG_ID = B.CAR_REG_ID
+                            AND B.TAX_SCT_CD IN ('01', '02')
+                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
+                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
+                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
+                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                ${dtlOldCarNo ? "AND PUR_BEF_CAR_NO = @PUR_BEF_CAR_NO" : ""}
+                ${dtlNewCarNo ? "AND CAR_NO = @CAR_NO" : ""}
+                ${dtlExpdItem ? "AND EXPD_ITEM_CD = @EXPD_ITEM_CD" : ""}
+                ${dtlTaxGubun ? "AND TAX_SCT_CD = @TAX_SCT_CD" : ""}
+                ${dtlExpdGubun ? "AND EXPD_SCT_CD = @EXPD_SCT_CD" : ""}
+                ${dtlExpdEvdc ? "AND EXPD_EVDC_CD = @EXPD_EVDC_CD" : ""}
+                ${dtlRmrk ? "AND RMRK = @RMRK" : ""}
+                ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
       `;
+
+      //console.log(query);
   
       const result = await request.query(query);
       return result.recordset;  
@@ -465,6 +519,7 @@ exports.getGoodsFeeList = async ({   carAgent,
 
   // 상품화비 등록 처리
 exports.insertGoodsFee = async ({ 
+    goodsFeeSeq,      // 상품화비 순번
     carRegId,         // 차량 등록 ID
     expdItemCd,       // 지출 항목 코드
     expdItemNm,       // 지출 항목 명
@@ -489,8 +544,8 @@ exports.insertGoodsFee = async ({
   }) => {
     try {
       const request = pool.request();
-  
-  
+
+      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
@@ -572,6 +627,129 @@ exports.insertGoodsFee = async ({
       await Promise.all([request.query(query1), request.query(query2)]);
     } catch (err) {
       console.error("Error inserting goods fee:", err);
+      throw err;
+    }
+  };
+  
+
+  // 상품화비 등록 처리
+exports.updateGoodsFee = async ({ 
+    goodsFeeSeq,      // 상품화비 순번
+    carRegId,         // 차량 등록 ID
+    expdItemCd,       // 지출 항목 코드
+    expdItemNm,       // 지출 항목 명
+    expdSctCd,        // 지출 구분 코드
+    expdAmt,          // 지출 금액
+    expdSupPrc,       // 지출 공급가
+    expdVat,          // 지출 부가세
+    expdDt,           // 지출 일자
+    expdMethCd,       // 지출 방식 코드
+    expdEvdcCd,       // 지출 증빙 코드
+    taxSctCd,         // 세금 구분 코드
+    txblIssuDt,       // 세금계산서 발행 일자
+    rmrk,             // 비고
+    adjInclusYn,      // 정산 포함 여부
+    cashRecptRcgnNo,  // 현금 영수증 식별 번호
+    cashMgmtkey,      // 현금 관리키
+    delYn,            // 삭제여부
+    regDtime,         // 등록 일시
+    regrId,           // 등록자 ID
+    modDtime,         // 수정 일시
+    modrId            // 수정자 ID
+  }) => {
+    try {
+      const request = pool.request();
+      
+      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
+      request.input("CAR_REG_ID", sql.VarChar, carRegId);
+      request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
+      request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
+      request.input("EXPD_SCT_CD", sql.VarChar, expdSctCd);
+      request.input("EXPD_AMT", sql.Decimal, expdAmt);
+      request.input("EXPD_SUP_PRC", sql.Decimal, expdSupPrc);
+      request.input("EXPD_VAT", sql.Decimal, expdVat);
+      request.input("EXPD_DT", sql.VarChar, expdDt);
+      request.input("EXPD_METH_CD", sql.VarChar, expdMethCd);
+      request.input("EXPD_EVDC_CD", sql.VarChar, expdEvdcCd);
+      request.input("TAX_SCT_CD", sql.VarChar, taxSctCd);
+      request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);
+      request.input("RMRK", sql.VarChar, rmrk);
+      request.input("ADJ_INCLUS_YN", sql.VarChar, adjInclusYn);
+      request.input("CASH_RECPT_RCGN_NO", sql.VarChar, cashRecptRcgnNo);
+      request.input("CASH_MGMTKEY", sql.VarChar, cashMgmtkey);
+      request.input("DEL_YN", sql.VarChar, delYn);
+      request.input("REG_DTIME", sql.VarChar, regDtime);
+      request.input("REGR_ID", sql.VarChar, regrId);
+      request.input("MOD_DTIME", sql.VarChar, modDtime);
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      // 기존 상품화비 삭제 하고 다시 등록 
+
+      const minusQuery = `
+        UPDATE dbo.CJB_CAR_PUR 
+        SET tot_cmrc_cost_fee = tot_cmrc_cost_fee - (SELECT EXPD_AMT FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ) 
+        WHERE CAR_REG_ID = @CAR_REG_ID;`;
+
+      const deleteQuery = `DELETE FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ;`;
+
+      // 상품화비 수정
+      const query1 = `
+        INSERT INTO dbo.CJB_GOODS_FEE (
+          CAR_REG_ID,
+          EXPD_ITEM_CD,
+          EXPD_ITEM_NM, 
+          EXPD_SCT_CD,
+          EXPD_AMT,
+          EXPD_SUP_PRC,
+          EXPD_VAT,
+          EXPD_DT,
+          EXPD_METH_CD,
+          EXPD_EVDC_CD,
+          TAX_SCT_CD,
+          TXBL_ISSU_DT,
+          RMRK,
+          ADJ_INCLUS_YN,
+          CASH_RECPT_RCGN_NO,
+          CASH_MGMTKEY,
+          DEL_YN,
+          REG_DTIME,
+          REGR_ID,
+          MOD_DTIME,
+          MODR_ID
+        ) VALUES (
+          @CAR_REG_ID,
+          @EXPD_ITEM_CD,
+          @EXPD_ITEM_NM,
+          @EXPD_SCT_CD,
+          @EXPD_AMT,
+          @EXPD_SUP_PRC,
+          @EXPD_VAT,
+          @EXPD_DT,
+          @EXPD_METH_CD,
+          @EXPD_EVDC_CD,
+          @TAX_SCT_CD,
+          @TXBL_ISSU_DT,
+          @RMRK,
+          @ADJ_INCLUS_YN,
+          @CASH_RECPT_RCGN_NO,
+          @CASH_MGMTKEY,
+          @DEL_YN,
+          @REG_DTIME,
+          @REGR_ID,
+          @MOD_DTIME,
+          @MODR_ID
+        );`;
+   
+      // 상품화비 총 금액 업데이트
+  
+      const query2 = `
+        UPDATE dbo.CJB_CAR_PUR 
+        SET tot_cmrc_cost_fee = tot_cmrc_cost_fee + @EXPD_AMT 
+        WHERE CAR_REG_ID = @CAR_REG_ID;`;
+  
+      await Promise.all([request.query(minusQuery), request.query(deleteQuery), request.query(query1), request.query(query2)]);
+    } catch (err) {
+      console.error("Error updating goods fee:", err);
       throw err;
     }
   };
