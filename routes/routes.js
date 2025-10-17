@@ -28,7 +28,7 @@ router.get("/getCDList", carController.getCDList);
 router.get("/getCDAllList", carController.getCDAllList);
 
 // 공통코드 등록
-router.get("/InsertCommCd", carController.InsertCommCd);
+router.get("/InsertCommCd", carController.insertCommCd);
 
 // 공통코드 수정
 router.get("/updateCommCd", carController.updateCommCd);

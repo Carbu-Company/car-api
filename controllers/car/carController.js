@@ -1,4 +1,3 @@
-const carSelectModel = require("../../models/select/delete_carSelectModel");
 const carAcctModel = require("../../models/select/carAcctModel");
 const carAdjModel = require("../../models/select/carAdjModel");
 const carAgentModel = require("../../models/select/carAgentModel");
@@ -18,91 +17,6 @@ const usrReqModel = require("../../models/select/usrReqModel");
 //const carInsertModel = require("../../models/insert/carInsertModel");
 //const carUpdateModel = require("../../models/update/carUpdateModel");
 //const carDeleteModel = require("../../models/delete/carDeleteModel");
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 사용 요청 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 사용 요청 등록
-exports.insertUserRequest = async (req, res, next) => {
-  try {
-    const { agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt } = req.body;
-
-    await usrReqModel.insertUserRequest({ agent, unionName, companyName, businessRegistrationNumber, representativeName, representativePhone, id, password, registrationCode, alive_dt, cnt });
-    res.status(200).json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-};  
-
-// 사용 요청 등록 (테스트트)
-exports.registerUser = async (req, res, next) => {
-  try {
-    const { AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel } = req.body;
-
-    await usrReqModel.registerUser({ AgentNm, AgentRegNo, AgentRegNo2, AgentRegNo3, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel });
-    res.status(200).json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-};  
-
-// 시스템 사용 요청 조회
-exports.getSystemUseRequest = async (req, res, next) => {
-  try {
-    const { carAgent } = req.body;
-
-    const systemUseRequest = await usrReqModel.getSystemUseRequest({ carAgent });  
-    res.status(200).json(systemUseRequest);
-  } catch (err) {
-    next(err);
-  }
-};  
-
-// 상사 코드 조회
-exports.checkSangsaCode = async (req, res, next) => {
-  try {
-    const { SangsaCode } = req.query;
-    const sangsaCode = await usrReqModel.checkSangsaCode({ SangsaCode });
-    res.status(200).json(sangsaCode);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
-// 인증번호 조회
-exports.getPhoneAuthNumber = async (req, res, next) => {
-  try {
-    const { representativePhone } = req.body;  
-
-    const authNumber = await usrReqModel.getPhoneAuthNumber({ representativePhone });
-
-    // 인증번호 등록
-    await carInsertModel.insertPhoneAuthNumber({ representativePhone, authNumber });
-    res.status(200).json({ success: true, authNumber: authNumber });
-  } catch (err) {
-    next(err);
-  }
-};  
-
-// 인증번호 확인 조회
-exports.checkPhoneAuthNumber = async (req, res, next) => {
-  try {
-    const { representativePhone, authNumber } = req.body; 
-
-    const checkPhoneAuthNumber = await usrReqModel.checkPhoneAuthNumber({ representativePhone, authNumber });
-
-    if (checkPhoneAuthNumber === authNumber) {
-      res.status(200).json({ success: true });
-    } else {
-      res.status(200).json({ success: false });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2102,6 +2016,67 @@ exports.getAgentInfo = async (req, res, next) => {
     const { carAgent } = req.query;
     const agentInfo = await commonModel.getAgentInfo({ carAgent });
     res.status(200).json(agentInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 사용 요청 등록
+exports.insertUserRequest = async (req, res, next) => {
+  try {
+    await usrReqModel.insertUserRequest(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 사용자 등록
+exports.registerUser = async (req, res, next) => {
+  try {
+    await usrReqModel.registerUser(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 코드 확인
+exports.checkSangsaCode = async (req, res, next) => {
+  try {
+    const { sangsaCode } = req.query;
+    const result = await usrReqModel.checkSangsaCode({ sangsaCode });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 시스템 사용 요청 조회
+exports.getSystemUseRequest = async (req, res, next) => {
+  try {
+    const result = await usrReqModel.getSystemUseRequest(req.body);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 인증번호 조회
+exports.getPhoneAuthNumber = async (req, res, next) => {
+  try {
+    const result = await usrReqModel.getPhoneAuthNumber(req.body);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 인증번호 확인
+exports.checkPhoneAuthNumber = async (req, res, next) => {
+  try {
+    const result = await usrReqModel.checkPhoneAuthNumber(req.body);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
