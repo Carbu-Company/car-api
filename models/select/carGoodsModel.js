@@ -634,7 +634,6 @@ exports.insertGoodsFee = async ({
 
   // 상품화비 등록 처리
 exports.updateGoodsFee = async ({ 
-    goodsFeeSeq,      // 상품화비 순번
     carRegId,         // 차량 등록 ID
     expdItemCd,       // 지출 항목 코드
     expdItemNm,       // 지출 항목 명
@@ -659,8 +658,6 @@ exports.updateGoodsFee = async ({
   }) => {
     try {
       const request = pool.request();
-      
-      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);

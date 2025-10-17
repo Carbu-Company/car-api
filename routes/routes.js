@@ -140,6 +140,9 @@ router.post("/getGoodsFeeCarSummary", carController.getGoodsFeeCarSummary);
 // 상품화비용 지출 저장
 router.post("/insertGoodsFee", carController.insertGoodsFee);
 
+// 상품화비용 지출 수정 등록
+router.post("/updateGoodsFee", carController.updateGoodsFee);
+
 
 //***************************************************************************************** */
 // 재고금융 2.0

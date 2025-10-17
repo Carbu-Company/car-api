@@ -532,6 +532,38 @@ exports.insertGoodsFee = async (req, res, next) => {
   }
 };  
 
+exports.updateGoodsFee = async (req, res, next) => {
+  try {
+    const { 
+    carRegId,         // 차량 등록 ID
+      expdItemCd,       // 지출 항목 코드
+      expdItemNm,       // 지출 항목 명
+      expdSctCd,        // 지출 구분 코드
+      expdAmt,          // 지출 금액
+      expdSupPrc,       // 지출 공급가
+      expdVat,          // 지출 부가세
+      expdDt,           // 지출 일자
+      expdMethCd,       // 지출 방식 코드
+      expdEvdcCd,       // 지출 증빙 코드
+      taxSctCd,         // 세금 구분 코드
+      txblIssuDt,       // 세금계산서 발행 일자
+      rmrk,             // 비고
+      adjInclusYn,      // 정산 포함 여부
+      cashRecptRcgnNo,  // 현금 영수증 식별 번호
+      cashMgmtkey,      // 현금 관리키
+      delYn,            // 삭제여부
+      regDtime,         // 등록 일시
+      regrId,           // 등록자 ID
+      modDtime,         // 수정 일시
+      modrId            // 수정자 ID
+      } = req.body;  
+
+    await carGoodsModel.updateGoodsFee({ carRegId, expdItemCd, expdItemNm, expdSctCd, expdAmt, expdSupPrc, expdVat, expdDt, expdMethCd, expdEvdcCd, taxSctCd, txblIssuDt, rmrk, adjInclusYn, cashRecptRcgnNo, cashMgmtkey, delYn, regDtime, regrId, modDtime, modrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 재고금융 2.0
