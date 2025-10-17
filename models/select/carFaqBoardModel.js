@@ -131,7 +131,7 @@ exports.getFaqList = async ({
       request.input("MODR_ID", sql.VarChar, usrId);
 
       const query = `
-        INSERT INTO dbo.CJB_USR
+        INSERT INTO dbo.CJB_FAQ_BOARD
             ( FAQ_TIT_NM,
               FAQ_CONT,
               REGR_ID,
