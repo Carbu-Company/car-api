@@ -634,6 +634,7 @@ exports.insertGoodsFee = async ({
 
   // 상품화비 등록 처리
 exports.updateGoodsFee = async ({ 
+    goodsFeeSeq,      // 상품화비 순번
     carRegId,         // 차량 등록 ID
     expdItemCd,       // 지출 항목 코드
     expdItemNm,       // 지출 항목 명
@@ -658,6 +659,7 @@ exports.updateGoodsFee = async ({
   }) => {
     try {
       const request = pool.request();
+      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
@@ -682,13 +684,39 @@ exports.updateGoodsFee = async ({
 
       // 기존 상품화비 삭제 하고 다시 등록 
 
+      console.log("goodsFeeSeq:", goodsFeeSeq);
+      console.log("carRegId:", carRegId);
+      console.log("expdItemCd:", expdItemCd);
+      console.log("expdItemNm:", expdItemNm);
+      console.log("expdSctCd:", expdSctCd);
+      console.log("expdAmt:", expdAmt);
+      console.log("expdSupPrc:", expdSupPrc);
+      console.log("expdVat:", expdVat);
+      console.log("expdDt:", expdDt);
+      console.log("expdMethCd:", expdMethCd);
+      console.log("expdEvdcCd:", expdEvdcCd);
+      console.log("taxSctCd:", taxSctCd);
+      console.log("txblIssuDt:", txblIssuDt);
+      console.log("rmrk:", rmrk);
+      console.log("adjInclusYn:", adjInclusYn);
+      console.log("cashRecptRcgnNo:", cashRecptRcgnNo);
+      console.log("cashMgmtkey:", cashMgmtkey);
+      console.log("delYn:", delYn);
+      console.log("regDtime:", regDtime);
+      console.log("regrId:", regrId);
+      console.log("modDtime:", modDtime);
+      console.log("modrId:", modrId);
+
       const minusQuery = `
         UPDATE dbo.CJB_CAR_PUR 
         SET tot_cmrc_cost_fee = tot_cmrc_cost_fee - (SELECT EXPD_AMT FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ) 
         WHERE CAR_REG_ID = @CAR_REG_ID;`;
 
+      await request.query(minusQuery);
+
       const deleteQuery = `DELETE FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ;`;
 
+      await request.query(deleteQuery);
       // 상품화비 수정
       const query1 = `
         INSERT INTO dbo.CJB_GOODS_FEE (
@@ -738,7 +766,7 @@ exports.updateGoodsFee = async ({
         );`;
    
       // 상품화비 총 금액 업데이트
-  
+      await request.query(query1);
       const query2 = `
         UPDATE dbo.CJB_CAR_PUR 
         SET tot_cmrc_cost_fee = tot_cmrc_cost_fee + @EXPD_AMT 

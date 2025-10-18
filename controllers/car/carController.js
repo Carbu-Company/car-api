@@ -535,7 +535,8 @@ exports.insertGoodsFee = async (req, res, next) => {
 exports.updateGoodsFee = async (req, res, next) => {
   try {
     const { 
-    carRegId,         // 차량 등록 ID
+      goodsFeeSeq,      // 상품화비 순번
+      carRegId,         // 차량 등록 ID
       expdItemCd,       // 지출 항목 코드
       expdItemNm,       // 지출 항목 명
       expdSctCd,        // 지출 구분 코드
@@ -558,7 +559,7 @@ exports.updateGoodsFee = async (req, res, next) => {
       modrId            // 수정자 ID
       } = req.body;  
 
-    await carGoodsModel.updateGoodsFee({ carRegId, expdItemCd, expdItemNm, expdSctCd, expdAmt, expdSupPrc, expdVat, expdDt, expdMethCd, expdEvdcCd, taxSctCd, txblIssuDt, rmrk, adjInclusYn, cashRecptRcgnNo, cashMgmtkey, delYn, regDtime, regrId, modDtime, modrId });
+    await carGoodsModel.updateGoodsFee({ goodsFeeSeq, carRegId, expdItemCd, expdItemNm, expdSctCd, expdAmt, expdSupPrc, expdVat, expdDt, expdMethCd, expdEvdcCd, taxSctCd, txblIssuDt, rmrk, adjInclusYn, cashRecptRcgnNo, cashMgmtkey, delYn, regDtime, regrId, modDtime, modrId });
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);
