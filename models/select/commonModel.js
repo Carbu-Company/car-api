@@ -76,6 +76,10 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
                        USR_NM,
                        USR_PHON,
                        USR_EMAIL,
+                       USR_ENTR_DT,     -- 입사일
+                       ZIP,
+                       ADDR1,
+                       ADDR2,
                        USR_STAT_CD,
                        dbo.CJB_FN_GET_CD_NM('25', A.USR_STAT_CD) USR_STAT_NM
                     FROM   dbo.CJB_USR A

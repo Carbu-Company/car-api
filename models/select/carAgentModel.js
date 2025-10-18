@@ -125,8 +125,11 @@ exports.getCarAgentList = async ({
       const query = `SELECT AGENT_ID
                         , AGENT_NM
                         , BRNO
+                        , (SELECT TOP 1 LOGIN_ID FROM dbo.CJB_USR WHERE AGENT_ID = @AGENT_ID) AS LOGIN_ID
+                        , '********' as LOGIN_PASSWD
                         , PRES_NM
                         , EMAIL
+                        , EMAIL_DOMAIN
                         , AGRM_AGR_YN
                         , FIRM_YN
                         , AGENT_STAT_CD
