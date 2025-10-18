@@ -26,7 +26,7 @@ exports.getGoodsFeeList = async ({   agentId,
     ordAscDesc = 'desc' }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -47,7 +47,7 @@ exports.getGoodsFeeList = async ({   agentId,
       const countQuery = `SELECT COUNT(*) as totalCount
                             FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
                             WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                                AND A.AGENT_ID = @CAR_AGENT
+                                AND A.AGENT_ID = @AGENT_ID
                                 AND A.CAR_DEL_YN = 'N'
                                 AND B.DEL_YN = 'N'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -99,7 +99,7 @@ exports.getGoodsFeeList = async ({   agentId,
                                 B.MODR_ID
                       FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
                       WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                          AND A.AGENT_ID = @CAR_AGENT
+                          AND A.AGENT_ID = @AGENT_ID
                           AND A.CAR_DEL_YN = 'N'
                           AND B.DEL_YN = 'N'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -169,7 +169,7 @@ exports.getGoodsFeeList = async ({   agentId,
     }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -191,7 +191,7 @@ exports.getGoodsFeeList = async ({   agentId,
                         SELECT COUNT(A.CAR_REG_ID) OVER() AS totalCount
                         FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.AGENT_ID = @AGENT_ID
                             AND A.CAR_DEL_YN = 'N'
                             AND B.DEL_YN = 'N'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -229,7 +229,7 @@ exports.getGoodsFeeList = async ({   agentId,
                       FROM dbo.CJB_CAR_PUR A
                          , dbo.CJB_GOODS_FEE B
                     WHERE 1 = 1
-                      AND A.AGENT_ID = @CAR_AGENT
+                      AND A.AGENT_ID = @AGENT_ID
                       AND A.CAR_REG_ID = B.CAR_REG_ID
                       AND A.CAR_DEL_YN = 'N'
                       AND B.DEL_YN = 'N'
@@ -331,7 +331,6 @@ exports.getGoodsFeeList = async ({   agentId,
   };
   
   
-  
   // 상품화비 한건에 대한 상세 조회
   exports.getGoodsFeeDetail = async ({ goodsFeeSeq }) => {
     try {
@@ -407,7 +406,7 @@ exports.getGoodsFeeList = async ({   agentId,
     }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -436,7 +435,7 @@ exports.getGoodsFeeList = async ({   agentId,
                           WHERE 1 = 1
                             AND A.CAR_DEL_YN = 'N'
                             AND B.DEL_YN = 'N'
-                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.AGENT_ID = @AGENT_ID
                             AND A.CAR_REG_ID = B.CAR_REG_ID
                             AND B.TAX_SCT_CD = '01'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -462,7 +461,7 @@ exports.getGoodsFeeList = async ({   agentId,
                           WHERE 1 = 1
                             AND A.CAR_DEL_YN = 'N'
                             AND B.DEL_YN = 'N'
-                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.AGENT_ID = @AGENT_ID
                             AND A.CAR_REG_ID = B.CAR_REG_ID
                             AND B.TAX_SCT_CD = '02'
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -488,7 +487,7 @@ exports.getGoodsFeeList = async ({   agentId,
                           WHERE 1 = 1
                             AND A.CAR_DEL_YN = 'N'
                             AND B.DEL_YN = 'N'
-                            AND A.AGENT_ID = @CAR_AGENT
+                            AND A.AGENT_ID = @AGENT_ID
                             AND A.CAR_REG_ID = B.CAR_REG_ID
                             AND B.TAX_SCT_CD IN ('01', '02')
                 ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
@@ -505,7 +504,7 @@ exports.getGoodsFeeList = async ({   agentId,
                 ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
       `;
 
-      //console.log(query);
+      console.log(query);
   
       const result = await request.query(query);
       return result.recordset;  
@@ -550,9 +549,9 @@ exports.insertGoodsFee = async ({
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
       request.input("EXPD_SCT_CD", sql.VarChar, expdSctCd);
-      request.input("EXPD_AMT", sql.Decimal, expdAmt);
-      request.input("EXPD_SUP_PRC", sql.Decimal, expdSupPrc);
-      request.input("EXPD_VAT", sql.Decimal, expdVat);
+      request.input("EXPD_AMT", sql.Int, expdAmt);
+      request.input("EXPD_SUP_PRC", sql.Int, expdSupPrc);
+      request.input("EXPD_VAT", sql.Int, expdVat);
       request.input("EXPD_DT", sql.VarChar, expdDt);
       request.input("EXPD_METH_CD", sql.VarChar, expdMethCd);
       request.input("EXPD_EVDC_CD", sql.VarChar, expdEvdcCd);
@@ -664,9 +663,9 @@ exports.updateGoodsFee = async ({
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
       request.input("EXPD_SCT_CD", sql.VarChar, expdSctCd);
-      request.input("EXPD_AMT", sql.Decimal, expdAmt);
-      request.input("EXPD_SUP_PRC", sql.Decimal, expdSupPrc);
-      request.input("EXPD_VAT", sql.Decimal, expdVat);
+      request.input("EXPD_AMT", sql.Int, expdAmt);
+      request.input("EXPD_SUP_PRC", sql.Int, expdSupPrc);
+      request.input("EXPD_VAT", sql.Int, expdVat);
       request.input("EXPD_DT", sql.VarChar, expdDt);
       request.input("EXPD_METH_CD", sql.VarChar, expdMethCd);
       request.input("EXPD_EVDC_CD", sql.VarChar, expdEvdcCd);
@@ -684,39 +683,13 @@ exports.updateGoodsFee = async ({
 
       // 기존 상품화비 삭제 하고 다시 등록 
 
-      console.log("goodsFeeSeq:", goodsFeeSeq);
-      console.log("carRegId:", carRegId);
-      console.log("expdItemCd:", expdItemCd);
-      console.log("expdItemNm:", expdItemNm);
-      console.log("expdSctCd:", expdSctCd);
-      console.log("expdAmt:", expdAmt);
-      console.log("expdSupPrc:", expdSupPrc);
-      console.log("expdVat:", expdVat);
-      console.log("expdDt:", expdDt);
-      console.log("expdMethCd:", expdMethCd);
-      console.log("expdEvdcCd:", expdEvdcCd);
-      console.log("taxSctCd:", taxSctCd);
-      console.log("txblIssuDt:", txblIssuDt);
-      console.log("rmrk:", rmrk);
-      console.log("adjInclusYn:", adjInclusYn);
-      console.log("cashRecptRcgnNo:", cashRecptRcgnNo);
-      console.log("cashMgmtkey:", cashMgmtkey);
-      console.log("delYn:", delYn);
-      console.log("regDtime:", regDtime);
-      console.log("regrId:", regrId);
-      console.log("modDtime:", modDtime);
-      console.log("modrId:", modrId);
-
       const minusQuery = `
         UPDATE dbo.CJB_CAR_PUR 
         SET tot_cmrc_cost_fee = tot_cmrc_cost_fee - (SELECT EXPD_AMT FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ) 
         WHERE CAR_REG_ID = @CAR_REG_ID;`;
 
-      await request.query(minusQuery);
-
       const deleteQuery = `DELETE FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ;`;
 
-      await request.query(deleteQuery);
       // 상품화비 수정
       const query1 = `
         INSERT INTO dbo.CJB_GOODS_FEE (
@@ -766,7 +739,7 @@ exports.updateGoodsFee = async ({
         );`;
    
       // 상품화비 총 금액 업데이트
-      await request.query(query1);
+  
       const query2 = `
         UPDATE dbo.CJB_CAR_PUR 
         SET tot_cmrc_cost_fee = tot_cmrc_cost_fee + @EXPD_AMT 
