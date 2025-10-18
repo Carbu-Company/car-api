@@ -208,9 +208,6 @@ exports.getGoodsFeeList = async ({   agentId,
                 ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
                                       GROUP BY A.CAR_REG_ID
                                       ;`;
-
-      console.log(countQuery);
-
   
       const query = `SELECT B.CAR_REG_ID, MIN(A.CAR_NO) CAR_NO,
                             MIN(A.DLR_ID) DLR_ID,
@@ -247,10 +244,6 @@ exports.getGoodsFeeList = async ({   agentId,
                 ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
                       GROUP BY B.CAR_REG_ID
                     ;`; 
-  
-
-
-      console.log(query);
 
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -427,9 +420,9 @@ exports.getGoodsFeeList = async ({   agentId,
       const query = `
                         SELECT '과세' AS TAX_SCT_NM
                               , COUNT(GOODS_FEE_SEQ) CNT
-                              , SUM(B.EXPD_AMT) AS EXPD_AMT
-                              , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
-                              , SUM(B.EXPD_VAT) AS EXPD_VAT
+                              , ISNULL(SUM(B.EXPD_AMT), 0) AS EXPD_AMT
+                              , ISNULL(SUM(B.EXPD_SUP_PRC), 0) AS EXPD_SUP_PRC
+                              , ISNULL(SUM(B.EXPD_VAT), 0) AS EXPD_VAT
                            FROM dbo.CJB_CAR_PUR A
                               , dbo.CJB_GOODS_FEE B
                           WHERE 1 = 1
@@ -453,9 +446,9 @@ exports.getGoodsFeeList = async ({   agentId,
                 UNION ALL
                         SELECT '비과세' AS TAX_SCT_NM
                               , COUNT(GOODS_FEE_SEQ) CNT
-                              , SUM(B.EXPD_AMT) AS EXPD_AMT
-                              , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
-                              , SUM(B.EXPD_VAT) AS EXPD_VAT
+                              , ISNULL(SUM(B.EXPD_AMT), 0) AS EXPD_AMT
+                              , ISNULL(SUM(B.EXPD_SUP_PRC), 0) AS EXPD_SUP_PRC
+                              , ISNULL(SUM(B.EXPD_VAT), 0) AS EXPD_VAT
                            FROM dbo.CJB_CAR_PUR A
                               , dbo.CJB_GOODS_FEE B
                           WHERE 1 = 1
@@ -479,9 +472,9 @@ exports.getGoodsFeeList = async ({   agentId,
                 UNION ALL
                         SELECT '합계' AS TAX_SCT_NM
                               , COUNT(GOODS_FEE_SEQ) CNT
-                              , SUM(B.EXPD_AMT) AS EXPD_AMT
-                              , SUM(B.EXPD_SUP_PRC) AS EXPD_SUP_PRC
-                              , SUM(B.EXPD_VAT) AS EXPD_VAT
+                              , ISNULL(SUM(B.EXPD_AMT), 0) AS EXPD_AMT
+                              , ISNULL(SUM(B.EXPD_SUP_PRC), 0) AS EXPD_SUP_PRC
+                              , ISNULL(SUM(B.EXPD_VAT), 0) AS EXPD_VAT
                            FROM dbo.CJB_CAR_PUR A
                               , dbo.CJB_GOODS_FEE B
                           WHERE 1 = 1
@@ -504,8 +497,6 @@ exports.getGoodsFeeList = async ({   agentId,
                 ${dtlAdjInclusYN ? "AND ADJ_INCLUS_YN = @ADJ_INCLUS_YN" : ""}
       `;
 
-      console.log(query);
-  
       const result = await request.query(query);
       return result.recordset;  
   
