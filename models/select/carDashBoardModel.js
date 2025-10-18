@@ -3,10 +3,10 @@ const pool = require("../../config/db");
 
 
 // 매입 매출 상품화비 조회
-exports.getTaxCashNoList = async ({ agent_id }) => {
+exports.getTaxCashNoList = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agent_id);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `SELECT A.CMRC_COST_SEQ  -- 상품화비 순번
                           , A.EXPD_METH_CD, B.CD_NM -- 결제 구분
@@ -40,10 +40,10 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   };
   
   // 재고금융 상태 조회
-  exports.getInventoryFinanceStatus = async ({ agent_id }) => {
+  exports.getInventoryFinanceStatus = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agent_id);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `SELECT A.LOAN_CORP_NM
                           , A.TOT_LMT_AMT
@@ -63,11 +63,11 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   
   
   // 차량 대출 정보 조회
-  exports.getCarLoanInfo = async ({ car_regid }) => {
+  exports.getCarLoanInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
   
-      request.input("CAR_REGID", sql.VarChar, car_regid);
+      request.input("CAR_REGID", sql.VarChar, carRegId);
   
       const query = `SELECT A.LOAN_AMT
                           , A.LOAN_CORP_INTR_RT 
@@ -86,10 +86,10 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   };
   
   // 매입 매출 요약 조회
-  exports.getSalesPurchaseSummary = async ({ agent_id }) => {
+  exports.getSalesPurchaseSummary = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agent_id);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `SELECT '매입' AS GUBUN 
                           , COUNT(*) CNT
@@ -128,10 +128,10 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   
   
   // 문의 조회
-  exports.getInquiryStatus = async ({ agent_id }) => {
+  exports.getInquiryStatus = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agent_id);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `SELECT BBC_NO, BBC_TIT, CONVERT(CHAR(10), REG_DTIME, 23) AS REG_DT
                        FROM dbo.CJB_INQ_BB
@@ -147,10 +147,10 @@ exports.getTaxCashNoList = async ({ agent_id }) => {
   };
   
   // 공지 조회
-  exports.getNoticeStatus = async ({ agent_id }) => {
+  exports.getNoticeStatus = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agent_id);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `SELECT ALL_YN, 
                             CASE WHEN ALL_YN = 'Y' THEN '전체' ELSE '개별' END GUBUN,

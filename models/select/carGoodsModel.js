@@ -6,7 +6,7 @@ const pool = require("../../config/db");
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 상품화비용 리스트 조회
-exports.getGoodsFeeList = async ({   carAgent, 
+exports.getGoodsFeeList = async ({   agentId, 
     page,
     pageSize,
     carNo,
@@ -26,7 +26,7 @@ exports.getGoodsFeeList = async ({   carAgent,
     ordAscDesc = 'desc' }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -148,7 +148,7 @@ exports.getGoodsFeeList = async ({   carAgent,
   
   // 차량별 리스트 조회
   exports.getGoodsFeeCarSumList = async ({ 
-    carAgent,
+    agentId,
     page,
     pageSize,
     carNo,
@@ -169,7 +169,7 @@ exports.getGoodsFeeList = async ({   carAgent,
     }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -386,7 +386,7 @@ exports.getGoodsFeeList = async ({   carAgent,
   
   // 차량별 리스트 조회
   exports.getGoodsFeeCarSummary= async ({ 
-    carAgent,
+    agentId,
     page,
     pageSize,
     carNo,
@@ -407,7 +407,7 @@ exports.getGoodsFeeList = async ({   carAgent,
     }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   

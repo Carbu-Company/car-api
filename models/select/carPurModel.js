@@ -6,7 +6,7 @@ const pool = require("../../config/db");
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.getCarPurList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -28,7 +28,7 @@ exports.getCarPurList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -48,7 +48,7 @@ exports.getCarPurList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -202,7 +202,7 @@ exports.getCarPurList = async ({
   
   // 제시 차량 합계 조회
   exports.getCarPurSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -224,7 +224,7 @@ exports.getCarPurList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -244,7 +244,7 @@ exports.getCarPurList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -437,7 +437,7 @@ exports.getCarPurList = async ({
 
 // 제시 직접 등록
 exports.insertCarPur = async ({
-    carAgent                 // 상사 ID              
+    agentId                 // 상사 ID              
   , purAmt                  // 매입금액
   , purSupPrc               // 공급가
   , purVat                  // 부가세
@@ -479,12 +479,12 @@ exports.insertCarPur = async ({
     console.log("usrId:", usrId);
 
     // car_reg_id 값도 미리 만들기
-    request.input("carAgent", sql.VarChar, carAgent); 
-    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
+    request.input("agentId", sql.VarChar, agentId); 
+    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@agentId) as CAR_REG_ID`);
     const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
 
     request.input("CAR_REG_ID", sql.VarChar, newCarRegId);                        // 차량 등록 ID         
-    request.input("AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("AGENT_ID", sql.VarChar, agentId);                            // 상사 ID              
     request.input("DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
     request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);                         // 차량 종류 코드         
     request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);                       // 제시 구분 코드       
@@ -643,7 +643,7 @@ exports.insertCarPur = async ({
       fileRequest.input("FILE_PATH", sql.VarChar, file.url);
       fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
       fileRequest.input("FILE_KND_NM", sql.VarChar, 'P');
-      fileRequest.input("AGENT_ID", sql.VarChar, carAgent);
+      fileRequest.input("AGENT_ID", sql.VarChar, agentId);
       fileRequest.input("REGR_ID", sql.VarChar, usrId);
       fileRequest.input("MODR_ID", sql.VarChar, usrId);
 
@@ -692,7 +692,7 @@ exports.insertCarPur = async ({
 // 제시 수정 등록 
 exports.updateCarPur = async ({ 
     carRegId,                                                  // 차량 등록 ID
-    carAgent,                                                  // 상사사 ID
+    agentId,                                                  // 상사사 ID
     purAmt,                                                    // 매입금액
     purSupPrc,                                                 // 공급가액
     purVat,                                                    // 부가세
@@ -732,7 +732,7 @@ exports.updateCarPur = async ({
 try {
   const request = pool.request();
   request.input("CAR_REG_ID", sql.VarChar, carRegId);
-  request.input("AGENT_ID", sql.VarChar, carAgent);
+  request.input("AGENT_ID", sql.VarChar, agentId);
   request.input("DLR_ID", sql.VarChar, dealerId);
   request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);
   request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);
@@ -826,10 +826,10 @@ try {
 
 
 // 제시 삭제
-exports.deleteCarPur = async ({car_regid, flag_type}) => {
+exports.deleteCarPur = async ({carRegId, flag_type}) => {
   try {
     const request = pool.request();
-    request.input("CAR_REGID", sql.VarChar, car_regid);
+    request.input("CAR_REGID", sql.VarChar, carRegId);
 
     let query = "";
 

@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 
 // 정산 내역 목록 조회 
 exports.getCarAdjList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -27,7 +27,7 @@ exports.getCarAdjList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -45,7 +45,7 @@ exports.getCarAdjList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -147,7 +147,7 @@ exports.getCarAdjList = async ({
   
   // 정산 합계 조회
   exports.getCarAdjSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -167,7 +167,7 @@ exports.getCarAdjList = async ({
     try {
       const request = pool.request();
   
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -185,7 +185,7 @@ exports.getCarAdjList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   

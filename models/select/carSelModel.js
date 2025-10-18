@@ -8,7 +8,7 @@ const pool = require("../../config/db");
 
 // 차량 판매매도 목록 조회
 exports.getCarSelList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -31,7 +31,7 @@ exports.getCarSelList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -51,7 +51,7 @@ exports.getCarSelList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -174,7 +174,7 @@ exports.getCarSelList = async ({
  
   // 제시 차량 합계 조회
   exports.getCarSelSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -197,7 +197,7 @@ exports.getCarSelList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -218,7 +218,7 @@ exports.getCarSelList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -508,7 +508,7 @@ exports.updateCarSel = async ({
         fileRequest.input("FILE_PATH", sql.VarChar, file.url);
         fileRequest.input("FILE_SCT_CD", sql.VarChar, 'P');
         fileRequest.input("FILE_KND_NM", sql.VarChar, 'P');
-        fileRequest.input("AGENT_ID", sql.VarChar, carAgent);
+        fileRequest.input("AGENT_ID", sql.VarChar, agentId);
         fileRequest.input("REGR_ID", sql.VarChar, usrId);
         fileRequest.input("MODR_ID", sql.VarChar, usrId);
 

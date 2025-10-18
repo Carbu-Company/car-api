@@ -7,10 +7,10 @@ const pool = require("../../config/db");
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 시스템 사용 요청 조회
-exports.getSystemUseRequest = async ({ carAgent }) => {
+exports.getSystemUseRequest = async ({ agentId }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);  
+    request.input("CAR_AGENT", sql.VarChar, agentId);  
 
     const query = `SELECT DBO.SMJ_FN_MK_AGENT() as agent,
                           CONVERT(VARCHAR(10), DATEADD(DAY, 3650, GETDATE()), 21) as alive_dt,
@@ -106,16 +106,16 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
         // 존재하면 Agent_ID값 가져오기
         const agent_id_request = pool.request();
         agent_id_request.input("CombAgentCd", sql.VarChar, CombAgentCd);
-        const agent_id = await agent_id_request.query(`SELECT AGENT_ID FROM dbo.CJB_AGENT WHERE CMBT_AGENT_CD = @CombAgentCd`);
-        new_agent_id = agent_id.recordset[0].AGENT_ID;
+        const agentId = await agent_id_request.query(`SELECT AGENT_ID FROM dbo.CJB_AGENT WHERE CMBT_AGENT_CD = @CombAgentCd`);
+        new_agent_id = agentId.recordset[0].AGENT_ID;
   
-        console.log("agent_id:", new_agent_id);
+        console.log("agentId:", new_agent_id);
       }
       else {
-        // 존재하지 않으면 agent_id 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_AGENT_ID()
+        // 존재하지 않으면 agentId 값 미리 생성 하고 해당 값을 넘기기. 함수는 CJB_FN_MK_AGENT_ID()
         const agent_id_request = pool.request();
-        const agent_id = await agent_id_request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agent_id`);
-        new_agent_id = agent_id.recordset[0].agent_id;
+        const agentId = await agent_id_request.query(`SELECT dbo.CJB_FN_MK_AGENT_ID() as agentId`);
+        new_agent_id = agentId.recordset[0].agentId;
         console.log("new_agent_id:", new_agent_id);
   
         // 상사 정보 저장 처리 함수 
@@ -226,7 +226,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
   
       const user_insert_request = pool.request();
       user_insert_request.input("usr_id", sql.VarChar, new_usr_id); 
-      user_insert_request.input("agent_id", sql.VarChar, new_agent_id); 
+      user_insert_request.input("agentId", sql.VarChar, new_agent_id); 
       user_insert_request.input("login_id", sql.VarChar, UserId);
       user_insert_request.input("login_passwd", sql.VarChar, UserPw);
       user_insert_request.input("usr_nm", sql.VarChar, UsrNm);
@@ -256,11 +256,11 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                 , USR_EMAIL                    --  사용자 이메일         INPUT
                 , USR_STRT_DT                  --  사용자 시작 일자      GETDATE()
                 , USR_END_DT                   --  사용자 종료 일자     '2999-12-31'
-                , AGENT_CD                     --  상사 코드            input 존재하면 agent_id 값을 획득 가능함.  
+                , AGENT_CD                     --  상사 코드            input 존재하면 agentId 값을 획득 가능함.  
                 , LOGIN_IP                     --  로그인 IP      
               ) VALUES (  
                   @usr_id
-                , @agent_id
+                , @agentId
                 , @login_id
                 , @login_passwd
                 , @usr_nm

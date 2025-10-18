@@ -8,7 +8,7 @@ const pool = require("../../config/db");
 
 // FAQ 목록 조회 
 exports.getFaqList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     faqTitNm,
@@ -19,7 +19,7 @@ exports.getFaqList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
 
@@ -29,7 +29,7 @@ exports.getFaqList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
 

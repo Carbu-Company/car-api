@@ -8,7 +8,7 @@ const pool = require("../../config/db");
 
 // 계좌 상세 내역 목록 조회 
 exports.getCarAcctList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -28,7 +28,7 @@ exports.getCarAcctList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -46,7 +46,7 @@ exports.getCarAcctList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -148,7 +148,7 @@ exports.getCarAcctList = async ({
   
   // 현금영수증 합계 조회
   exports.getCarAcctSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -168,7 +168,7 @@ exports.getCarAcctList = async ({
     try {
       const request = pool.request();
   
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -186,7 +186,7 @@ exports.getCarAcctList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -306,10 +306,10 @@ exports.getCarAcctList = async ({
   };
 
   // 계좌정보 목록 조회
-  exports.getAgentAcctList = async ({ carAgent }) => {
+  exports.getAgentAcctList = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
 
       const query = `SELECT A.BNK_CD
                           , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
@@ -330,7 +330,7 @@ exports.getCarAcctList = async ({
 
   // 계좌정보 상세 저장
   exports.insertCarAcctDetail = async ({ 
-    carAgent, 
+    agentId, 
     acctNo, 
     tid, 
     tradeDt, 
@@ -349,7 +349,7 @@ exports.getCarAcctList = async ({
   }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("ACCT_NO", sql.VarChar, acctNo);     
       request.input("TID", sql.VarChar, tid);
       request.input("TRADE_DT", sql.VarChar, tradeDt);

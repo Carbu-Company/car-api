@@ -2,11 +2,11 @@ const sql = require("mssql");
 const pool = require("../../config/db");
 
 // 계좌정보 수정
-exports.updateAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, accountName }) => {
+exports.updateAccountInfo = async ({ agentId, bankCode, accountNumber, memo, accountName }) => {
   try {
     const request = pool.request();
 
-    request.input("CAR_AGENT", sql.VarChar, carAgent);  
+    request.input("CAR_AGENT", sql.VarChar, agentId);  
     request.input("BANKCODE", sql.VarChar, bankCode);
     request.input("ACCOUNTNUMBER", sql.VarChar, accountNumber);
     request.input("MEMO", sql.VarChar, memo);

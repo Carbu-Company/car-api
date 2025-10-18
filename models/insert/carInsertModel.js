@@ -203,11 +203,11 @@ exports.insertUserRequest = async ({ agent
 
 
 // 계좌정보 등록
-exports.insertAccountInfo = async ({ carAgent, bankCode, accountNumber, memo, accountName }) => {
+exports.insertAccountInfo = async ({ agentId, bankCode, accountNumber, memo, accountName }) => {
   try {
     const request = pool.request();
 
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
     request.input("BANKCODE", sql.VarChar, bankCode);
     request.input("ACCOUNTNUMBER", sql.VarChar, accountNumber);
     request.input("MEMO", sql.VarChar, memo);

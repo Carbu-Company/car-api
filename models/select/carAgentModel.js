@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 
 // 상사 내역 목록 조회 
 exports.getCarAgentList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     agentNm, 
@@ -21,7 +21,7 @@ exports.getCarAgentList = async ({
     try {
       const request = pool.request();
   /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -39,7 +39,7 @@ exports.getCarAgentList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   */
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
     
@@ -115,120 +115,35 @@ exports.getCarAgentList = async ({
     }
   };
   
-  // 상사 합계 조회
-  exports.getCarAdjSummary = async ({  
-    carAgent, 
-    page,
-    pageSize,
-    agentNm, 
-    brno,
-    presNm,
-    agentStatCd,
-    cmbtAgentCd,
-    orderItem = '01',
-    ordAscDesc = 'desc'
-  }) => {
-    try {
-      const request = pool.request();
-  
-      console.log('carAgent:', carAgent);
-      console.log('pageSize:', pageSize);
-      console.log('page:', page);
-  
-      console.log('agentNm:', agentNm);
-      console.log('brno:', brno);
-      console.log('presNm:', presNm);
-      console.log('agentStatCd:', agentStatCd);
-      console.log('cmbtAgentCd:', cmbtAgentCd);
-      console.log('orderItem:', orderItem);
-      console.log('ordAscDesc:', ordAscDesc);
-  
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
-      request.input("PAGE_SIZE", sql.Int, pageSize);
-      request.input("PAGE", sql.Int, page);
-    
-      if (agentNm) request.input("AGENT_NM", sql.VarChar, `%${agentNm}%`);
-      if (brno) request.input("BRNO", sql.VarChar, `%${brno}%`);
-      if (presNm) request.input("PRES_NM", sql.VarChar, `%${presNm}%`);
-      if (agentStatCd) request.input("AGENT_STAT_CD", sql.VarChar, agentStatCd);
-      if (cmbtAgentCd) request.input("CMBT_AGENT_CD", sql.VarChar, `%${cmbtAgentCd}%`);
-  
-      const query = `SELECT SUM(I_CNT) AS I_CNT
-                          , SUM(O_CNT) AS O_CNT
-                       FROM (SELECT COUNT(A.AGENT_CD) AS I_CNT
-                                  , COUNT(A.AGENT_CD) AS O_CNT
-                              FROM dbo.CJB_AGENT A
-                             WHERE 1 = 1
-                               AND A.REG_DTIME > DATEADD(day, 0, CONVERT(date, GETDATE()))
-                              $${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
-                            UNION ALL
-                            SELECT  COUNT(A.AGENT_CD) AS I_CNT
-                                  , COUNT(A.AGENT_CD) AS O_CNT
-                               FROM dbo.CJB_AGENT A
-                             WHERE 1 = 1
-                              AND A.REG_DTIME >= DATEADD(day, -1, CONVERT(date, GETDATE())) 
-                              AND A.REG_DTIME <  DATEADD(day, 0, CONVERT(date, GETDATE()))
-                              ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
-                            UNION ALL
-                            SELECT  COUNT(A.AGENT_CD) AS I_CNT
-                                  , COUNT(A.AGENT_CD) AS O_CNT
-                              FROM dbo.CJB_AGENT A
-                            WHERE 1 = 1
-                              ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}
-                              ${brno ? "AND A.BRNO LIKE @BRNO" : ""}
-                              ${presNm ? "AND A.PRES_NM LIKE @PRES_NM" : ""}
-                              ${agentStatCd ? "AND A.AGENT_STAT_CD = @AGENT_STAT_CD" : ""}
-                              ${cmbtAgentCd ? "AND A.CMBT_AGENT_CD LIKE @CMBT_AGENT_CD" : ""}
-                      ) A`;
-        
-      
-      console.log('query:', query);
-
-      const result = await request.query(query);
-      return result.recordset;
-    } catch (err) {
-      console.error("Error fetching car pur sum:", err);
-      throw err;
-    }
-  };
-  
   // 상사 상세 조회
-  exports.getCarAgentDetail = async ({ carRegId }) => {
+  exports.getAgentInfo = async ({ agentId }) => {
     try {
       const request = pool.request();
-
-      request.input("carRegId", sql.VarChar, carRegId);   
-      console.log('carRegId:', carRegId);
+      console.log('agentId:', agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);   
   
-      const query = `SELECT ACCT_DTL_SEQ     -- 계좌 내역 순번
-                          , A.BNK_CD       -- 은행코드
-                          , (SELECT TOP 1 CD_NM FROM dbo.CJB_COMM_CD WHERE GRP_CD = '09' AND CD = A.BNK_CD) BNK_NM  -- 은행명
-                          , A.ACCT_NO      -- 계좌번호
-                          , A.ACCT_NM      -- 계좌명
-                          , A.ACCT_HLDR    -- 예금주
-                          , A.MAST_YN
-                          , B.TID
-                          , B.TRADE_DT
-                          , B.TRADE_SN
-                          , B.TRADE_SCT_NM
-                          , B.TRADE_RMRK_NM
-                          , B.TRADE_ITEM_CD
-                          , B.TRADE_ITEM_NM
-                          , CONVERT(VARCHAR(19), B.TRADE_DTIME, 20) TRADE_DTIME 
-                          , B.IAMT
-                          , B.OAMT
-                          , B.BLNC
-                          , B.NOTE1
-                        FROM dbo.CJB_AGENT A
-                        WHERE AGENT_CD = @AGENT_CD `;
+      const query = `SELECT AGENT_ID
+                        , AGENT_NM
+                        , BRNO
+                        , PRES_NM
+                        , EMAIL
+                        , AGRM_AGR_YN
+                        , FIRM_YN
+                        , AGENT_STAT_CD
+                        , PHON
+                        , FAX
+                        , ZIP
+                        , ADDR1
+                        , ADDR2
+                        , FEE_SCT_CD
+                        , CMBT_AGENT_CD
+                        , CMBT_AGENT_STAT_NM
+                        , REG_DTIME
+                        , REGR_ID
+                        , MOD_DTIME
+                        , MODR_ID
+                       FROM dbo.CJB_AGENT 
+                      WHERE AGENT_ID = @AGENT_ID `;
   
       console.log('query:', query);
   

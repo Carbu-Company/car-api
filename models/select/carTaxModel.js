@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 
 // 세금계산서 목록 조회
 exports.getCarTaxList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -29,7 +29,7 @@ exports.getCarTaxList = async ({
     try {
       const request = pool.request();
 
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -49,7 +49,7 @@ exports.getCarTaxList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
 
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
     
@@ -161,7 +161,7 @@ exports.getCarTaxList = async ({
   
   // 세금계산서 합계 조회
   exports.getCarTaxSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -183,7 +183,7 @@ exports.getCarTaxList = async ({
     try {
       const request = pool.request();
   
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -203,7 +203,7 @@ exports.getCarTaxList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   

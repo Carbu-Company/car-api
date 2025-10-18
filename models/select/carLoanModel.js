@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 
 
 // 재고금융 리스트 조회 
-exports.getCarLoanList = async ({   carAgent, 
+exports.getCarLoanList = async ({   agentId, 
     page,
     pageSize,
     carNo,
@@ -23,7 +23,7 @@ exports.getCarLoanList = async ({   carAgent,
     ordAscDesc = 'desc' }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -127,7 +127,7 @@ exports.getCarLoanList = async ({   carAgent,
   
   // 재고금융 차량별 리스트 조회
   exports.getCarLoanSumList = async ({ 
-    carAgent,
+    agentId,
     page,
     pageSize,
     carNo,
@@ -146,7 +146,7 @@ exports.getCarLoanList = async ({   carAgent,
     }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -257,7 +257,7 @@ exports.getCarLoanList = async ({   carAgent,
   
   // 재고금융 차량별 리스트 조회
   exports.getCarLoanSummary= async ({     
-    carAgent,
+    agentId,
     page,
     pageSize,
     carNo,
@@ -276,7 +276,7 @@ exports.getCarLoanList = async ({   carAgent,
    }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -473,7 +473,7 @@ try {
   const request = pool.request();
 
   // car_reg_id 값도 미리 만들기
-  request.input("AGENT_ID", sql.VarChar, carAgent); 
+  request.input("AGENT_ID", sql.VarChar, agentId); 
   const loanID = await request.query(`SELECT dbo.CJB_FN_MK_LOAN_NO(@AGENT_ID) as LOAN_ID`);
   const newLoanId = loanID.recordset[0].LOAN_ID;
   request.input("LOAN_ID", sql.VarChar, newLoanId);                        // 대출 ID
@@ -659,10 +659,10 @@ exports.updateCarLoan = async ({
 
 
 // 재고 금융 삭제
-exports.deleteCarLoan = async ({car_regid, flag_type}) => {
+exports.deleteCarLoan = async ({carRegId, flag_type}) => {
   try {
     const request = pool.request();
-    request.input("CAR_REGID", sql.VarChar, car_regid);
+    request.input("CAR_REGID", sql.VarChar, carRegId);
 
     let query = "";
 
@@ -692,10 +692,10 @@ exports.deleteCarLoan = async ({car_regid, flag_type}) => {
 
 
 // 재고 금융 삭제
-exports.deleteAgentLoanCorp = async ({agent_id, loan_corp_cd, flag_type}) => {
+exports.deleteAgentLoanCorp = async ({agentId, loan_corp_cd, flag_type}) => {
   try {
     const request = pool.request();
-    request.input("AGENT_ID", sql.VarChar, agent_id);
+    request.input("AGENT_ID", sql.VarChar, agentId);
     request.input("LOAN_CORP_CD", sql.VarChar, loan_corp_cd);
 
     let query = "";

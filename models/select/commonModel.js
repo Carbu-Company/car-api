@@ -7,10 +7,10 @@ const pool = require("../../config/db");
 
 
 // 관리키 조회  dbo.SMJ_FN_MK_REGID   car_reg_id 값 만드는 함수 
-exports.getMgtKey = async ({ carAgent }) => {
+exports.getMgtKey = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("carAgent", sql.VarChar, carAgent);
+      request.input("agentId", sql.VarChar, agentId);
   
       const query = `
         SELECT DBO.SMJ_FN_MK_MGTKEY(A.AGENT_ID) AS MgtKey,
@@ -19,7 +19,7 @@ exports.getMgtKey = async ({ carAgent }) => {
                CJB_USR B
          WHERE A.AGENT_ID = B.AGENT_ID
            AND B.USR_GRADE_CD = '9'
-           AND A.AGENT_ID = @carAgent;
+           AND A.AGENT_ID = @agentId;
       `;
   
       const result = await request.query(query);
@@ -67,10 +67,10 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   };
   
   // 딜러 조회
-  exports.getDealerList = async ({ carAgent }) => {
+  exports.getDealerList = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
   
       const query = `SELECT USR_ID,
                        USR_NM,
@@ -95,10 +95,10 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
   };
   
   // 딜러 상세 목록 
-  exports.getDealerDetailList = async ({ carAgent }) => {
+  exports.getDealerDetailList = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
   
       const query = `
         SELECT *
@@ -351,10 +351,10 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
 
 // 고객 목록 조회
 /*
-exports.getCustomerList = async ({ carAgent, search }) => {
+exports.getCustomerList = async ({ agentId, search }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
     request.input("SEARCH", sql.VarChar, search);
     const query = `SELECT CUSTNO,   
                           NAME,
@@ -399,15 +399,15 @@ exports.getCustomerList = async ({ carAgent, search }) => {
 
 */
 
-exports.getCustomerList = async ({ carAgent, custNm }) => {
+exports.getCustomerList = async ({ agentId, custNm }) => {
   try {
 
     const request = pool.request();
 
-    console.log('carAgent:', carAgent);
+    console.log('agentId:', agentId);
     console.log('custNm:', custNm);
 
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
     request.input("CUST_NM", sql.VarChar, custNm);
 
     const query = `SELECT CUST_NO
@@ -437,7 +437,7 @@ exports.getCustomerList = async ({ carAgent, custNm }) => {
 
 
 exports.getCarList = async ({ 
-  carAgent, 
+  agentId, 
   page,
   pageSize,
   carNo,
@@ -448,7 +448,7 @@ exports.getCarList = async ({
   try {
     const request = pool.request();
 /*
-    console.log('carAgent:', carAgent);
+    console.log('agentId:', agentId);
     console.log('pageSize:', pageSize);
     console.log('page:', page);
 
@@ -457,7 +457,7 @@ exports.getCarList = async ({
     console.log('orderItem:', orderItem);
     console.log('ordAscDesc:', ordAscDesc);
 */
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
     request.input("PAGE_SIZE", sql.Int, pageSize);
     request.input("PAGE", sql.Int, page);
 
@@ -568,10 +568,10 @@ exports.getCarList = async ({
 
 // 상사 대출 업체 대출 한도
 
-exports.getCompanyLoanLimit = async ({ carAgent }) => { 
+exports.getCompanyLoanLimit = async ({ agentId }) => { 
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
 
     const query = `SELECT LOAN_CORP_CD
                         , LOAN_CORP_NM
@@ -593,10 +593,10 @@ exports.getCompanyLoanLimit = async ({ carAgent }) => {
 };
 
 // 상사정보관리 조회
-exports.getAgentInfo = async ({ carAgent }) => {
+exports.getAgentInfo = async ({ agentId }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, carAgent);
+    request.input("CAR_AGENT", sql.VarChar, agentId);
 
     const query = `SELECT AGENT_NM  AS COMNAME
                         , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE

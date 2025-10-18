@@ -8,7 +8,7 @@ const pool = require("../../config/db");
 
 // 현금영수증 목록 조회 
 exports.getCarCashList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -32,7 +32,7 @@ exports.getCarCashList = async ({
     try {
       const request = pool.request();
 
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -52,7 +52,7 @@ exports.getCarCashList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
 
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
     
@@ -172,7 +172,7 @@ exports.getCarCashList = async ({
   
   // 현금영수증 합계 조회
   exports.getCarCashSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -196,7 +196,7 @@ exports.getCarCashList = async ({
     try {
       const request = pool.request();
 
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
 
@@ -488,8 +488,8 @@ exports.insertCarPur = async ({
     console.log("usrId:", usrId);
 
     // car_reg_id 값도 미리 만들기
-    request.input("carAgent", sql.VarChar, carAgent); 
-    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@carAgent) as CAR_REG_ID`);
+    request.input("agentId", sql.VarChar, agentId); 
+    const carRegId = await request.query(`SELECT dbo.CJB_FN_MK_CAR_REG_ID(@agentId) as CAR_REG_ID`);
     const newCarRegId = carRegId.recordset[0].CAR_REG_ID;
 
     request.input("CASH_MGMT_KEY", sql.VarChar, cashMgmtkey);
@@ -657,7 +657,7 @@ exports.updateCarCash = async ({
 try {
   const request = pool.request();
   request.input("CAR_REG_ID", sql.VarChar, carRegId);
-  request.input("AGENT_ID", sql.VarChar, carAgent);
+  request.input("AGENT_ID", sql.VarChar, agentId);
   request.input("DLR_ID", sql.VarChar, dealerId);
   request.input("CAR_KND_CD", sql.VarChar, carKndCd?.split('|')[0]);
   request.input("PRSN_SCT_CD", sql.VarChar, prsnSctCd);

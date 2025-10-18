@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 
 // 알선 목록 조회 
 exports.getCarConcilList = async ({ 
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -27,7 +27,7 @@ exports.getCarConcilList = async ({
     try {
       const request = pool.request();
 /*
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -46,7 +46,7 @@ exports.getCarConcilList = async ({
       console.log('ordAscDesc:', ordAscDesc);
 */
 
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -159,7 +159,7 @@ exports.getCarConcilList = async ({
   
   // 알선 합계 조회
   exports.getCarConcilSummary = async ({  
-    carAgent, 
+    agentId, 
     page,
     pageSize,
     carNo,
@@ -179,7 +179,7 @@ exports.getCarConcilList = async ({
     try {
       const request = pool.request();
   
-      console.log('carAgent:', carAgent);
+      console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
   
@@ -197,7 +197,7 @@ exports.getCarConcilList = async ({
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
   
-      request.input("CAR_AGENT", sql.VarChar, carAgent);
+      request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
@@ -348,7 +348,7 @@ exports.getCarConcilList = async ({
 
 // 알선 판매 등록
 exports.insertCarConcil = async ({
-  carAgent,                                                  // 상사 ID              
+  agentId,                                                  // 상사 ID              
   dealerId,                                                  // 판매딜러 ID
   tradeItemCd,                                               // 거래항목 코드
   brkSaleDt,                                                 // 알선판매일  
@@ -391,7 +391,7 @@ exports.insertCarConcil = async ({
     console.log('usrId:', usrId);
     console.log('carRegId:', carRegId);
 
-    request.input("BRK_AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("BRK_AGENT_ID", sql.VarChar, agentId);                            // 상사 ID              
     request.input("BRK_DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
     request.input("BRK_TRADE_ITEM_CD", sql.VarChar, tradeItemCd);              // 거래항목 코드
     request.input("BRK_SALE_DT", sql.VarChar, brkSaleDt);                      // 알선판매일
@@ -464,7 +464,7 @@ exports.insertCarConcil = async ({
 // 알선 판매 수정
 exports.updateCarConcil = async ({
   brkSeq,                                                    // 알선 판매 순번
-  carAgent,                                                  // 상사 ID              
+  agentId,                                                  // 상사 ID              
   dealerId,                                                  // 판매딜러 ID
   tradeItemCd,                                               // 거래항목 코드
   brkSaleDt,                                                 // 알선판매일  
@@ -510,7 +510,7 @@ exports.updateCarConcil = async ({
 
     request.input("BRK_SEQ", sql.Int, brkSeq);                        // 알선 판매 순번
 
-    request.input("BRK_AGENT_ID", sql.VarChar, carAgent);                            // 상사 ID              
+    request.input("BRK_AGENT_ID", sql.VarChar, agentId);                            // 상사 ID              
     request.input("BRK_DLR_ID", sql.VarChar, dealerId);                             // 딜러 ID              
     request.input("BRK_TRADE_ITEM_CD", sql.VarChar, tradeItemCd);              // 거래항목 코드
     request.input("BRK_SALE_DT", sql.VarChar, brkSaleDt);                      // 알선판매일
