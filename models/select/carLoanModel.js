@@ -881,7 +881,7 @@ exports.getCarLoanCorpList = async ({ agentId }) => {
                              B.TOT_LMT_AMT,        -- 총 대출한도액
                              B.TOT_LOAN_AMT,       -- 총 대출액
                              (TOT_LMT_AMT - TOT_LOAN_AMT) AS LMT_AMT, -- 남은 한도액
-                             (TOT_LOAN_AMT/TOT_LMT_AMT) * 100 AS RT, -- 사용률률
+                             (TOT_LOAN_AMT/TOT_LMT_AMT) * 100 AS RT -- 사용률률
                     FROM dbo.CJB_AGENT_LOAN_CORP B
                     WHERE B.AGENT_ID = @AGENT_ID
                     ORDER BY B.LOAN_CORP_CD;`;
