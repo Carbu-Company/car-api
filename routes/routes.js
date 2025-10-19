@@ -183,6 +183,8 @@ router.post("/updateAgentLoanCorp", carController.updateAgentLoanCorp);
 // 재고금융 상사 삭제 
 router.get("/deleteAgentLoanCorp", carController.deleteAgentLoanCorp);
 
+// 캐피탈사별 대출 한도 조회
+router.get("/getAgentLoanCorpList", carController.getAgentLoanCorpList);
 
 //***************************************************************************************** */
 // 알선 2.0

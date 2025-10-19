@@ -868,3 +868,29 @@ exports.deleteCarIntrPay = async ({
     throw err;
   }
 };
+
+
+// 차량 대출 정보 조회
+exports.getCarLoanCorpList = async ({ agentId }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agentId);
+
+    const query = `SELECT B.LOAN_CORP_CD, 
+                             B.LOAN_CORP_NM,       -- 캐피탈사사
+                             B.TOT_LMT_AMT,        -- 총 대출한도액
+                             B.TOT_LOAN_AMT,       -- 총 대출액
+                             (TOT_LMT_AMT - TOT_LOAN_AMT) AS LMT_AMT, -- 남은 한도액
+                             (TOT_LOAN_AMT/TOT_LMT_AMT) * 100 AS RT, -- 사용률률
+                    FROM dbo.CJB_AGENT_LOAN_CORP B
+                    WHERE B.AGENT_ID = @AGENT_ID
+                    ORDER BY B.LOAN_CORP_CD;`;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching car loan corp list:", err);
+    throw err;
+  }
+};
+  
