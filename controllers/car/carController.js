@@ -709,7 +709,7 @@ exports.deleteAgentLoanCorp = async (req, res, next) => {
 
 
 // 캐피탈사별 대출 한도 조회
-exports.getAgentLoanCorpList = async (req, res, next) => {
+exports.getCarLoanCorpList = async (req, res, next) => {
   try {
     const { agentId } = req.query;
     const carLoanCorpList = await carLoanModel.getCarLoanCorpList({ agentId });

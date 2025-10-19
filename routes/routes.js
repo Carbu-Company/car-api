@@ -184,7 +184,7 @@ router.post("/updateAgentLoanCorp", carController.updateAgentLoanCorp);
 router.get("/deleteAgentLoanCorp", carController.deleteAgentLoanCorp);
 
 // 캐피탈사별 대출 한도 조회
-router.get("/getAgentLoanCorpList", carController.getAgentLoanCorpList);
+router.get("/getCarLoanCorpList", carController.getCarLoanCorpList);
 
 //***************************************************************************************** */
 // 알선 2.0
