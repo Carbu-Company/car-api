@@ -143,6 +143,11 @@ router.post("/insertGoodsFee", carController.insertGoodsFee);
 // 상품화비용 지출 수정 등록
 router.post("/updateGoodsFee", carController.updateGoodsFee);
 
+// 상품화비 전체 삭제 
+router.get("/deleteAllGoodsFee", carController.deleteAllGoodsFee);
+
+// 상품화비 한건 삭제 
+router.get("/deleteGoodsFee", carController.deleteGoodsFee);
 
 //***************************************************************************************** */
 // 재고금융 2.0

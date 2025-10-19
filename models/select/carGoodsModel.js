@@ -295,12 +295,12 @@ exports.getGoodsFeeList = async ({   agentId,
                                 B.EXPD_VAT,           -- 부가세
                                 B.EXPD_AMT,           -- 금액    
                                 B.EXPD_DT,            -- 결제일
-                                B.EXPD_EVDC_CD,
-                                dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙
+                                B.EXPD_EVDC_CD,       -- 지출증빙 코드드
+                                dbo.CJB_FN_GET_CD_NM('07', B.EXPD_EVDC_CD) AS EXPD_EVDC_NM,    -- 지출증빙 명
                                 B.RMRK,            -- 비고
                                 B.ADJ_INCLUS_YN,   -- 정산 포함 여부 
-                                B.EXPD_METH_CD,
-                                dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,
+                                B.EXPD_METH_CD,     -- 지출 방식 코드
+                                dbo.CJB_FN_GET_CD_NM('06', B.EXPD_METH_CD) AS EXPD_METH_NM,    -- 지출 방식 명
                                 B.TXBL_ISSU_DT,
                                 B.CASH_RECPT_RCGN_NO,
                                 B.CASH_MGMTKEY,
@@ -622,7 +622,7 @@ exports.insertGoodsFee = async ({
   };
   
 
-  // 상품화비 등록 처리
+  // 상품화비 수정 처리
 exports.updateGoodsFee = async ({ 
     goodsFeeSeq,      // 상품화비 순번
     carRegId,         // 차량 등록 ID
@@ -743,4 +743,62 @@ exports.updateGoodsFee = async ({
     }
   };
   
-  
+
+
+  // 차량에 걸려 있는 상품화비 전체 삭제 
+exports.deleteAllGoodsFee = async ({carRegId, usrId}) => {
+  try {
+    const request = pool.request();
+
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("MODR_ID", sql.VarChar, usrId);
+
+    // 차량에 걸려 있는 상품화비 전체 삭제 
+    const query = `DELETE FROM dbo.CJB_GOODS_FEE 
+                    WHERE CAR_REG_ID = @CAR_REG_ID;`;
+
+
+                    console.log("query:", query);
+
+    // 차량에 걸려 있는 상품화비 총 금액 0 셋팅 
+    const query2 = `UPDATE dbo.CJB_CAR_PUR 
+                    SET tot_cmrc_cost_fee = 0 
+                    , MOD_DTIME = GETDATE()
+                    , MODR_ID = @MODR_ID
+                    WHERE CAR_REG_ID = @CAR_REG_ID;`;
+
+                    console.log("query2:", query2);
+
+    await Promise.all([request.query(query), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error deleting all goods fee:", err);
+    throw err;
+  }
+};
+
+
+  // 상품화비 한건 삭제 
+exports.deleteGoodsFee = async ({goodsFeeSeq, usrId}) => {
+  try {
+    const request = pool.request();
+    request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
+    request.input("MODR_ID", sql.VarChar, usrId);
+    // 차량에 걸려 있는 상품화비 전체 삭제 
+    const query = `DELETE FROM dbo.CJB_GOODS_FEE 
+                    WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ ;`;
+
+    // 차량에 걸려 있는 상품화비 총 금액 0 셋팅 
+    const query2 = `UPDATE dbo.CJB_CAR_PUR 
+                    SET tot_cmrc_cost_fee = tot_cmrc_cost_fee - (SELECT EXPD_AMT FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ) 
+                    , MOD_DTIME = GETDATE()
+                    , MODR_ID = @MODR_ID
+                    WHERE CAR_REG_ID = (SELECT CAR_REG_ID FROM dbo.CJB_GOODS_FEE WHERE GOODS_FEE_SEQ = @GOODS_FEE_SEQ);`;
+
+    await Promise.all([request.query(query), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error deleting all goods fee:", err);
+    throw err;
+  }
+};

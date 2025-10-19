@@ -219,7 +219,7 @@ exports.getTaxCashNoList = async (req, res, next) => {
   try {
     const { agentId } = req.query;
 
-    const taxCashNoList = await carSelectModel.getTaxCashNoList({ agentId });
+    const taxCashNoList = await carDashBoardModel.getTaxCashNoList({ agentId });
     res.status(200).json(taxCashNoList);
   } catch (err) {
     next(err);
@@ -230,7 +230,7 @@ exports.getInventoryFinanceStatus = async (req, res, next) => {
   try {
     const { agentId } = req.query;  
 
-    const inventoryFinanceStatus = await carSelectModel.getInventoryFinanceStatus({ agentId });
+    const inventoryFinanceStatus = await carDashBoardModel.getInventoryFinanceStatus({ agentId });
     res.status(200).json(inventoryFinanceStatus);
   } catch (err) {
     next(err);
@@ -241,7 +241,7 @@ exports.getCarLoanInfo = async (req, res, next) => {
   try {
     const { carRegId } = req.query;  
 
-    const carLoanInfo = await carSelectModel.getCarLoanInfo({ carRegId });
+    const carLoanInfo = await carDashBoardModel.getCarLoanInfo({ carRegId });
     res.status(200).json(carLoanInfo);
   } catch (err) {
     next(err);
@@ -252,7 +252,7 @@ exports.getSalesPurchaseSummary = async (req, res, next) => {
   try {
     const { agentId } = req.query;
 
-    const salesPurchaseSummary = await carSelectModel.getSalesPurchaseSummary({ agentId });
+    const salesPurchaseSummary = await carDashBoardModel.getSalesPurchaseSummary({ agentId });
     res.status(200).json(salesPurchaseSummary);
   } catch (err) {
     next(err);
@@ -266,7 +266,7 @@ exports.getInquiryStatus = async (req, res, next) => {
   try {
     const { agentId } = req.query;
 
-    const inquiryStatus = await carSelectModel.getInquiryStatus({ agentId });
+    const inquiryStatus = await carDashBoardModel.getInquiryStatus({ agentId });
     res.status(200).json(inquiryStatus);
   } catch (err) {
     next(err);
@@ -277,7 +277,7 @@ exports.getNoticeStatus = async (req, res, next) => {
   try {
     const { agentId } = req.query;
 
-    const noticeStatus = await carSelectModel.getNoticeStatus({ agentId });
+    const noticeStatus = await carDashBoardModel.getNoticeStatus({ agentId });
     res.status(200).json(noticeStatus);
   } catch (err) {
     next(err);
@@ -565,6 +565,27 @@ exports.updateGoodsFee = async (req, res, next) => {
     next(err);
   }
 };  
+
+
+exports.deleteAllGoodsFee = async (req, res, next) => {
+  try {
+    const { carRegId, usrId } = req.query;
+    await carGoodsModel.deleteAllGoodsFee({ carRegId, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteGoodsFee = async (req, res, next) => {
+  try {
+    const { goodsFeeSeq, usrId } = req.query;
+    await carGoodsModel.deleteGoodsFee({ goodsFeeSeq, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 재고금융 2.0

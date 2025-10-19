@@ -602,36 +602,97 @@ exports.updateCarSel = async ({
   
   
 // 판매매도 삭제
-exports.deleteCarSel = async ({carRegId, flag_type}) => {
+exports.deleteCarSel = async ({carRegId, usrId}) => {
   try {
     const request = pool.request();
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("MODR_ID", sql.VarChar, usrId);
 
-    let query = "";
+    /**
+     * 1. 매입에서 매도일자 null 셋팅
+     * 2. 차량 상태 코드를 001 값으로 셋팅 (매입상태로 변경)
+     * 3. 상사매도비 비용 0 셋팅 
+     * 4. 성능보험료 비용 0 셋팅 
+     * 5. 정산여부 체크해서 정산이 완료된것은 삭제가 안되게 처리
+     * 6. 알선인 경우에는 알선 정보도 전체삭제
+     * 7. 매도 첨부파일 전체 삭제
+     * 8. 매입자 고객 정보 전체 삭제
+     * 9. 매도에서 판매 일자 null 셋팅
+     * 10. 매도에서 매출 등록 일자 null 셋팅
+     * 11. 매도에서 판매 차량 번호 null 셋팅
+     * 12. 매도에서 상사 매도 비용 0 셋팅
+     * 13. 매도에서 성능보험료 비용 0 셋팅
+     * 14. 매도에서 세무비 포함 여부 null 셋팅
+     * 15. 매도에서 증빙종류 null 셋팅
+     * 16. 매도에서 증빙내용 null 셋팅
+     * 17. 매도에서 증빙일자 null 셋팅
+     */    
 
-    if(flag_type == "1") {
+    // 매도 정보 변경경
+    const query1 = `UPDATE dbo.CJB_CAR_SEL
+                      SET CAR_SALE_DT = NULL
+                        , SALE_REG_DT = NULL
+                        , DLR_ID = NULL
+                        , SALE_TP_CD = NULL
+                        , BUYER_NM = NULL
+                        , BUYER_TP_CD = NULL
+                        , BUYER_SSN = NULL
+                        , BUYER_BRNO = NULL
+                        , BUYER_PHON = NULL
+                        , BUYER_ZIP = NULL
+                        , BUYER_ADDR1 = NULL
+                        , BUYER_ADDR2 = NULL
+                        , SALE_AMT = 0
+                        , SALE_SUP_PRC = 0
+                        , SALE_VAT = 0
+                        , SALE_CAR_NO = NULL
+                        , AGENT_SEL_COST = 0
+                        , PERF_INFE_AMT = 0
+                        , TXBL_ISSU_YN = 'N'
+                        , SEL_CST_INCLUS_YN = 'N'
+                        , SEL_EVDC_CD = NULL
+                        , SEL_EVDC_CONT = NULL
+                        , SEL_EVDC_DT = NULL
+                        , ADJ_FIN_DT = NULL
+                        , ADJ_FIN_YN = 'N'
+                        , TOT_FEE_AMT = 0
+                        , REAL_FEE_AMT = 0
+                        , SALE_CR_ISSU_YN = 'N'
+                        , SALE_DESC = NULL
+                        , MOD_DTIME = GETDATE()
+                        , MODR_ID = @MODR_ID
+                      WHERE CAR_REG_ID = @CAR_REG_ID
+                        AND CAR_SALE_DT IS NOT NULL`;
 
-      query = `DELETE CJB_CAR_SEL
-                        WHERE CAR_REG_ID = @CAR_REG_ID
-                        AND CAR_DEL_YN = 'N'
-            `;  
-    } else {
-      query = `UPDATE CJB_CAR_SEL
-                        SET CAR_DEL_YN = 'Y'
-                          , CAR_DEL_DT = GETDATE()
-                        WHERE CAR_REG_ID = @CAR_REG_ID;
-            `;  
-    }
+    // 매입 정보 변경
+    const query2 = `UPDATE dbo.CJB_CAR_PUR
+                      SET CAR_SALE_DT = NULL
+                        , CAR_STAT_CD = '001'    -- 매입상태로 변경
+                        , MOD_DTIME = GETDATE()
+                        , MODR_ID = @MODR_ID
+                      WHERE CAR_REG_ID = @CAR_REG_ID
+                        AND CAR_STAT_CD IN ('002', '003')`;
 
-    console.log("query:", query);
+    // 알선 데이터 존재시 삭제 처리 
+    const query3 = `DELETE FROM dbo.CJB_CAR_SEL_BRK
+                      WHERE CAR_REG_ID = @CAR_REG_ID`;
 
-    await request.query(query);
+    // 매도 첨부파일 전체 삭제
+    const query4 = `DELETE FROM dbo.CJB_FILE_INFO
+                      WHERE CAR_REG_ID = @CAR_REG_ID`;
 
+    // 매입자 고객 전체 삭제
+    const query5 = `DELETE FROM dbo.CJB_CAR_BUY_CUST
+                      WHERE CAR_REG_ID = @CAR_REG_ID`;
+
+    await Promise.all([request.query(query1), request.query(query2), request.query(query3), request.query(query4), request.query(query5)]);
+    
+    return { success: true };
   } catch (err) {
     console.error("Error deleting car sel:", err);
     throw err;
   }
-};
+}; 
 
 // 매입자 고객 정보 등록
 exports.insertCarBuyCust = async ({
