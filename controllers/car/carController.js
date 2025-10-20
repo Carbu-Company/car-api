@@ -720,10 +720,8 @@ exports.getCarLoanCorpList = async (req, res, next) => {
 };  
 
 
-
-
 // 캐피탈사별 대출 한도 조회
-exports.getCarLoanCorpList = async (req, res, next) => {
+exports.getCarLoanIdOneInfo = async (req, res, next) => {
   try {
     const { loanId } = req.query;
     const carLoanIdList = await carLoanModel.getCarLoanIdOneInfo({ loanId });
