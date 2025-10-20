@@ -577,8 +577,8 @@ exports.getCompanyLoanLimit = async ({ agentId }) => {
     const request = pool.request();
     request.input("CAR_AGENT", sql.VarChar, agentId);
 
-    const query = `SELECT LOAN_CORP_CD
-                        , LOAN_CORP_NM
+    const query = `SELECT A.LOAN_CORP_CD
+                        , A.LOAN_CORP_NM
                         , A.TOT_LMT_AMT    -- 총 대출한도액
                         , A.TOT_LOAN_AMT   -- 총 대출액
                       FROM dbo.CJB_AGENT_LOAN_CORP A
@@ -586,7 +586,7 @@ exports.getCompanyLoanLimit = async ({ agentId }) => {
                     WHERE A.AGENT_ID  = @CAR_AGENT
                       AND A.LOAN_CORP_CD = B.CD
                       AND B.GRP_CD = '05'
-                    ORDER BY A.SORT_SEQ;
+                    ORDER BY B.SORT_SEQ;
                     `;
     const result = await request.query(query);
     return result.recordset;

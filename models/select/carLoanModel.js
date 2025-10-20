@@ -458,8 +458,9 @@ exports.getCarLoanList = async ({   agentId,
       
   // 재고 금융 등록
 exports.insertCarLoan = async ({
+  agentId,                // 상사 ID
   carRegId,               // 차량 등록 ID
-  loanCompCd,           // 대출회사 코드
+  loanCorpCd,           // 대출회사 코드
   loanAmt,                 // 대출금액
   loanDt,                   // 대출실행일
   loanMmCnt,             // 대출기간
@@ -478,11 +479,11 @@ try {
   const newLoanId = loanID.recordset[0].LOAN_ID;
   request.input("LOAN_ID", sql.VarChar, newLoanId);                        // 대출 ID
   request.input("CAR_REG_ID", sql.VarChar, carRegId);                      // 차량 등록 ID
-  request.input("LOAN_COMP_CD", sql.VarChar, loanCompCd);                  // 대출회사 코드
+  request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출회사 코드
   request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
   request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 일자
   request.input("LOAN_AMT", sql.Int, loanAmt);                             // 대출 금액
-  request.input("LOAN_AMT", sql.Int, loanMmCnt);                           // 대출 기간
+  request.input("LOAN_MM_CNT", sql.Int, loanMmCnt);                        // 대출 기간
   request.input("LOAN_CORP_INTR_RT", sql.Decimal, loanCorpIntrRt);         // 대출 업체 이자율
   request.input("DLR_APLY_INTR_RT", sql.Decimal, dlrAplyIntrRt);           // 딜러 적용 이자율
   request.input("LOAN_MEMO", sql.VarChar, loanMemo);                       // 대출 메모
@@ -499,7 +500,8 @@ try {
                   LOAN_CORP_INTR_RT,
                   DLR_APLY_INTR_RT,
                   LOAN_MEMO,
-                  LOAN_COMP_CD,
+                  LOAN_CORP_CD,
+                  AGENT_ID,
                   REGR_ID,
                   MODR_ID
                 ) VALUES (
@@ -511,7 +513,8 @@ try {
                   @LOAN_CORP_INTR_RT,
                   @DLR_APLY_INTR_RT,
                   @LOAN_MEMO,
-                  @LOAN_COMP_CD,
+                  @LOAN_CORP_CD,
+                  @AGENT_ID,
                   @REGR_ID,
                   @MODR_ID
                 )`;
@@ -524,7 +527,7 @@ try {
             , MOD_DTIME = GETDATE()
             , MODR_ID = @MODR_ID
           WHERE AGENT_ID = @AGENT_ID
-            AND LOAN_COMP_CD = @LOAN_COMP_CD;
+            AND LOAN_CORP_CD = @LOAN_CORP_CD;
 `;
 
   await Promise.all([request.query(query1), request.query(query2)]);
@@ -902,7 +905,8 @@ exports.getCarLoanIdOneInfo = async ({ loanId }) => {
     const request = pool.request();
     request.input("LOAN_ID", sql.VarChar, loanId);
 
-    const query = `SELECT B.CAR_REG_ID, 
+    const query = `SELECT B.LOAN_ID,
+                          B.CAR_REG_ID, 
                           B.LOAN_CORP_CD,
                           dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
                           B.LOAN_AMT,
@@ -916,9 +920,9 @@ exports.getCarLoanIdOneInfo = async ({ loanId }) => {
                           B.LOAN_SCT_CD, 
                           dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
                           B.LOAN_STAT_CD,
-                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM
+                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM,
                           B.LOAN_MEMO
-                    FROM dbo.CJB_AGENT_LOAN B
+                    FROM dbo.CJB_CAR_LOAN B
                     WHERE B.LOAN_ID = @LOAN_ID;`;
 
     const result = await request.query(query);
