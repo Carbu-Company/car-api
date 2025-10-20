@@ -917,6 +917,7 @@ exports.getCarLoanIdOneInfo = async ({ loanId }) => {
                           dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
                           B.LOAN_STAT_CD,
                           dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM
+                          B.LOAN_MEMO
                     FROM dbo.CJB_AGENT_LOAN B
                     WHERE B.LOAN_ID = @LOAN_ID;`;
 
