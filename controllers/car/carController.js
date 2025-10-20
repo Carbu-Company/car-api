@@ -719,6 +719,21 @@ exports.getCarLoanCorpList = async (req, res, next) => {
   }
 };  
 
+
+
+
+// 캐피탈사별 대출 한도 조회
+exports.getCarLoanCorpList = async (req, res, next) => {
+  try {
+    const { loanId } = req.query;
+    const carLoanIdList = await carLoanModel.getCarLoanIdOneInfo({ loanId });
+    res.status(200).json(carLoanIdList);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 계좌 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

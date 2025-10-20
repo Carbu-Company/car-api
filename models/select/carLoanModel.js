@@ -894,3 +894,37 @@ exports.getCarLoanCorpList = async ({ agentId }) => {
   }
 };
   
+
+
+// 대출 한건에 대한 정보
+exports.getCarLoanIdOneInfo = async ({ loanId }) => {
+  try {
+    const request = pool.request();
+    request.input("LOAN_ID", sql.VarChar, loanId);
+
+    const query = `SELECT B.CAR_REG_ID, 
+                          B.LOAN_CORP_CD,
+                          dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
+                          B.LOAN_AMT,
+                          B.LOAN_DT,         -- 대출 실행 일자
+                          B.LOAN_MM_CNT,
+                          B.DLR_APLY_INTR_RT,
+                          B.MM_INTR_AMT, 
+                          B.LOAN_MM_CNT * B.MM_INTR_AMT AS TOT_INTR_AMT, 
+                          B.TOT_PAY_INTR_AMT, 
+                          B.RCNT_PAY_DTIME,
+                          B.LOAN_SCT_CD, 
+                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
+                          B.LOAN_STAT_CD,
+                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM
+                    FROM dbo.CJB_AGENT_LOAN B
+                    WHERE B.LOAN_ID = @LOAN_ID;`;
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching car loan corp list:", err);
+    throw err;
+  }
+};
+  
