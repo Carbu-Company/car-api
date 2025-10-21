@@ -23,7 +23,7 @@ exports.getCarLoanList = async ({   agentId,
     ordAscDesc = 'desc' }) => {
     try {
       const request = pool.request();
-      request.input("CAR_AGENT", sql.VarChar, agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
       request.input("PAGE", sql.Int, page);
       request.input("PAGESIZE", sql.Int, pageSize);
   
@@ -31,10 +31,10 @@ exports.getCarLoanList = async ({   agentId,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, dtlNewCarNo);
-      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, `%${dtlNewCarNo}%`);
+      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, `%${dtlOldCarNo}%`);
       if (dtlCapital) request.input("LOAN_CORP_CD", sql.VarChar, dtlCapital);
-      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
+      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, `%${dtlLoanMemo}%`);
  
       // 전체 카운트 조회
       const countQuery = `SELECT COUNT(*) as totalCount
@@ -42,14 +42,14 @@ exports.getCarLoanList = async ({   agentId,
                            INNER JOIN dbo.CJB_CAR_LOAN B ON (A.CAR_REG_ID = B.CAR_REG_ID)
                             LEFT JOIN dbo.CJB_LOAN_INTR_PAY C ON (B.LOAN_ID = C.LOAN_ID)
                            WHERE 1 = 1
-                             AND A.AGENT_ID = @CAR_AGENT
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                             AND A.AGENT_ID = @AGENT_ID
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
           `;
 
@@ -64,17 +64,19 @@ exports.getCarLoanList = async ({   agentId,
                                 A.CAR_PUR_DT,     -- 차량구매일
                                 A.PUR_AMT,        -- 차량구매금액
                                 B.LOAN_CORP_CD, -- 대출 업체 코드
-                                dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
+                                dbo.CJB_FN_GET_CD_NM('05', B.LOAN_CORP_CD) LOAN_CORP_NM, 
                                 B.LOAN_AMT, -- 대출 금액
                                 B.LOAN_DT,         -- 대출 실행 일자
                                 B.LOAN_MM_CNT, -- 대출 개월 수
-                                B.DLR_APLY_INTR_RT, -- 딜러 적용 이자율
-                                B.MM_INTR_AMT, -- 월 이자액
-                                B.LOAN_MM_CNT * B.MM_INTR_AMT AS TOT_INTR_AMT, -- 총 이자액
-                                B.TOT_PAY_INTR_AMT, -- 총 납입 이자액
+                                B.CORP_INTR_RT,
+                                B.CORP_MM_INTR_AMT,
+                                B.CORP_TOT_PAY_INTR_AMT,
+                                B.DLR_INTR_RT,
+                                B.DLR_MM_INTR_AMT,
+                                B.DLR_TOT_PAY_INTR_AMT,
                                 B.RCNT_PAY_DTIME, -- 최근 납입 일자
                                 B.LOAN_SCT_CD, -- 대출 구분 코드
-                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
+                                dbo.CJB_FN_GET_CD_NM('26', B.LOAN_SCT_CD) LOAN_SCT_NM,
                                 B.LOAN_STAT_CD, -- 대출 상태 코드
                                 dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM, 
                                 ISNULL(C.INTR_PAY_AMT, 0) INTR_PAY_AMT,
@@ -84,13 +86,13 @@ exports.getCarLoanList = async ({   agentId,
                       LEFT JOIN dbo.CJB_LOAN_INTR_PAY C ON (B.LOAN_ID = C.LOAN_ID)
                     WHERE 1 = 1
                       AND A.AGENT_ID = @CAR_AGENT
-                  ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                  ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                  ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                  ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                  ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                  ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                  ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                  ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                   ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                   ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                  ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                  ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                   ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
                       ORDER BY ${orderItem === '실행일' ? 'LOAN_DT' : orderItem === '결제일' ? 'INTR_PAY_DT' : orderItem === '이자납입일' ? 'INTR_PAY_DT' : 'LOAN_DT'} ${ordAscDesc}
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
@@ -154,13 +156,13 @@ exports.getCarLoanList = async ({   agentId,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, dtlNewCarNo);
-      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, `%${dtlNewCarNo}%`);
+      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, `%${dtlOldCarNo}%`);
       if (dtlCapital) request.input("LOAN_CORP_CD", sql.VarChar, dtlCapital);
-      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
+      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, `%${dtlLoanMemo}%`);
       if (dtlLoanSctGubun) request.input("DTL_LOAN_SCT_GUBUN", sql.VarChar, dtlLoanSctGubun);
       if (dtlLoanStatGubun) request.input("DTL_LOAN_STAT_GUBUN", sql.VarChar, dtlLoanStatGubun);
-  
+
       // 전체 카운트 조회
       const countQuery = `
                         SELECT COUNT(*) as totalCount
@@ -169,16 +171,16 @@ exports.getCarLoanList = async ({   agentId,
                         WHERE A.CAR_REG_ID = B.CAR_REG_ID
                           AND A.AGENT_ID = @CAR_AGENT
                  --       AND A.CAR_DEL_YN = 'N'
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
-                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
-                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD = @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD = @DTL_LOAN_STAT_GUBUN" : ""}
       `;
 
       console.log(countQuery);
@@ -192,35 +194,40 @@ exports.getCarLoanList = async ({   agentId,
                                 A.CAR_PUR_DT,     -- 차량구매일
                                 A.PUR_AMT,        -- 차량구매금액
                                 B.LOAN_CORP_CD,
-                                dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
+                                dbo.CJB_FN_GET_CD_NM('05', B.LOAN_CORP_CD) LOAN_CORP_NM, 
                                 B.LOAN_AMT,
                                 B.LOAN_DT,         -- 대출 실행 일자
                                 B.LOAN_MM_CNT,
-                                B.DLR_APLY_INTR_RT,
-                                B.MM_INTR_AMT, 
-                                B.LOAN_MM_CNT * B.MM_INTR_AMT AS TOT_INTR_AMT, 
-                                B.TOT_PAY_INTR_AMT, 
-                                B.RCNT_PAY_DTIME,
-                                B.LOAN_SCT_CD, 
-                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
-                                B.LOAN_STAT_CD,
-                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM
+                                B.CORP_INTR_RT,
+                                B.CORP_MM_INTR_AMT,
+                                B.CORP_TOT_PAY_INTR_AMT,
+                                B.DLR_INTR_RT,
+                                B.DLR_MM_INTR_AMT,
+                                B.DLR_TOT_PAY_INTR_AMT,
+                                B.RPY_FCST_DT,
+                                B.LOAN_MEMO,
+                                B.RCNT_PAY_DTIME, 
+                                B.LOAN_SCT_CD, -- 대출 구분 코드
+                                dbo.CJB_FN_GET_CD_NM('26', B.LOAN_SCT_CD) LOAN_SCT_NM,
+                                B.LOAN_STAT_CD, -- 대출 상태 코드
+                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM, 
+                                (SELECT ISNULL(SUM(INTR_PAY_AMT), 0) FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = B.LOAN_ID) AS TOT_INTR_PAY_AMT
                       FROM dbo.CJB_CAR_PUR A
                          , dbo.CJB_CAR_LOAN B
                     WHERE 1 = 1
                       AND A.AGENT_ID = @CAR_AGENT
                       AND A.CAR_REG_ID = B.CAR_REG_ID
                       --AND A.CAR_DEL_YN = 'N'
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
-                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
-                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD = @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD = @DTL_LOAN_STAT_GUBUN" : ""}
                       ORDER BY ${orderItem === '실행일' ? 'LOAN_DT' : orderItem === '결제일' ? 'INTR_PAY_DT' : orderItem === '이자납입일' ? 'INTR_PAY_DT' : 'LOAN_DT'} ${ordAscDesc}
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
                       FETCH NEXT @PAGESIZE ROWS ONLY
@@ -284,10 +291,10 @@ exports.getCarLoanList = async ({   agentId,
       if (dealer) request.input("DEALER", sql.VarChar, dealer);
       if (startDt) request.input("START_DT", sql.VarChar, startDt);
       if (endDt) request.input("END_DT", sql.VarChar, endDt);
-      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, dtlNewCarNo);
-      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, dtlOldCarNo);
+      if (dtlNewCarNo) request.input("DTL_NEW_CAR_NO", sql.VarChar, `%${dtlNewCarNo}%`);
+      if (dtlOldCarNo) request.input("DTL_OLD_CAR_NO", sql.VarChar, `%${dtlOldCarNo}%`);
       if (dtlCapital) request.input("LOAN_CORP_CD", sql.VarChar, dtlCapital);
-      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, dtlLoanMemo);
+      if (dtlLoanMemo) request.input("LOAN_MEMO", sql.VarChar, `%${dtlLoanMemo}%`);
       if (dtlLoanSctGubun) request.input("DTL_LOAN_SCT_GUBUN", sql.VarChar, dtlLoanSctGubun);
       if (dtlLoanStatGubun) request.input("DTL_LOAN_STAT_GUBUN", sql.VarChar, dtlLoanStatGubun);
     
@@ -296,17 +303,16 @@ exports.getCarLoanList = async ({   agentId,
                         SELECT COUNT(*) as totalCount
                         FROM dbo.CJB_AGENT_LOAN_CORP B
                           WHERE B.AGENT_ID = @CAR_AGENT
-                ${carNo ? "AND CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND DLR_ID LIKE @DEALER" : ""}
-                ${startDt ? "AND CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND CAR_PUR_DT <= @END_DT" : ""}
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
-                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
-                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
-      `;
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD = @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD = @DTL_LOAN_STAT_GUBUN" : ""}      `;
 
       // 기본 목록 조회
       const query = `SELECT B.LOAN_CORP_CD, 
@@ -344,16 +350,16 @@ exports.getCarLoanList = async ({   agentId,
                                 WHERE A.AGENT_ID = @CAR_AGENT ) K
                             WHERE K.RN = 1) C
                     ON ( B.AGENT_ID = C.AGENT_ID AND B.LOAN_CORP_CD = C.LOAN_CORP_CD )
-                ${carNo ? "AND A.CAR_NO LIKE @CAR_NO" : ""}
-                ${dealer ? "AND A.DLR_ID = @DEALER" : ""}
-                ${startDt ? "AND A.CAR_PUR_DT >= @START_DT" : ""}
-                ${endDt ? "AND A.CAR_PUR_DT <= @END_DT" : ""}
+                ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+                ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
+                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlNewCarNo ? "AND A.CAR_NO LIKE @DTL_NEW_CAR_NO" : ""}
                 ${dtlOldCarNo ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_OLD_CAR_NO" : ""}
-                ${dtlCapital ? "AND B.LOAN_CORP_CD LIKE @DTL_CAPITAL" : ""}
+                ${dtlCapital ? "AND B.LOAN_CORP_CD = @LOAN_CORP_CD" : ""}
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
-                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD LIKE @DTL_LOAN_SCT_GUBUN" : ""}
-                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD LIKE @DTL_LOAN_STAT_GUBUN" : ""}
+                ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD = @DTL_LOAN_SCT_GUBUN" : ""}
+                ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD = @DTL_LOAN_STAT_GUBUN" : ""}
                     ;`; 
 
       const result = await request.query(query);
@@ -374,7 +380,7 @@ exports.getCarLoanList = async ({   agentId,
       const query = `SELECT A.LOAN_AMT
                         , A.LOAN_CORP_INTR_RT 
                         , A.LOAN_DT
-                        , A.TOT_PAY_INTR_AMT
+                        , (SELECT ISNULL(SUM(INTR_PAY_AMT), 0) FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = B.LOAN_ID) AS TOT_INTR_PAY_AMT
                     FROM dbo.CJB_CAR_LOAN A
                     WHERE  A.CAR_REG_ID = @CAR_REG_ID
                     ;`;
@@ -460,15 +466,21 @@ exports.getCarLoanList = async ({   agentId,
 exports.insertCarLoan = async ({
   agentId,                // 상사 ID
   carRegId,               // 차량 등록 ID
-  loanCorpCd,           // 대출회사 코드
-  loanAmt,                 // 대출금액
-  loanDt,                   // 대출실행일
-  loanMmCnt,             // 대출기간
-  loanCorpIntrRt,   // 캐피탈이율
-  dlrAplyIntrRt,     // 딜러이율
-  loanSctCd,             // 대출유형
-  loanMemo,               // 특이사항 
-  usrId                  // 사용자 ID
+  loanCorpCd,             // 대출 업체 코드
+  loanStatCd,             // 대출 상태 코드
+  loanAmt,                // 대출금액
+  loanDt,                 // 대출실행일
+  loanMmCnt,              // 대출기간
+  corpIntrRt,             // 캐피탈 이자율
+  corpMmIntrAmt,          // 월 이자액
+  corpTotPayIntrAmt,      // 총 납입 이자액
+  dlrIntrRt,              // 딜러 이자율
+  dlrMmIntrAmt,           // 월 이자액
+  dlrTotPayIntrAmt,       // 총 납입 이자액
+  rpyFcstDt,              // 상환 예정 일자
+  loanSctCd,              // 대출 구분 코드
+  loanMemo,               // 대출 메모
+  usrId                   // 사용자 ID
 }) => {
 try {
   const request = pool.request();
@@ -480,43 +492,63 @@ try {
   request.input("LOAN_ID", sql.VarChar, newLoanId);                        // 대출 ID
   request.input("CAR_REG_ID", sql.VarChar, carRegId);                      // 차량 등록 ID
   request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출회사 코드
-  request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
-  request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 일자
+  request.input("LOAN_STAT_CD", sql.VarChar, loanStatCd);                  // 대출 상태 코드
   request.input("LOAN_AMT", sql.Int, loanAmt);                             // 대출 금액
+  request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 실행 일자
   request.input("LOAN_MM_CNT", sql.Int, loanMmCnt);                        // 대출 기간
-  request.input("LOAN_CORP_INTR_RT", sql.Decimal, loanCorpIntrRt);         // 대출 업체 이자율
-  request.input("DLR_APLY_INTR_RT", sql.Decimal, dlrAplyIntrRt);           // 딜러 적용 이자율
+  request.input("CORP_INTR_RT", sql.Decimal, corpIntrRt);                  // 캐피탈 이자율
+  request.input("CORP_MM_INTR_AMT", sql.Decimal, corpMmIntrAmt);           // 캐피탈 월 이자액
+  request.input("CORP_TOT_PAY_INTR_AMT", sql.Decimal, corpTotPayIntrAmt);  // 캐피탈 총 납입 이자액
+  request.input("DLR_INTR_RT", sql.Decimal, dlrIntrRt);                    // 딜러 이자율
+  request.input("DLR_MM_INTR_AMT", sql.Decimal, dlrMmIntrAmt);             // 딜러 월 이자액
+  request.input("DLR_TOT_PAY_INTR_AMT", sql.Decimal, dlrTotPayIntrAmt);    // 딜러 총 납입 이자액
+  request.input("RPY_FCST_DT", sql.VarChar, rpyFcstDt);                    // 상환 예정 일자
+  request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
   request.input("LOAN_MEMO", sql.VarChar, loanMemo);                       // 대출 메모
   request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID
   request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID
 
   // 재고 금융
   const query1 = `INSERT INTO dbo.CJB_CAR_LOAN (
-                  LOAN_ID,
-                  CAR_REG_ID,
-                  LOAN_SCT_CD,
-                  LOAN_DT,
-                  LOAN_AMT,
-                  LOAN_CORP_INTR_RT,
-                  DLR_APLY_INTR_RT,
-                  LOAN_MEMO,
-                  LOAN_CORP_CD,
-                  AGENT_ID,
-                  REGR_ID,
-                  MODR_ID
+                    LOAN_ID
+                  , CAR_REG_ID
+                  , LOAN_SCT_CD
+                  , LOAN_STAT_CD
+                  , LOAN_DT
+                  , LOAN_AMT
+                  , LOAN_MM_CNT
+                  , CORP_INTR_RT
+                  , CORP_MM_INTR_AMT
+                  , CORP_TOT_PAY_INTR_AMT
+                  , DLR_INTR_RT
+                  , DLR_MM_INTR_AMT
+                  , DLR_TOT_PAY_INTR_AMT
+                  , RPY_FCST_DT
+                  , LOAN_MEMO
+                  , AGENT_ID
+                  , LOAN_CORP_CD
+                  , REGR_ID
+                  , MODR_ID
                 ) VALUES (
-                  @LOAN_ID,
-                  @CAR_REG_ID,
-                  @LOAN_SCT_CD,
-                  @LOAN_DT,
-                  @LOAN_AMT,
-                  @LOAN_CORP_INTR_RT,
-                  @DLR_APLY_INTR_RT,
-                  @LOAN_MEMO,
-                  @LOAN_CORP_CD,
-                  @AGENT_ID,
-                  @REGR_ID,
-                  @MODR_ID
+                    @LOAN_ID
+                  , @CAR_REG_ID
+                  , @LOAN_SCT_CD
+                  , @LOAN_STAT_CD
+                  , @LOAN_DT
+                  , @LOAN_AMT
+                  , @LOAN_MM_CNT
+                  , @CORP_INTR_RT
+                  , @CORP_MM_INTR_AMT
+                  , @CORP_TOT_PAY_INTR_AMT
+                  , @DLR_INTR_RT
+                  , @DLR_MM_INTR_AMT
+                  , @DLR_TOT_PAY_INTR_AMT
+                  , @RPY_FCST_DT
+                  , @LOAN_MEMO
+                  , @AGENT_ID
+                  , @LOAN_CORP_CD
+                  , @REGR_ID
+                  , @MODR_ID
                 )`;
  
   // 재고 금융 업체 
@@ -614,8 +646,11 @@ exports.updateCarLoan = async ({
     request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 일자
     request.input("LOAN_AMT", sql.Int, loanAmt);                             // 대출 금액
     request.input("LOAN_CORP_INTR_RT", sql.Decimal, loanCorpIntrRt);        // 대출 업체 이자율
-    request.input("DLR_APLY_INTR_RT", sql.Decimal, dlrAplyIntrRt);          // 딜러 적용 이자율
-    request.input("TOT_PAY_INTR_AMT", sql.Int, totPayIntrAmt);              // 총 납입 이자 금액
+    request.input("CORP_MM_INTR_AMT", sql.Decimal, corpMmIntrAmt);           // 캐피탈 월 이자액
+    request.input("CORP_TOT_PAY_INTR_AMT", sql.Decimal, corpTotPayIntrAmt);  // 캐피탈 총 납입 이자액
+    request.input("DLR_INTR_RT", sql.Decimal, dlrIntrRt);                    // 딜러 이자율
+    request.input("DLR_MM_INTR_AMT", sql.Decimal, dlrMmIntrAmt);             // 딜러 월 이자액
+    request.input("DLR_TOT_PAY_INTR_AMT", sql.Decimal, dlrTotPayIntrAmt);    // 딜러 총 납입 이자액
     request.input("RPY_FCST_DT", sql.VarChar, rpyFcstDt);                   // 상환 예정 일자
     request.input("LOAN_MEMO", sql.VarChar, loanMemo);                      // 대출 메모
     request.input("AGENT_ID", sql.VarChar, agentId);                        // 상사 ID
@@ -629,7 +664,7 @@ exports.updateCarLoan = async ({
           LOAN_DT = @LOAN_DT,
           LOAN_AMT = @LOAN_AMT,
           LOAN_CORP_INTR_RT = @LOAN_CORP_INTR_RT,
-          DLR_APLY_INTR_RT = @DLR_APLY_INTR_RT,
+          DLR_INTR_RT = @DLR_INTR_RT,
           TOT_PAY_INTR_AMT = @TOT_PAY_INTR_AMT,
           RPY_FCST_DT = @RPY_FCST_DT,
           LOAN_MEMO = @LOAN_MEMO,
@@ -905,28 +940,32 @@ exports.getCarLoanIdOneInfo = async ({ loanId }) => {
     const request = pool.request();
     request.input("LOAN_ID", sql.VarChar, loanId);
 
-    const query = `SELECT B.LOAN_ID,
-                          B.CAR_REG_ID, 
-                          B.LOAN_CORP_CD,
-                          dbo.CJB_FN_GET_CD_NM('08', B.LOAN_CORP_CD) LOAN_CORP_NM, 
-                          B.LOAN_AMT,
-                          B.LOAN_DT,         -- 대출 실행 일자
-                          B.LOAN_MM_CNT,
-                          B.DLR_APLY_INTR_RT,
-                          B.MM_INTR_AMT, 
-                          B.LOAN_MM_CNT * B.MM_INTR_AMT AS TOT_INTR_AMT, 
-                          B.TOT_PAY_INTR_AMT, 
-                          B.RCNT_PAY_DTIME,
-                          B.LOAN_SCT_CD, 
-                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_CORP_CD) LOAN_SCT_NM,
-                          B.LOAN_STAT_CD,
-                          dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM,
-                          B.LOAN_MEMO
-                    FROM dbo.CJB_CAR_LOAN B
-                    WHERE B.LOAN_ID = @LOAN_ID;`;
+    const query = `SELECT B.LOAN_ID,           
+                                B.LOAN_CORP_CD,
+                                dbo.CJB_FN_GET_CD_NM('05', B.LOAN_CORP_CD) LOAN_CORP_NM, 
+                                B.LOAN_AMT,
+                                B.LOAN_DT,         -- 대출 실행 일자
+                                B.LOAN_MM_CNT,
+                                B.CORP_INTR_RT,
+                                B.CORP_MM_INTR_AMT,
+                                B.CORP_TOT_PAY_INTR_AMT,
+                                B.DLR_INTR_RT,
+                                B.DLR_MM_INTR_AMT,
+                                B.DLR_TOT_PAY_INTR_AMT,
+                                B.RPY_FCST_DT,
+                                B.LOAN_MEMO,
+                                B.RCNT_PAY_DTIME, 
+                                B.LOAN_SCT_CD, -- 대출 구분 코드
+                                dbo.CJB_FN_GET_CD_NM('26', B.LOAN_SCT_CD) LOAN_SCT_NM,
+                                B.LOAN_STAT_CD, -- 대출 상태 코드
+                                dbo.CJB_FN_GET_CD_NM('20', B.LOAN_STAT_CD) LOAN_STAT_NM, 
+                                (SELECT ISNULL(SUM(INTR_PAY_AMT), 0) FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = B.LOAN_ID) AS TOT_INTR_PAY_AMT
+                      FROM dbo.CJB_CAR_LOAN B
+                    WHERE 1 = 1
+                      AND B.LOAN_ID = @LOAN_ID;`;
 
     const result = await request.query(query);
-    return result.recordset;
+    return result.recordset[0];
   } catch (err) {
     console.error("Error fetching car loan corp list:", err);
     throw err;
