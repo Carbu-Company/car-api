@@ -719,6 +719,18 @@ exports.getCarLoanCorpList = async (req, res, next) => {
   }
 };  
 
+// 캐피탈사별 대출 한도 조회
+exports.getCarLoanCorpLmtAmt = async (req, res, next) => {
+  try {
+    const { agentId, loanCorpCd } = req.query;
+    const carLoanCorpLmtAmt = await carLoanModel.getCarLoanCorpLmtAmt({ agentId, loanCorpCd });
+    res.status(200).json(carLoanCorpLmtAmt);
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
 
 // 캐피탈사별 대출 한도 조회
 exports.getCarLoanIdOneInfo = async (req, res, next) => {

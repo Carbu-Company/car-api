@@ -186,6 +186,9 @@ router.get("/deleteAgentLoanCorp", carController.deleteAgentLoanCorp);
 // 캐피탈사별 대출 한도 조회
 router.get("/getCarLoanCorpList", carController.getCarLoanCorpList);
 
+// 캐피탈사 대출 잔여 금액 조회
+router.get("/getCarLoanCorpLmtAmt", carController.getCarLoanCorpLmtAmt);
+
 // 대출 한건에 대한 정보
 router.get("/getCarLoanIdOneInfo", carController.getCarLoanIdOneInfo);
 
