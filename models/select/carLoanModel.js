@@ -707,6 +707,7 @@ exports.updateCarLoan = async ({
     request.input("DLR_INTR_RT", sql.Decimal, dlrIntrRt);                    // 딜러 이자율
     request.input("DLR_MM_INTR_AMT", sql.Decimal, dlrMmIntrAmt);                 // 딜러 월 이자액
     request.input("DLR_TOT_PAY_INTR_AMT", sql.Decimal, dlrTotPayIntrAmt);        // 딜러 총 납입 이자액
+    request.input("TOT_PAY_INTR_AMT", sql.Decimal, 0);                       // 총 납입한 이자액
     request.input("RPY_FCST_DT", sql.VarChar, rpyFcstDt);                    // 상환 예정 일자
     request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
     request.input("LOAN_MEMO", sql.VarChar, loanMemo);                       // 대출 메모
@@ -739,7 +740,7 @@ exports.updateCarLoan = async ({
     const carCorpLmtAmt = await getCarLoanCorpLmtAmt({ agentId, loanCorpCd });
 
     console.log(carCorpLmtAmt);
-    if ((carCorpLmtAmt.LMT_AMT - loanAmt) > 0) {
+    if ((carCorpLmtAmt.LMT_AMT - loanAmt) < 0) {
       throw new Error("Loan amount exceeds remaining limit");
     }
 
@@ -788,6 +789,7 @@ exports.updateCarLoan = async ({
                     , DLR_INTR_RT
                     , DLR_MM_INTR_AMT
                     , DLR_TOT_PAY_INTR_AMT
+                    , TOT_PAY_INTR_AMT
                     , RPY_FCST_DT
                     , LOAN_MEMO
                     , AGENT_ID
@@ -808,6 +810,7 @@ exports.updateCarLoan = async ({
                     , @DLR_INTR_RT
                     , @DLR_MM_INTR_AMT
                     , @DLR_TOT_PAY_INTR_AMT
+                    , @TOT_PAY_INTR_AMT
                     , @RPY_FCST_DT
                     , @LOAN_MEMO
                     , @AGENT_ID
@@ -933,7 +936,7 @@ exports.deleteAgentLoanCorp = async ({agentId, loan_corp_cd, flag_type}) => {
 
 
 // 대출 이자 납입 리스트 조회 
-exports.getCarIntrPayList = async ({ 
+exports.getLoanIntrPayList = async ({ 
     loanId,
     orderItem = '제시일',
     ordAscDesc = 'desc' }) => {
@@ -991,8 +994,56 @@ exports.getCarIntrPayList = async ({
     }
   }
 
+// 이자 납입 삭제
+exports.insertLoanIntrPay = async ({ 
+    loanId                      // 상사 ID  
+  , intrPayDt                   // 이자 납입 일자  
+  , intrPayAmt                  // 이자 납입 금액
+  , usrId                       // 사용자 ID
+}) => {
+  try {
+    const request = pool.request();
+
+    request.input("LOAN_ID", sql.VarChar, loanId);                          // 상사 ID 
+    request.input("INTR_PAY_DT", sql.VarChar, intrPayDt);                   // 이자 납입 일자 
+    request.input("INTR_PAY_AMT", sql.Int, intrPayAmt);                     // 이자 납입 금액
+    request.input("MODR_ID", sql.VarChar, usrId);                           // 수정자 ID
+
+    const query1 = `INSERT INTO dbo.CJB_LOAN_INTR_PAY (
+                      LOAN_ID
+                    , PAY_SEQ
+                    , INTR_PAY_DT
+                    , INTR_PAY_AMT
+                    , REGR_ID
+                    , MODR_ID
+                  ) VALUES (
+                      @LOAN_ID
+                    , (SELECT ISNULL(MAX(PAY_SEQ), 0)+1 FROM dbo.CJB_LOAN_INTR_PAY FROM LOAN_ID = @LOAN_ID)
+                    , @INTR_PAY_DT
+                    , @INTR_PAY_AMT
+                    , @REGR_ID
+                    , @MODR_ID
+                  )`;
+    
+
+    const query2 = `UPDATE dbo.CJB_LOAN
+                       SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT + @INTR_PAY_AMT
+                           MOD_DTIME = GETDATE(),
+                           MODR_ID = @MODR_ID
+                     WHERE LOAN_ID = @LOAN_ID
+                    `; 
+
+    await Promise.all([request.query(query1), request.query(query2)]);
+
+  } catch (err) {
+    console.error("Error updating car pur:", err);
+    throw err;
+  }
+};
+
+
 // 이자 납입 수정
-exports.updateCarIntrPay = async ({ 
+exports.updateLoanIntrPay = async ({ 
     loanId                      // 상사 ID        
   , paySeq                      // 납입 순번
   , intrPayDt                   // 이자 납입 일자  
@@ -1010,24 +1061,35 @@ exports.updateCarIntrPay = async ({
     request.input("MODR_ID", sql.VarChar, usrId);                           // 수정자 ID
 
     const query1 = `
-      UPDATE dbo.CJB_LOAN_INTR_PAY
-      SET INTR_PAY_DT = @INTR_PAY_DT,
-          INTR_PAY_AMT = @INTR_PAY_AMT, 
-          MOD_DTIME = GETDATE(),
-          MODR_ID = @MODR_ID
-      WHERE LOAN_ID = @LOAN_ID
-        AND PAY_SEQ = @PAY_SEQ;
-    `;  
-
-    const query2 = `
       UPDATE dbo.CJB_LOAN
-      SET LOAN_AMT = LOAN_AMT + @INTR_PAY_AMT
+      SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT - (SELECT INTR_PAY_AMT 
+                                                   FROM dbo.CJB_LOAN_INTR_PAY 
+                                                  WHERE LOAN_ID = @LOAN_ID
+                                                    AND PAY_SEQ = @PAY_SEQ)
           MOD_DTIME = GETDATE(),
           MODR_ID = @MODR_ID
       WHERE LOAN_ID = @LOAN_ID
     `; 
 
-    await Promise.all([request.query(query1), request.query(query2)]);
+    const query2 = `
+      UPDATE dbo.CJB_LOAN_INTR_PAY
+         SET INTR_PAY_DT = @INTR_PAY_DT,
+             INTR_PAY_AMT = @INTR_PAY_AMT, 
+             MOD_DTIME = GETDATE(),
+             MODR_ID = @MODR_ID
+       WHERE LOAN_ID = @LOAN_ID
+         AND PAY_SEQ = @PAY_SEQ;
+    `;  
+
+    const query3 = `
+      UPDATE dbo.CJB_LOAN
+         SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT + @INTR_PAY_AMT
+             MOD_DTIME = GETDATE(),
+             MODR_ID = @MODR_ID
+       WHERE LOAN_ID = @LOAN_ID
+    `; 
+
+    await Promise.all([request.query(query1), request.query(query2), request.query(query3)]);
 
   } catch (err) {
     console.error("Error updating agent loan corp:", err);
@@ -1037,7 +1099,7 @@ exports.updateCarIntrPay = async ({
 
 
 // 이자 납입 삭제
-exports.deleteCarIntrPay = async ({ 
+exports.deleteLoanIntrPay = async ({ 
     loanId                      // 상사 ID        
   , paySeq                      // 납입 순번
   , intrPayDt                   // 이자 납입 일자  
@@ -1061,10 +1123,10 @@ exports.deleteCarIntrPay = async ({
 
     const query2 = `
       UPDATE dbo.CJB_LOAN
-      SET LOAN_AMT = LOAN_AMT - @INTR_PAY_AMT
-          MOD_DTIME = GETDATE(),
-          MODR_ID = @MODR_ID
-      WHERE LOAN_ID = @LOAN_ID
+         SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT - @INTR_PAY_AMT
+             MOD_DTIME = GETDATE(),
+             MODR_ID = @MODR_ID
+       WHERE LOAN_ID = @LOAN_ID
     `; 
 
     await Promise.all([request.query(query1), request.query(query2)]);
