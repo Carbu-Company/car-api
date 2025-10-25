@@ -744,6 +744,39 @@ exports.getCarLoanIdOneInfo = async (req, res, next) => {
 };  
 
 
+// 이자납입 등록
+exports.insertLoanIntrPay = async (req, res, next) => {
+  try {
+    await carLoanModel.insertLoanIntrPay(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 이자납입 수정 등록
+exports.updateLoanIntrPay = async (req, res, next) => {
+  try {
+    await carLoanModel.updateLoanIntrPay(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
+// 이자납입 삭제 
+exports.deleteLoanIntrPay = async (req, res, next) => {
+  try {
+    const { loanId, paySeq, intrPayDt, intrPayAmt, usrId } = req.body;
+    await carLoanModel.deleteLoanIntrPay({ loanId, paySeq, intrPayDt, intrPayAmt, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 계좌 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

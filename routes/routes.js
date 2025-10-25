@@ -192,6 +192,17 @@ router.get("/getCarLoanCorpLmtAmt", carController.getCarLoanCorpLmtAmt);
 // 대출 한건에 대한 정보
 router.get("/getCarLoanIdOneInfo", carController.getCarLoanIdOneInfo);
 
+
+// 이자납입 등록
+router.post("/insertLoanIntrPay", carController.insertLoanIntrPay);
+
+// 이자납입 수정 등록
+router.post("/updateLoanIntrPay", carController.updateLoanIntrPay);
+
+// 이자납입 삭제 
+router.post("/deleteLoanIntrPay", carController.deleteLoanIntrPay);
+
+
 //***************************************************************************************** */
 // 알선 2.0
 //***************************************************************************************** */

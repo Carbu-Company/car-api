@@ -53,9 +53,9 @@ exports.getCarLoanList = async ({   agentId,
                 ${dtlLoanMemo ? "AND B.LOAN_MEMO LIKE @LOAN_MEMO" : ""}
           `;
 
-      console.log(countQuery);
   
       const query = `SELECT B.LOAN_ID,           
+                                C.PAY_SEQ,
                                 A.DLR_ID DLR_ID,     
                                 (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM,    -- 딜러 명
                                 A.CAR_REG_ID,
@@ -74,6 +74,7 @@ exports.getCarLoanList = async ({   agentId,
                                 B.DLR_INTR_RT,
                                 B.DLR_MM_INTR_AMT,
                                 B.DLR_TOT_PAY_INTR_AMT,
+                                B.TOT_PAY_INTR_AMT,
                                 B.RCNT_PAY_DTIME, -- 최근 납입 일자
                                 B.LOAN_SCT_CD, -- 대출 구분 코드
                                 dbo.CJB_FN_GET_CD_NM('26', B.LOAN_SCT_CD) LOAN_SCT_NM,
@@ -83,9 +84,9 @@ exports.getCarLoanList = async ({   agentId,
                                 C.INTR_PAY_DT
                       FROM dbo.CJB_CAR_PUR A
                      INNER JOIN dbo.CJB_CAR_LOAN B ON (A.CAR_REG_ID = B.CAR_REG_ID)
-                      LEFT JOIN dbo.CJB_LOAN_INTR_PAY C ON (B.LOAN_ID = C.LOAN_ID)
+                     INNER JOIN dbo.CJB_LOAN_INTR_PAY C ON (B.LOAN_ID = C.LOAN_ID)
                     WHERE 1 = 1
-                      AND A.AGENT_ID = @CAR_AGENT
+                      AND A.AGENT_ID = @AGENT_ID
                   ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                   ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
                   ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
@@ -98,8 +99,6 @@ exports.getCarLoanList = async ({   agentId,
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
                       FETCH NEXT @PAGESIZE ROWS ONLY
                       `;
-  
-      console.log(query);
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -182,9 +181,7 @@ exports.getCarLoanList = async ({   agentId,
                 ${dtlLoanSctGubun ? "AND B.LOAN_SCT_CD = @DTL_LOAN_SCT_GUBUN" : ""}
                 ${dtlLoanStatGubun ? "AND B.LOAN_STAT_CD = @DTL_LOAN_STAT_GUBUN" : ""}
       `;
-
-      console.log(countQuery);
-  
+      
       const query = `SELECT B.LOAN_ID,           
                                 A.PRSN_SCT_CD,
                                 dbo.CJB_FN_GET_CD_NM('27', A.PRSN_SCT_CD) PRSN_SCT_NM,
@@ -206,6 +203,7 @@ exports.getCarLoanList = async ({   agentId,
                                 B.DLR_INTR_RT,
                                 B.DLR_MM_INTR_AMT,
                                 B.DLR_TOT_PAY_INTR_AMT,
+                                B.TOT_PAY_INTR_AMT,
                                 B.RPY_FCST_DT,
                                 B.LOAN_MEMO,
                                 B.RCNT_PAY_DTIME, 
@@ -234,8 +232,6 @@ exports.getCarLoanList = async ({   agentId,
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
                       FETCH NEXT @PAGESIZE ROWS ONLY
                       `;
-
-      console.log(query);
 
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -428,9 +424,7 @@ exports.getCarLoanList = async ({   agentId,
   }) => {
   try {
     const request = pool.request();
-  
-    console.log("usrId:", regrId);
-  
+    
     request.input("AGENT_ID", sql.VarChar, agentId);                         // 상사 ID
     request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출 업체 코드 
     request.input("LOAN_CORP_NM", sql.VarChar, loanCorpNm);                  // 대출 업체 명
@@ -640,7 +634,7 @@ exports.updateAgentLoanCorp = async ({
     console.error("Error updating agent loan corp:", err);
     throw err;
   }
-};
+};idi
 
 
 // 재고 금융 수정
@@ -666,27 +660,6 @@ exports.updateCarLoan = async ({
 }) => {
   try {
     const request = pool.request();
-
-
-    console.log("loanId:", loanId);
-    console.log("agentId:", agentId);
-    console.log("carRegId:", carRegId);
-    console.log("loanCorpCd:", loanCorpCd);
-    console.log("loanStatCd:", loanStatCd);
-    console.log("loanAmt:", loanAmt);
-    console.log("loanDt:", loanDt);
-    console.log("loanMmCnt:", loanMmCnt);
-    console.log("corpIntrRt:", corpIntrRt);
-    console.log("corpMmIntrAmt:", corpMmIntrAmt);
-    console.log("corpTotPayIntrAmt:", corpTotPayIntrAmt);
-    console.log("dlrIntrRt:", dlrIntrRt);
-    console.log("dlrMmIntrAmt:", dlrMmIntrAmt);
-    console.log("dlrTotPayIntrAmt:", dlrTotPayIntrAmt);
-    console.log("rpyFcstDt:", rpyFcstDt);
-    console.log("loanSctCd:", loanSctCd);
-    console.log("loanMemo:", loanMemo);
-    console.log("usrId:", usrId);
-
 
     /**
      * 기존 대출을 삭제하고 신규 등록 하기
@@ -721,7 +694,6 @@ exports.updateCarLoan = async ({
                             AND A.LOAN_ID = @LOAN_ID
         `;
 
-    console.log(countQuery);
     const countResult = await request.query(countQuery);
     const totalCount = countResult.recordset[0].totalCount;
 
@@ -739,7 +711,6 @@ exports.updateCarLoan = async ({
      */
     const carCorpLmtAmt = await getCarLoanCorpLmtAmt({ agentId, loanCorpCd });
 
-    console.log(carCorpLmtAmt);
     if ((carCorpLmtAmt.LMT_AMT - loanAmt) < 0) {
       throw new Error("Loan amount exceeds remaining limit");
     }
@@ -759,8 +730,6 @@ exports.updateCarLoan = async ({
       WHERE AGENT_ID = @AGENT_ID
         AND LOAN_CORP_CD = @LOAN_CORP_CD;
     `;
-
-    console.log(delLoanAmt);
 
     /**
      * (기존)대출 정보 삭제
@@ -845,7 +814,6 @@ exports.deleteCarLoan = async ({loanId, loanAmt}) => {
     const request = pool.request();
     request.input("CAR_REGID", sql.VarChar, carRegId);
 
-
     /**
      * 기존 이자납입건이 있으면 삭제 못함.
      */
@@ -856,8 +824,6 @@ exports.deleteCarLoan = async ({loanId, loanAmt}) => {
                           WHERE 1 = 1
                             AND A.LOAN_ID = @LOAN_ID
         `;
-
-    console.log(countQuery);
     countResult = request.query(countQuery);
     const totalCount = countResult.recordset[0].totalCount;
 
@@ -924,8 +890,6 @@ exports.deleteAgentLoanCorp = async ({agentId, loan_corp_cd, flag_type}) => {
             `;  
     }
 
-    console.log("query:", query);
-
     await request.query(query);
 
   } catch (err) {
@@ -950,8 +914,6 @@ exports.getLoanIntrPayList = async ({
                              AND A.LOAN_ID = @LOAN_ID
           `;
 
-      console.log(countQuery);
-  
       const query = `SELECT A.PAY_SEQ
                           , A.INTR_PAY_DT
                           , A.INTR_PAY_AMT
@@ -966,8 +928,7 @@ exports.getLoanIntrPayList = async ({
                       OFFSET (@PAGE - 1) * @PAGESIZE ROWS
                       FETCH NEXT @PAGESIZE ROWS ONLY
                       `;
-  
-      console.log(query);
+
       // 두 쿼리를 동시에 실행
       const [countResult, dataResult] = await Promise.all([
         request.query(countQuery),
@@ -1007,6 +968,7 @@ exports.insertLoanIntrPay = async ({
     request.input("LOAN_ID", sql.VarChar, loanId);                          // 상사 ID 
     request.input("INTR_PAY_DT", sql.VarChar, intrPayDt);                   // 이자 납입 일자 
     request.input("INTR_PAY_AMT", sql.Int, intrPayAmt);                     // 이자 납입 금액
+    request.input("REGR_ID", sql.VarChar, usrId);                           // 수정자 ID
     request.input("MODR_ID", sql.VarChar, usrId);                           // 수정자 ID
 
     const query1 = `INSERT INTO dbo.CJB_LOAN_INTR_PAY (
@@ -1018,16 +980,16 @@ exports.insertLoanIntrPay = async ({
                     , MODR_ID
                   ) VALUES (
                       @LOAN_ID
-                    , (SELECT ISNULL(MAX(PAY_SEQ), 0)+1 FROM dbo.CJB_LOAN_INTR_PAY FROM LOAN_ID = @LOAN_ID)
+                    , (SELECT ISNULL(MAX(PAY_SEQ), 0)+1 FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = @LOAN_ID)
                     , @INTR_PAY_DT
                     , @INTR_PAY_AMT
                     , @REGR_ID
                     , @MODR_ID
                   )`;
     
-
-    const query2 = `UPDATE dbo.CJB_LOAN
-                       SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT + @INTR_PAY_AMT
+    const query2 = `UPDATE dbo.CJB_CAR_LOAN
+                       SET TOT_PAY_INTR_AMT = CONVERT(DECIMAL(18,2), TOT_PAY_INTR_AMT) + CONVERT(DECIMAL(18,2), @INTR_PAY_AMT),
+                           RCNT_PAY_DTIME = @INTR_PAY_DT,
                            MOD_DTIME = GETDATE(),
                            MODR_ID = @MODR_ID
                      WHERE LOAN_ID = @LOAN_ID
@@ -1116,18 +1078,19 @@ exports.deleteLoanIntrPay = async ({
     request.input("MODR_ID", sql.VarChar, usrId);                           // 수정자 ID
 
     const query1 = `
-      DELETE dbo.CJB_CAR_INTR_PAY
-       WHERE LOAN_ID = @LOAN_ID
-         AND PAY_SEQ = @PAY_SEQ;
-    `;  
-
-    const query2 = `
-      UPDATE dbo.CJB_LOAN
-         SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT - @INTR_PAY_AMT
+      UPDATE dbo.CJB_CAR_LOAN
+         SET TOT_PAY_INTR_AMT = TOT_PAY_INTR_AMT - @INTR_PAY_AMT,
+             RCNT_PAY_DTIME = (SELECT MAX(INTR_PAY_DT) FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = @LOAN_ID),
              MOD_DTIME = GETDATE(),
              MODR_ID = @MODR_ID
        WHERE LOAN_ID = @LOAN_ID
     `; 
+
+    const query2 = `
+      DELETE dbo.CJB_LOAN_INTR_PAY
+       WHERE LOAN_ID = @LOAN_ID
+         AND PAY_SEQ = @PAY_SEQ;  
+    `;  
 
     await Promise.all([request.query(query1), request.query(query2)]);
 
@@ -1167,10 +1130,6 @@ const getCarLoanCorpLmtAmt = async ({ agentId, loanCorpCd }) => {
   try {
     const request = pool.request();
 
-
-    console.log('agentId:', agentId);
-    console.log('loanCorpCd:', loanCorpCd);
-
     request.input("AGENT_ID", sql.VarChar, agentId);
     request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);
 
@@ -1179,9 +1138,7 @@ const getCarLoanCorpLmtAmt = async ({ agentId, loanCorpCd }) => {
                     WHERE AGENT_ID = @AGENT_ID
                       AND LOAN_CORP_CD = @LOAN_CORP_CD;`;
 
-    console.log(query);
     const result = await request.query(query);
-    console.log('SQl Result:', result.recordset[0]);
     return result.recordset[0];
   } catch (err) {
     console.error("Error fetching car loan corp list:", err);
@@ -1209,6 +1166,7 @@ exports.getCarLoanIdOneInfo = async ({ loanId }) => {
                                 B.DLR_INTR_RT,
                                 B.DLR_MM_INTR_AMT,
                                 B.DLR_TOT_PAY_INTR_AMT,
+                                B.TOT_PAY_INTR_AMT,
                                 B.RPY_FCST_DT,
                                 B.LOAN_MEMO,
                                 B.RCNT_PAY_DTIME, 

@@ -342,8 +342,7 @@ exports.getCarPurList = async ({
                         ${dtlCtshNo ? "AND A.CTSH_NO LIKE @DTL_CTSH_NO" : ""}
                         ${dtlCarNoBefore ? "AND A.PUR_BEF_CAR_NO LIKE @DTL_CAR_NO_BEFORE" : ""}
         `;
-      
-      //console.log('query:', query);
+
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
@@ -425,8 +424,6 @@ exports.getCarPurList = async ({
                               FROM dbo.CJB_CAR_PUR A     
                             WHERE  A.CAR_REG_ID    = @CAR_REG_ID `;
   
-      console.log('query:', query);
-  
       const result = await request.query(query);
       return result.recordset[0];
     } catch (err) {
@@ -434,7 +431,6 @@ exports.getCarPurList = async ({
       throw err;
     }
   };
-
 // 제시 직접 등록
 exports.insertCarPur = async ({
     agentId                 // 상사 ID              
@@ -475,8 +471,6 @@ exports.insertCarPur = async ({
 }) => {
   try {
     const request = pool.request();
-
-    console.log("usrId:", usrId);
 
     // car_reg_id 값도 미리 만들기
     request.input("agentId", sql.VarChar, agentId); 
