@@ -75,12 +75,13 @@ exports.getCarCashList = async ({
       // 전체 카운트 조회
       const countQuery = `
       SELECT COUNT(*) as totalCount
-                      FROM dbo.CJB_CASH_RECPT A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
-                              LEFT JOIN dbo.CJB_CAR_SEL C ON (B.CAR_REG_ID = C.CAR_REG_ID)
-                              LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
-                    WHERE A.AGENT_ID = @CAR_AGENT
+                      FROM dbo.CJB_GOODS_FEE B 
+                      LEFT JOIN dbo.CJB_CASH_RECPT A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                              LEFT JOIN dbo.CJB_CAR_PUR D ON (B.CAR_REG_ID = D.CAR_REG_ID)
+                              LEFT JOIN dbo.CJB_CAR_SEL C ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE B.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
+                      AND B.EXPD_EVDC_CD = '004'
             ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
             ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
             ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -98,7 +99,24 @@ exports.getCarCashList = async ({
       console.log('countQuery:', countQuery);
     
       const dataQuery = `
-                   SELECT A.NTS_CONF_NO     -- 국세청 승인 번호
+                   SELECT A.AGENT_ID
+                        , B.CAR_REG_ID
+                        , B.EXPD_ITEM_CD
+                        , B.EXPD_ITEM_NM
+                        , B.EXPD_SCT_CD
+                        , B.EXPD_AMT
+                        , B.EXPD_SUP_PRC
+                        , B.EXPD_VAT
+                        , B.EXPD_DT
+                        , B.EXPD_METH_CD
+                        , B.EXPD_EVDC_CD
+                        , B.TAX_SCT_CD
+                        , B.TXBL_ISSU_DT
+                        , B.RMRK
+                        , B.ADJ_INCLUS_YN
+                        , B.CASH_RECPT_RCGN_NO
+                        , B.CASH_MGMTKEY
+                        , A.NTS_CONF_NO     -- 국세청 승인 번호
                         , A.TRADE_DT
                         , A.TRADE_SCT_NM     -- 거래 구분  (승인, 취소)
                         , A.TRADE_TP_NM      -- 거래 유형  (소득공제, 지출증빙)
@@ -119,12 +137,13 @@ exports.getCarCashList = async ({
                         , D.CAR_PUR_DT         -- 차량 매입(제시)일
                         , D.DLR_ID                   -- 매입(제시) 딜러 아이디
                         , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = D.DLR_ID) AS DLR_NM  -- 매입(제시) 딜러 아이디
-                      FROM dbo.CJB_CASH_RECPT A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
-                              LEFT JOIN dbo.CJB_CAR_SEL C ON (B.CAR_REG_ID = C.CAR_REG_ID)
-                              LEFT JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
-                    WHERE A.AGENT_ID = @CAR_AGENT
+                      FROM dbo.CJB_GOODS_FEE B 
+                      LEFT JOIN dbo.CJB_CASH_RECPT A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                              LEFT JOIN dbo.CJB_CAR_PUR D ON (B.CAR_REG_ID = D.CAR_REG_ID)
+                              LEFT JOIN dbo.CJB_CAR_SEL C ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE B.AGENT_ID = @CAR_AGENT
                       AND D.CAR_DEL_YN = 'N'
+                      AND B.EXPD_EVDC_CD = '004'
             ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SEL_CAR_NO LIKE @CAR_NO)" : ""}
             ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
             ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}

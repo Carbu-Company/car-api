@@ -634,7 +634,7 @@ exports.updateAgentLoanCorp = async ({
     console.error("Error updating agent loan corp:", err);
     throw err;
   }
-};idi
+};
 
 
 // 재고 금융 수정

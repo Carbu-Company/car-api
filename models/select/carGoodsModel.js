@@ -93,9 +93,9 @@ exports.getGoodsFeeList = async ({   agentId,
                                 B.TXBL_ISSU_DT,
                                 B.CASH_RECPT_RCGN_NO,
                                 B.CASH_MGMTKEY,
-                                B.REG_DTIME,
+                                CONVERT(CHAR(10), B.REG_DTIME, 23) REG_DTIME,
                                 B.REGR_ID,
-                                B.MOD_DTIME,
+                                CONVERT(CHAR(10), B.MOD_DTIME, 23) MOD_DTIME,
                                 B.MODR_ID
                       FROM dbo.CJB_CAR_PUR A, dbo.CJB_GOODS_FEE B
                       WHERE A.CAR_REG_ID = B.CAR_REG_ID
@@ -509,7 +509,7 @@ exports.getGoodsFeeList = async ({   agentId,
 
   // 상품화비 등록 처리
 exports.insertGoodsFee = async ({ 
-    goodsFeeSeq,      // 상품화비 순번
+    agentId,          // 상사 ID
     carRegId,         // 차량 등록 ID
     expdItemCd,       // 지출 항목 코드
     expdItemNm,       // 지출 항목 명
@@ -535,7 +535,25 @@ exports.insertGoodsFee = async ({
     try {
       const request = pool.request();
 
-      request.input("GOODS_FEE_SEQ", sql.Int, goodsFeeSeq);
+      console.log("agentId:", agentId);
+      console.log("carRegId:", carRegId);
+      console.log("expdItemCd:", expdItemCd);
+      console.log("expdItemNm:", expdItemNm);
+      console.log("expdSctCd:", expdSctCd);
+      console.log("expdAmt:", expdAmt);
+      console.log("expdSupPrc:", expdSupPrc);
+      console.log("expdVat:", expdVat);
+      console.log("expdDt:", expdDt);
+      console.log("expdMethCd:", expdMethCd);
+      console.log("expdEvdcCd:", expdEvdcCd);
+      console.log("taxSctCd:", taxSctCd);
+      console.log("txblIssuDt:", txblIssuDt);
+      console.log("rmrk:", rmrk);
+      console.log("adjInclusYn:", adjInclusYn);
+      console.log("cashRecptRcgnNo:", cashRecptRcgnNo);
+      console.log("cashMgmtkey:", cashMgmtkey);
+
+      request.input("AGENT_ID", sql.VarChar, agentId);
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
       request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
@@ -561,6 +579,7 @@ exports.insertGoodsFee = async ({
       // 상품화비 등록
       const query1 = `
         INSERT INTO dbo.CJB_GOODS_FEE (
+          AGENT_ID,
           CAR_REG_ID,
           EXPD_ITEM_CD,
           EXPD_ITEM_NM, 
@@ -583,6 +602,7 @@ exports.insertGoodsFee = async ({
           MOD_DTIME,
           MODR_ID
         ) VALUES (
+          @AGENT_ID,
           @CAR_REG_ID,
           @EXPD_ITEM_CD,
           @EXPD_ITEM_NM,

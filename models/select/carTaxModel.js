@@ -70,11 +70,13 @@ exports.getCarTaxList = async ({
       // 전체 카운트 조회
       const countQuery = `
       SELECT COUNT(*) as totalCount
-                FROM dbo.CJB_TXBL A
-                LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                FROM dbo.CJB_GOODS_FEE B
+                LEFT JOIN dbo.CJB_TXBL A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
                 LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                 LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
-              WHERE A.AGENT_ID = @CAR_AGENT
+              WHERE B.AGENT_ID = @CAR_AGENT
+                AND C.CAR_DEL_YN = 'N'
+                AND B.EXPD_EVDC_CD = '001'
                 ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -90,7 +92,24 @@ exports.getCarTaxList = async ({
 
       //console.log('countQuery:', countQuery);
     
-      const dataQuery = `SELECT C.CAR_NO
+      const dataQuery = `SELECT B.AGENT_ID
+                        , B.CAR_REG_ID
+                        , B.EXPD_ITEM_CD
+                        , B.EXPD_ITEM_NM
+                        , B.EXPD_SCT_CD
+                        , B.EXPD_AMT
+                        , B.EXPD_SUP_PRC
+                        , B.EXPD_VAT
+                        , B.EXPD_DT
+                        , B.EXPD_METH_CD
+                        , B.EXPD_EVDC_CD
+                        , B.TAX_SCT_CD
+                        , B.TXBL_ISSU_DT
+                        , B.RMRK
+                        , B.ADJ_INCLUS_YN
+                        , B.CASH_RECPT_RCGN_NO
+                        , B.CASH_MGMTKEY
+                        , C.CAR_NO
                         , C.DLR_ID 
                         , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = C.DLR_ID) AS DLR_NM
                         , C.CAR_NM 
@@ -110,11 +129,13 @@ exports.getCarTaxList = async ({
                         , A.TXBL_TRNS_STAT_CD
                         , dbo.CJB_FN_GET_CD_NM('22', A.TXBL_TRNS_STAT_CD) TXBL_TRNS_STAT_NM
                         , A.TAX_MGMTKEY
-                      FROM dbo.CJB_TXBL A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      FROM dbo.CJB_GOODS_FEE B
+                      LEFT JOIN dbo.CJB_TXBL A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
-                    WHERE A.AGENT_ID = @CAR_AGENT
+                    WHERE B.AGENT_ID = @CAR_AGENT
+                      AND C.CAR_DEL_YN = 'N'
+                      AND B.EXPD_EVDC_CD = '001'
         ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SEL_CAR_NO LIKE @CAR_NO)" : ""}
         ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
         ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
