@@ -276,6 +276,24 @@ router.post("/insertCarAcctDetail", carController.insertCarAcctDetail);
 router.post("/updateCarAcctDetail", carController.updateCarAcctDetail);
 
 
+
+//***************************************************************************************** */
+// 고객 2.0
+//***************************************************************************************** */
+
+// 고객 목록 조회
+router.post("/getCarCustList", carController.getCarCustList);
+
+// 고객 상세 조회
+router.get("/getCarCustDetail", carController.getCarCustDetail);
+
+// 고객 등록
+router.post("/insertCarCust", carController.insertCarCust);
+
+// 고객 상세 조회
+router.post("/getCarCustExist", carController.getCarCustExist);
+
+
 //***************************************************************************************** */
 // 정산 2.0
 //***************************************************************************************** */

@@ -3,6 +3,7 @@ const carAdjModel = require("../../models/select/carAdjModel");
 const carAgentModel = require("../../models/select/carAgentModel");
 const carCashModel = require("../../models/select/carCashModel");
 const carConcilModel = require("../../models/select/carConcilModel");
+const carCustModel = require("../../models/select/carCustModel");
 const carDashBoardModel = require("../../models/select/carDashBoardModel");
 const carFaqBoardModel = require("../../models/select/carFaqBoardModel");
 const carGoodsModel = require("../../models/select/carGoodsModel");
@@ -837,6 +838,54 @@ exports.deleteCarAcctDetail = async (req, res, next) => {
     next(err);
   }
 };
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 고객 2.0
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 고객 목록 조회
+exports.getCarCustList = async (req, res, next) => {
+  try {
+    const carCustList = await carCustModel.getCarCustList(req.body);
+    res.status(200).json(carCustList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 계좌정보 상세 조회
+exports.getCarCustDetail = async (req, res, next) => {
+  try {
+    const { custNo } = req.query;
+    const carCustDetail = await carCustModel.getCarAcctDetail({ custNo });
+    res.status(200).json(carCustDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 고객 정보 저장
+exports.insertCarCust = async (req, res, next) => {
+  try {
+    await carCustModel.insertCarCust(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 고객 목록 조회
+exports.getCarCustExist = async (req, res, next) => {
+  try {
+    const carCustInfo = await carCustModel.getCarCustExist(req.body);
+    res.status(200).json(carCustInfo);
+  } catch (err) {
+    next(Error);
+  }
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 정산 2.0

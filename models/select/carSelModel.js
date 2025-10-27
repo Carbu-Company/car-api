@@ -1,5 +1,6 @@
 const sql = require("mssql");
 const pool = require("../../config/db");
+const carCustModel = require("../../models/select/carCustModel");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 매도 2.0
@@ -540,29 +541,81 @@ exports.updateCarSel = async ({
       });
   
       // 매입자 고객 정보
+      /**
+       * 고객정보에 먼저 등록하고 고객번호을 가지고 매입자 고객정보에 등록한다.
+       */
       buyerCustomers.forEach(async (cust) => {
 
-        console.log("cust:", cust.customerName);
-        console.log("cust:", cust.residentNumber);
-        console.log("cust:", cust.businessNumber);
-        console.log("cust:", cust.phone);
-        console.log("cust:", cust.zip);
-        console.log("cust:", cust.address);
-        console.log("cust:", cust.memo);
-        console.log("cust:", cust.shareRate);
+        /**
+         * 총 4개의 항목으로 검색해서 존재하지 않으면 신규 등록 하고, 존재하면 고객번호를 가지고 등록
+         */
 
+
+          console.log("customerName:", cust.customerName);
+          console.log("residentNumber:", cust.residentNumber);
+          console.log("businessNumber:", cust.businessNumber);
+          console.log("phone:", cust.phone);
+          console.log("zip:", cust.zip);
+          console.log("address:", cust.address);
+          console.log("memo:", cust.memo);
+          console.log("shareRate:", cust.shareRate);
+
+
+          const custInfo = carCustModel.getCarCustExist(
+            cust.customerName,
+            cust.residentNumber,
+            cust.businessNumber,
+            cust.phone
+          );
+
+          console.log('custInfo:********' + custInfo);
+
+          /**
+           * 미 등록 고객이면
+           */
+          if(!custInfo.CUST_NO)
+          {
+            const insCust = carCustModel.insertCarCust
+                              ( agentId, 
+                                buyerNm,
+                                custTpCd,    // 사업자 번호 있으면 ... 사업자 ?!
+                                buyerPhon,
+                                '',
+                                buyerSsn,
+                                buyerBrno,
+                                buyerZip,
+                                buyerAddr1,
+                                buyerAddr2,
+                                usrId )
+
+            newCustNo = insCust.custNo;
+
+
+          }
         const custRequest = pool.request();
 
+
+        /* 테이블 변경 *
+        /* 내용 */
+        /*'차량인수고객테이블
+
+           차량등록ID
+           차량 비용 항목 코드 (차량매도, 상사매도비, 성능보험료)
+           총금액
+
+
+         차량 인수 고객 비율
+           차량등록ID
+           차량 비용 항목 코드 (차량매도, 상사매도비, 성능보험료)
+           고객번호
+           인수지분율
+           인수지분금액
+           증빙구분코드
+           증빙발행일자
+           증빙발행여부
+          */
+
         custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
-        custRequest.input("BUY_SEQ", sql.Int, cust.index + 1);
-        custRequest.input("CUST_NM", sql.VarChar, cust.customerName);
-        custRequest.input("CUST_SSN", sql.VarChar, cust.residentNumber);
-        custRequest.input("CUST_BRNO", sql.VarChar, cust.businessNumber);
-        custRequest.input("CUST_PHON", sql.VarChar, cust.phone);
-        custRequest.input("CUST_ZIP", sql.VarChar, cust.zip);
-        custRequest.input("CUST_ADDR", sql.VarChar, cust.address);
-        custRequest.input("CUST_MEMO", sql.VarChar, cust.memo);
-        custRequest.input("BUY_SHR_RT", sql.VarChar, cust.shareRate);
         custRequest.input("REGR_ID", sql.VarChar, usrId);
         custRequest.input("MODR_ID", sql.VarChar, usrId);
 
