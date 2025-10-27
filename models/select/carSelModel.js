@@ -389,7 +389,14 @@ exports.getCarSelInfo = async ({ carRegId }) => {
 };
 
 
-// 차량 판매 정보 수정
+// 차량 판매 정보 수정 (판매처리)
+/**
+ * 제시 등록시 차량 판매테이블에 저장처리 됨. (기본 정보만 입력됨)
+ * 판매 처리시에는 차량 판매 테이블 update 처리
+ * 1. 차량매도 금액, 상사매도비, 성능보험료에 대한 세금계산서, 현금영수증 중에 처리 테이블에 필요한 데이터 저장 
+ * 2. 차량매도 금액, 상사매도비, 성능보험료는 여러 매수인 정보로 분해되어 등록 될 수 있음.
+ *     차량매도금액- 여러사람 각 지분별, 상사매도비 - 여러사람 각 지분별, 성능보험료 - 여러사람 각 지분별
+ */
 exports.updateCarSel = async ({ 
   carRegId, 
   carSaleDt, 
@@ -559,16 +566,17 @@ exports.updateCarSel = async ({
         custRequest.input("REGR_ID", sql.VarChar, usrId);
         custRequest.input("MODR_ID", sql.VarChar, usrId);
 
-        await custRequest.query(`INSERT INTO dbo.CJB_CAR_BUY_CUST (
+        await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST (
                                             CAR_REG_ID,
-                                            BUY_SEQ,
+                                            RCV_SEQ,
                                             CUST_SSN,
                                             CUST_BRNO,
                                             CUST_PHON,
                                             CUST_ZIP,
                                             CUST_ADDR,
                                             CUST_MEMO,
-                                            BUY_SHR_RT,
+                                            RCV_SHR_RT,
+                                            RCV_AMT
                                             REGR_ID,
                                             MODR_ID) VALUES (
                                             @CAR_REG_ID, 
@@ -579,18 +587,20 @@ exports.updateCarSel = async ({
                                             @CUST_ZIP, 
                                             @CUST_ADDR, 
                                             @CUST_MEMO, 
-                                            @BUY_SHR_RT, 
+                                            @RCV_SHR_RT, 
+                                            0, 
                                             @REGR_ID, 
                                             @MODR_ID)`);
 
       });
   
-          // 차량판매
+    // 차량상태코드 (매입 -> 일반판매)
     const query2 = `UPDATE dbo.CJB_CAR_PUR
-                    SET 
-                    REGR_ID = @REGR_ID
-                    MODR_ID = @MODR_ID
-                    WHERE CAR_REG_ID = @CAR_REG_ID;`;
+                       SET CAR_STAT_CD = '002' -- 일반판매
+                         , MODR_ID = @MODR_ID
+                     WHERE CAR_REG_ID = @CAR_REG_ID
+                       AND PRSN_SCT_CD = '0'   -- 상사
+                       `;
 
     await Promise.all([request.query(query1), request.query(query2)]);
 
