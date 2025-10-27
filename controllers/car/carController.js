@@ -129,6 +129,29 @@ exports.getCarSelInfo = async (req, res, next) => {
   }
 };
 
+// 차량 판매 첨부파일 목록 조회
+exports.getCarSelFilesList = async (req, res, next) => {
+  try {
+    const { carRegId } = req.query;
+    const carSelFilesList = await carSelModel.getCarSelFilesList({ carRegId });
+    res.status(200).json(carSelFilesList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 차량 판매 고객 목록 조회
+exports.getCarSelCustList = async (req, res, next) => {
+  try {
+    const { carRegId } = req.query;
+    const carSelCustList = await carSelModel.getCarSelCustList({ carRegId });
+    res.status(200).json(carSelCustList);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // 차량 판매 정보 수정
 exports.updateCarSel = async (req, res, next) => {  
   try {

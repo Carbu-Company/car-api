@@ -108,6 +108,12 @@ router.post("/getCarSelSummary", carController.getCarSelSummary);
 // 차량 판매 정보 조회
 router.get("/getCarSelInfo", carController.getCarSelInfo);
 
+// 차량 판매 첨부파일 목록 조회
+router.get("/getCarSelFilesList", carController.getCarSelFilesList);
+
+// 차량 판매 첨부파일 상세 조회
+router.get("/getCarSelCustList", carController.getCarSelCustList);
+
 // 판매매도 수정 등록
 router.post("/updateCarSel", carController.updateCarSel);
 

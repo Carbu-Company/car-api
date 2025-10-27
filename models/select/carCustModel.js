@@ -142,7 +142,7 @@ exports.getCarCustList = async ({
        */
       // car_reg_id 값도 미리 만들기
       request.input("agentId", sql.VarChar, agentId); 
-      const custId = await request.query(`SELECT dbo.CJB_FN_MK_CUST_REG_ID(@agentId) as CUST_NO`);
+      const custId = await request.query(`SELECT dbo.CJB_FN_MK_CUST_NO(@agentId) as CUST_NO`);
       const newCustId = custId.recordset[0].CUST_NO;
 
       request.input("CUST_NO", sql.VarChar, newCustId);

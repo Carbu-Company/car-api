@@ -359,6 +359,8 @@ exports.getCarSelInfo = async ({ carRegId }) => {
                   , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = B.DLR_ID) AS SEL_DLR_NM
                   , B.BUYER_NM        -- 매입자명 
                   , B.SALE_AMT        -- 매도 금액
+                  , B.SALE_SUP_PRC    -- 매도 공급가액
+                  , B.SALE_VAT        -- 매도 부가세
                   , B.AGENT_SEL_COST  -- 상사 매도 비용
                   , B.PERF_INFE_AMT   -- 성능 보험료 금액
                   , B.CAR_SALE_DT     -- 차량 판매 일자 
@@ -370,6 +372,8 @@ exports.getCarSelInfo = async ({ carRegId }) => {
                   , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
                   , A.PUR_AMT         -- 차량구매금액
                   , B.ADJ_FIN_DT      -- 정산일
+                  , B.SALE_CAR_NO     -- 판매 차량 번호
+                  , B.SALE_DESC       -- 매도 설명
               FROM dbo.CJB_CAR_PUR A
                  , dbo.CJB_CAR_SEL B
               WHERE A.CAR_REG_ID = B.CAR_REG_ID
@@ -388,6 +392,66 @@ exports.getCarSelInfo = async ({ carRegId }) => {
     throw err;
   }
 };
+
+
+exports.getCarSelFilesList = async ({ carRegId }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+
+    const dataQuery = `SELECT A.FILE_SEQ
+                        , A.FILE_NM
+                        , A.FILE_PATH
+                        , A.FILE_SCT_CD
+                        , dbo.CJB_FN_GET_CD_NM('01', A.FILE_SCT_CD) AS FILE_SCT_NM
+                        , A.FILE_KND_NM
+                        , A.AGENT_ID
+                        , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.REGR_ID) AS REGR_NM
+                        , A.MODR_ID
+                        , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.MODR_ID) AS MODR_NM
+                        FROM dbo.CJB_FILE_INFO A 
+                        WHERE A.CAR_REG_ID = @CAR_REG_ID
+                        ORDER BY A.FILE_SEQ ASC`;
+    const result = await request.query(dataQuery);
+    return result.recordset;
+
+  } catch (err) {
+    console.error("Error fetching car sel file info:", err);
+    throw err;
+  }
+};
+
+
+exports.getCarSelCustList = async ({ carRegId }) => {
+  try {
+    const request = pool.request();
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    const dataQuery = `SELECT A.BUY_SEQ
+                        , A.CUST_NO
+                        , A.CUST_NM
+                        , A.CUST_TP_CD
+                        , A.CUST_PHON
+                        , A.CUST_EMAIL
+                        , A.CUST_SSN
+                        , A.CUST_BRNO
+                        , A.CUST_ZIP
+                        , A.CUST_ADDR1
+                        , A.CUST_ADDR2
+                        , A.MODR_ID
+                        , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.MODR_ID) AS MODR_NM
+                        , A.SHARE_RATE
+                        FROM dbo.CJB_CAR_BUY_CUST A 
+                        WHERE A.CAR_REG_ID = @CAR_REG_ID`;
+    const result = await request.query(dataQuery);
+    return result.recordset;
+  } catch (err) {
+    console.error("Error fetching car sel cust list:", err);
+    throw err;
+  }
+};
+
+
+
 
 
 // 차량 판매 정보 수정 (판매처리)
@@ -549,8 +613,6 @@ exports.updateCarSel = async ({
         /**
          * 총 4개의 항목으로 검색해서 존재하지 않으면 신규 등록 하고, 존재하면 고객번호를 가지고 등록
          */
-
-
           console.log("customerName:", cust.customerName);
           console.log("residentNumber:", cust.residentNumber);
           console.log("businessNumber:", cust.businessNumber);
@@ -559,7 +621,6 @@ exports.updateCarSel = async ({
           console.log("address:", cust.address);
           console.log("memo:", cust.memo);
           console.log("shareRate:", cust.shareRate);
-
 
           const custInfo = carCustModel.getCarCustExist(
             cust.customerName,
@@ -589,10 +650,13 @@ exports.updateCarSel = async ({
                                 usrId )
 
             newCustNo = insCust.custNo;
-
-
           }
-        const custRequest = pool.request();
+          else
+          {
+            newCustNo = custInfo.CUST_NO;
+          }
+
+          const custRequest = pool.request();
 
 
         /* 테이블 변경 *
@@ -615,38 +679,39 @@ exports.updateCarSel = async ({
            증빙발행여부
           */
 
-        custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
-        custRequest.input("REGR_ID", sql.VarChar, usrId);
-        custRequest.input("MODR_ID", sql.VarChar, usrId);
+          custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
+          custRequest.input("REGR_ID", sql.VarChar, usrId);
+          custRequest.input("MODR_ID", sql.VarChar, usrId);
 
-        await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST (
-                                            CAR_REG_ID,
-                                            RCV_SEQ,
-                                            CUST_SSN,
-                                            CUST_BRNO,
-                                            CUST_PHON,
-                                            CUST_ZIP,
-                                            CUST_ADDR,
-                                            CUST_MEMO,
-                                            RCV_SHR_RT,
-                                            RCV_AMT
-                                            REGR_ID,
-                                            MODR_ID) VALUES (
-                                            @CAR_REG_ID, 
-                                            @BUY_SEQ, 
-                                            @CUST_SSN, 
-                                            @CUST_BRNO, 
-                                            @CUST_PHON, 
-                                            @CUST_ZIP, 
-                                            @CUST_ADDR, 
-                                            @CUST_MEMO, 
-                                            @RCV_SHR_RT, 
-                                            0, 
-                                            @REGR_ID, 
-                                            @MODR_ID)`);
+          await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST (
+                                              CAR_REG_ID,
+                                              RCV_SEQ,
+                                              CUST_SSN,
+                                              CUST_BRNO,
+                                              CUST_PHON,
+                                              CUST_ZIP,
+                                              CUST_ADDR,
+                                              CUST_MEMO,
+                                              RCV_SHR_RT,
+                                              RCV_AMT
+                                              REGR_ID,
+                                              MODR_ID) VALUES (
+                                              @CAR_REG_ID, 
+                                              @BUY_SEQ, 
+                                              @CUST_SSN, 
+                                              @CUST_BRNO, 
+                                              @CUST_PHON, 
+                                              @CUST_ZIP, 
+                                              @CUST_ADDR, 
+                                              @CUST_MEMO, 
+                                              @RCV_SHR_RT, 
+                                              0, 
+                                              @REGR_ID, 
+                                              @MODR_ID)`);
 
       });
   
+
     // 차량상태코드 (매입 -> 일반판매)
     const query2 = `UPDATE dbo.CJB_CAR_PUR
                        SET CAR_STAT_CD = '002' -- 일반판매
