@@ -352,40 +352,71 @@ exports.getCarSelInfo = async ({ carRegId }) => {
     request.input("CAR_REG_ID", sql.VarChar, carRegId);
 
     const dataQuery = `SELECT A.CAR_REG_ID
-                  , A.CAR_STAT_CD     -- 차량 상태 코드
-                  , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
-                  , B.SALE_TP_CD      -- 판매유형코드 
-                  , dbo.CJB_FN_GET_CD_NM('03', B.SALE_TP_CD) SALE_TP_NM
-                  , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = B.DLR_ID) AS SEL_DLR_NM
-                  , B.BUYER_NM        -- 매입자명 
-                  , B.SALE_AMT        -- 매도 금액
-                  , B.SALE_SUP_PRC    -- 매도 공급가액
-                  , B.SALE_VAT        -- 매도 부가세
-                  , B.AGENT_SEL_COST  -- 상사 매도 비용
-                  , B.PERF_INFE_AMT   -- 성능 보험료 금액
-                  , B.CAR_SALE_DT     -- 차량 판매 일자 
-                  , B.SALE_REG_DT     -- 매출 등록 일자
-                  , A.CAR_NO          -- 차량번호
-                  , A.CAR_NM          -- 차량명
-                  , A.CAR_PUR_DT      -- 차량구매일
-                  , A.DLR_ID
-                  , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
-                  , A.PUR_AMT         -- 차량구매금액
-                  , B.ADJ_FIN_DT      -- 정산일
-                  , B.SALE_CAR_NO     -- 판매 차량 번호
-                  , B.SALE_DESC       -- 매도 설명
-              FROM dbo.CJB_CAR_PUR A
-                 , dbo.CJB_CAR_SEL B
-              WHERE A.CAR_REG_ID = B.CAR_REG_ID
-                AND A.CAR_DEL_YN = 'N'
-                AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
-                AND A.CAR_REG_ID = @CAR_REG_ID
-                ;`;
+                            , A.CAR_STAT_CD     -- 차량 상태 코드
+                            , dbo.CJB_FN_GET_CD_NM('01', A.CAR_STAT_CD) CAR_STAT_NM
+                            , B.SALE_TP_CD      -- 판매유형코드 
+                            , dbo.CJB_FN_GET_CD_NM('03', B.SALE_TP_CD) SALE_TP_NM
+                            , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = B.DLR_ID) AS SEL_DLR_NM
+                            , B.BUYER_NM        -- 매입자명 
+                            , B.SALE_AMT        -- 매도 금액
+                            , B.SALE_SUP_PRC    -- 매도 공급가액
+                            , B.SALE_VAT        -- 매도 부가세
+                            , B.AGENT_SEL_COST  -- 상사 매도 비용
+                            , B.PERF_INFE_AMT   -- 성능 보험료 금액
+                            , B.CAR_SALE_DT     -- 차량 판매 일자 
+                            , B.SALE_REG_DT     -- 매출 등록 일자
+                            , A.CAR_NO          -- 차량번호
+                            , A.CAR_NM          -- 차량명
+                            , A.CAR_PUR_DT      -- 차량구매일
+                            , A.DLR_ID
+                            , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.DLR_ID) AS DLR_NM
+                            , A.PUR_AMT         -- 차량구매금액
+                            , B.ADJ_FIN_DT      -- 정산일
+                            , B.SALE_CAR_NO     -- 판매 차량 번호
+                            , B.SALE_DESC       -- 매도 설명
+                        FROM dbo.CJB_CAR_PUR A
+                          , dbo.CJB_CAR_SEL B
+                        WHERE A.CAR_REG_ID = B.CAR_REG_ID
+                          AND A.CAR_DEL_YN = 'N'
+                          AND A.CAR_STAT_CD IN ('002', '003')     --- 일반판매, 알선판매매
+                          AND A.CAR_REG_ID = @CAR_REG_ID
+                        ;`;
 
-      console.log('dataQuery:', dataQuery);
+    console.log('dataQuery:', dataQuery);
 
-      const result = await request.query(dataQuery);
-      return result.recordset[0];
+
+    const fileQuery = `SELECT A.FILE_SCT_CD
+                            , A.FILE_KND_NM
+                            , A.FILE_NM
+                            , A.FILE_PATH
+                            , A.FILE_DESC
+                         FROM dbo.CJB_FILE_INFO A
+                        WHERE A.CAR_REG_ID = @CAR_REG_ID
+                    ;`;
+
+    const custQuery = `SELECT A.RCV_ITEM_CD,
+                              A.CUST_NO,
+                              A.RCV_SHR_RT,
+                              A.RCV_SHR_AMT,
+                              A.EVDC_SCT_CD,
+                              A.EVDC_ISSUE_DT,
+                              A.CUST_MEMO
+                         FROM dbo.CJB_CAR_RCV_CUST_RT A
+                        WHERE A.CAR_REG_ID = @CAR_REG_ID
+                    ;`;
+
+      // 두 쿼리를 동시에 실행
+      const [dataResult, fileResult, custResult] = await Promise.all([
+        request.query(dataQuery),
+        request.query(fileQuery),
+        request.query(custQuery),
+      ]);
+      
+      return {
+        carlist: dataResult.recordset[0],
+        filelist: fileResult.recordset,
+        custlist: custResult.recordset
+      };
 
   } catch (err) {
     console.error("Error fetching car sel info:", err);
@@ -638,15 +669,15 @@ exports.updateCarSel = async ({
           {
             const insCust = carCustModel.insertCarCust
                               ( agentId, 
-                                buyerNm,
+                                cust.customerName,
                                 custTpCd,    // 사업자 번호 있으면 ... 사업자 ?!
-                                buyerPhon,
+                                cust.phone,
                                 '',
-                                buyerSsn,
-                                buyerBrno,
-                                buyerZip,
-                                buyerAddr1,
-                                buyerAddr2,
+                                cust.residentNumber,
+                                cust.businessNumber,
+                                cust.zip,
+                                cust.address1,
+                                cust.address2,
                                 usrId )
 
             newCustNo = insCust.custNo;
@@ -659,53 +690,56 @@ exports.updateCarSel = async ({
           const custRequest = pool.request();
 
 
-        /* 테이블 변경 *
-        /* 내용 */
-        /*'차량인수고객테이블
+          /* 테이블 변경 *
+          /* 내용 */
+          /*'차량인수고객테이블
 
            차량등록ID
            차량 비용 항목 코드 (차량매도, 상사매도비, 성능보험료)
            총금액
 
 
-         차량 인수 고객 비율
-           차량등록ID
-           차량 비용 항목 코드 (차량매도, 상사매도비, 성능보험료)
-           고객번호
-           인수지분율
-           인수지분금액
-           증빙구분코드
-           증빙발행일자
-           증빙발행여부
-          */
+          차량 인수 고객 비율
+            차량등록ID
+            차량 비용 항목 코드 (차량매도, 상사매도비, 성능보험료)
+            고객번호
+            인수지분율
+            인수지분금액
+            증빙구분코드
+            증빙발행일자
+            증빙발행여부
+            */
 
           custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
+          custRequest.input("RCV_ITEM_CD", sql.VarChar, cust.rcvItemCd);
+          custRequest.input("CUST_NO", sql.VarChar, newCustNo);
+          custRequest.input("RCV_SHR_RT", sql.VarChar, cust.shareRate);
+          custRequest.input("RCV_SHR_AMT", sql.VarChar, cust.shareAmt);
+          custRequest.input("EVDC_SCT_CD", sql.VarChar, cust.evdcSctCd);
+          custRequest.input("EVDC_ISSUE_DT", sql.VarChar, null);
+          custRequest.input("CUST_MEMO", sql.VarChar, cust.memo);
           custRequest.input("REGR_ID", sql.VarChar, usrId);
           custRequest.input("MODR_ID", sql.VarChar, usrId);
 
           await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST (
                                               CAR_REG_ID,
-                                              RCV_SEQ,
-                                              CUST_SSN,
-                                              CUST_BRNO,
-                                              CUST_PHON,
-                                              CUST_ZIP,
-                                              CUST_ADDR,
-                                              CUST_MEMO,
+                                              RCV_ITEM_CD,
+                                              CUST_NO,
                                               RCV_SHR_RT,
-                                              RCV_AMT
+                                              RCV_SHR_AMT,
+                                              EVDC_SCT_CD,
+                                              EVDC_ISSUE_DT,
+                                              CUST_MEMO,
                                               REGR_ID,
                                               MODR_ID) VALUES (
-                                              @CAR_REG_ID, 
-                                              @BUY_SEQ, 
-                                              @CUST_SSN, 
-                                              @CUST_BRNO, 
-                                              @CUST_PHON, 
-                                              @CUST_ZIP, 
-                                              @CUST_ADDR, 
-                                              @CUST_MEMO, 
-                                              @RCV_SHR_RT, 
-                                              0, 
+                                              @CAR_REG_ID,
+                                              @RCV_ITEM_CD,
+                                              @UST_NO,
+                                              @RCV_SHR_RT,
+                                              @RCV_SHR_AMT,
+                                              @EVDC_SCT_CD,
+                                              @EVDC_ISSUE_DT,
+                                              @CUST_MEMO,
                                               @REGR_ID, 
                                               @MODR_ID)`);
 

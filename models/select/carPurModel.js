@@ -422,7 +422,7 @@ exports.getCarPurList = async ({
                             , MOD_DTIME             
                             , MODR_ID               
                               FROM dbo.CJB_CAR_PUR A     
-                            WHERE  A.CAR_REG_ID    = @CAR_REG_ID `;
+                            WHERE  A.CAR_REG_ID = @CAR_REG_ID `;
   
       const result = await request.query(query);
       return result.recordset[0];
