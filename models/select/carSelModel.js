@@ -415,9 +415,9 @@ exports.getCarSelInfo = async ({ carRegId }) => {
       ]);
       
       return {
-        carlist: dataResult.recordset[0],
-        filelist: fileResult.recordset,
-        custlist: custResult.recordset
+        selInfo: dataResult.recordset[0],
+        fileList: fileResult.recordset,
+        custList: custResult.recordset
       };
 
   } catch (err) {
