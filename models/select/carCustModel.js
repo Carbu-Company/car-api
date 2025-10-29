@@ -204,7 +204,6 @@ exports.getCarCustList = async ({
   exports.getCarCustExist = async ({ custNm, ssn, brno, custPhon }) => {
     try {
       const request = pool.request();
-      request.input("CUST_NO", sql.VarChar, custNo);  
       
       if (custNm) request.input("SSN", sql.VarChar, `%${custNm}%`);
       if (ssn) request.input("SSN", sql.VarChar, `%${ssn}%`);
