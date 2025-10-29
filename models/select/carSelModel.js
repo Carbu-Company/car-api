@@ -399,8 +399,10 @@ exports.getCarSelInfo = async ({ carRegId }) => {
                               A.RCV_SHR_RT,
                               A.RCV_SHR_AMT,
                               A.EVDC_SCT_CD,
-                              A.EVDC_ISSUE_DT,
-                              A.CUST_MEMO
+                              A.EVDC_ISSU_DT,
+                              A.CUST_MEMO,
+                              A.MODR_ID,
+                              (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.MODR_ID) AS MODR_NM
                          FROM dbo.CJB_CAR_RCV_CUST_RT A
                         WHERE A.CAR_REG_ID = @CAR_REG_ID
                     ;`;
@@ -716,19 +718,19 @@ exports.updateCarSel = async ({
           custRequest.input("RCV_SHR_RT", sql.VarChar, cust.shareRate);
           custRequest.input("RCV_SHR_AMT", sql.VarChar, cust.shareAmt);
           custRequest.input("EVDC_SCT_CD", sql.VarChar, cust.evdcSctCd);
-          custRequest.input("EVDC_ISSUE_DT", sql.VarChar, null);
+          custRequest.input("EVDC_ISSU_DT", sql.VarChar, null);
           custRequest.input("CUST_MEMO", sql.VarChar, cust.memo);
           custRequest.input("REGR_ID", sql.VarChar, usrId);
           custRequest.input("MODR_ID", sql.VarChar, usrId);
 
-          await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST (
+          await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST_RT (
                                               CAR_REG_ID,
                                               RCV_ITEM_CD,
                                               CUST_NO,
                                               RCV_SHR_RT,
                                               RCV_SHR_AMT,
                                               EVDC_SCT_CD,
-                                              EVDC_ISSUE_DT,
+                                              EVDC_ISSU_DT,
                                               CUST_MEMO,
                                               REGR_ID,
                                               MODR_ID) VALUES (
@@ -738,7 +740,7 @@ exports.updateCarSel = async ({
                                               @RCV_SHR_RT,
                                               @RCV_SHR_AMT,
                                               @EVDC_SCT_CD,
-                                              @EVDC_ISSUE_DT,
+                                              @EVDC_ISSU_DT,
                                               @CUST_MEMO,
                                               @REGR_ID, 
                                               @MODR_ID)`);
