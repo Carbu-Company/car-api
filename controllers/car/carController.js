@@ -2201,8 +2201,11 @@ exports.getCarSearchList = async (req, res, next) => {
     const { agentId } = req.query;
     const carSearchList = await carSystemModel.getCarSearchList({ agentId, carNo });
     res.status(200).json(carSearchList);
-  } catch (err) {
+  } catch (err) { 
     next(err);
+  }
+};
+
 // 사용 요청 등록
 exports.insertUserRequest = async (req, res, next) => {
   try {
