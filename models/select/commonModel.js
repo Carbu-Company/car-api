@@ -411,7 +411,7 @@ exports.getCustomerList = async ({ agentId, custNm }) => {
     console.log('agentId:', agentId);
     console.log('custNm:', custNm);
 
-    request.input("CAR_AGENT", sql.VarChar, agentId);
+    request.input("AGENT_ID", sql.VarChar, agentId);
     request.input("CUST_NM", sql.VarChar, custNm);
 
     const query = `SELECT CUST_NO
@@ -426,7 +426,7 @@ exports.getCustomerList = async ({ agentId, custNm }) => {
                         , ADDR2
                         , MOD_DTIME
                         FROM  dbo.CJB_CUST A
-                        WHERE AGENT_ID = @CAR_AGENT
+                        WHERE AGENT_ID = @AGENT_ID
                           AND CUST_NM LIKE '%' + @CUST_NM + '%'
                         ORDER BY CUST_NM;
     `;
