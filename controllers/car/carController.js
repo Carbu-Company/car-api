@@ -2195,6 +2195,14 @@ exports.getAgentInfo = async (req, res, next) => {
   }
 };
 
+// 차량 검색 설정 조회
+exports.getCarSearchList = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const carSearchList = await carSystemModel.getCarSearchList({ agentId, carNo });
+    res.status(200).json(carSearchList);
+  } catch (err) {
+    next(err);
 // 사용 요청 등록
 exports.insertUserRequest = async (req, res, next) => {
   try {
