@@ -2195,10 +2195,10 @@ exports.getAgentInfo = async (req, res, next) => {
   }
 };
 
-// 차량 검색 설정 조회
+// 차량 검색 설정 조회x
 exports.getCarSearchList = async (req, res, next) => {
   try {
-    const { agentId } = req.query;
+    const { agentId, carNo } = req.query;
     const carSearchList = await carSystemModel.getCarSearchList({ agentId, carNo });
     res.status(200).json(carSearchList);
   } catch (err) { 
