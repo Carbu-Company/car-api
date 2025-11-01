@@ -61,7 +61,7 @@ exports.getCarSearchList = async ({
             WHERE A.AGENT_ID = @AGENT_ID
               AND A.CAR_REG_ID = B.CAR_REG_ID
               AND A.CAR_DEL_YN = 'N'
-              ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SEL_CAR_NO LIKE @CAR_NO)" : ""}
+              ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
               ORDER BY ${orderItem === '1' ? 'A.CAR_PUR_DT' : orderItem === '2' ? 'A.DLR_ID' : orderItem === '3' ? 'A.PRSN_SCT_CD' : orderItem === '4' ? 'A.OWNR_TP_CD' : 'A.OWNR_TP_CD'} ${ordAscDesc}
               OFFSET (@PAGE - 1) * @PAGE_SIZE ROWS
               FETCH NEXT @PAGE_SIZE ROWS ONLY;`;  
