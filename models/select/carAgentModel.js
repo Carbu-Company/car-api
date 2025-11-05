@@ -158,6 +158,25 @@ exports.getCarAgentList = async ({
     }
   };
 
+  // 상사 매입비 기본값 조회
+  exports.getAgentPurCst = async ({ agentId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+
+      const query = `SELECT TRADE_ITEM_AMT
+                       FROM dbo.CJB_CAR_TRADE_ITEM A
+                      WHERE A.AGENT_ID = @AGENT_ID
+                        AND A.TRADE_SCT_CD = '0' --매입
+                        AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
+                        ; `;
+      const result = await request.query(query);
+      return result.recordset[0];
+    } catch (err) {
+      console.error("Error fetching agent pur cst:", err);
+      throw err;
+    }
+  };
 
   // 상사 저장 
   exports.insertCarAgent = async ({ 

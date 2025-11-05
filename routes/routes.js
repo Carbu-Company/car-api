@@ -46,6 +46,10 @@ router.get("/getCompanyLoanLimit", carController.getCompanyLoanLimit);
 // 상사정보관리 조회
 router.get("/getAgentInfo", carController.getAgentInfo);
 
+// 상사 매입비 기본값 조회
+router.get("/getAgentPurCst", carController.getAgentPurCst);
+
+
 //***************************************************************************************** */
 // 차량 검색 설정
 //***************************************************************************************** */

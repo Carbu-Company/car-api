@@ -431,6 +431,8 @@ exports.getCarPurList = async ({
       throw err;
     }
   };
+
+
 // 제시 직접 등록
 exports.insertCarPur = async ({
     agentId                 // 상사 ID              
@@ -661,7 +663,7 @@ exports.insertCarPur = async ({
 
     });
 
-    // 차량판매
+    // 차량판매 기본값 저장장
     const query2 = `INSERT INTO dbo.CJB_CAR_SEL
             (CAR_REG_ID,
              AGENT_ID,
@@ -673,12 +675,110 @@ exports.insertCarPur = async ({
         @REGR_ID,
         @MODR_ID);`;
 
-    await Promise.all([request.query(query1), request.query(query2)]);
+
+    // 차량 거래 항목 (상사매입비) 참조하여 저장 처리 
+    const query3 = `INSERT dbo.CJB_CAR_TRADE_AMT (
+                      TRADE_ITEM_SEQ
+                      ,CAR_REG_ID
+                      ,TRADE_DT
+                      ,TRADE_SCT_CD
+                      ,TRADE_ITEM_CD
+                      ,TRADE_ITEM_NM
+                      ,TRADE_ITEM_AMT
+                      ,TRADE_ITEM_SUP_PRC
+                      ,TRADE_ITEM_VAT
+                      ,TRADE_PAY_AMT
+                      ,TRADE_PAY_DT
+                      ,TRADE_TGT_ID
+                      ,TRADE_TGT_NM
+                      ,TRADE_TGT_PHON
+                      ,TRADE_TGT_SCT_CD
+                      ,TRADE_TP_CD
+                      ,RCGN_NO
+                      ,TRADE_EVDC_CD
+                      ,TRADE_MEMO
+                      ,REGR_ID
+                      ,MODR_ID)
+                    SELECT TRADE_ITEM_SEQ
+                        , @CAR_REG_ID AS CAR_REG_ID
+                        , @CAR_PUR_DT AS CAR_PUR_DT 
+                        , TRADE_SCT_CD
+                        , TRADE_ITEM_CD
+                        , TRADE_ITEM_NM     
+                        , TRADE_ITEM_AMT
+                        , ROUND(TRADE_ITEM_AMT/1.1, 0) TRADE_ITEM_SUP_PRC
+                        , TRADE_ITEM_AMT - ROUND(TRADE_ITEM_AMT/1.1, 0) AS TRADE_ITEM_VAT
+                        , 0
+                        , NULL
+                        , @DLR_ID AS DLR_ID
+                        , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_NM
+                        , (SELECT USR_PHON FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_PHON
+                        , 'U' AS TRADE_TGT_SCT_CD
+                        , '001' TRADE_TP_CD  -- 소득공제 DEFAULT
+                        , '' RCGN_NO
+                        , '004'AS TRADE_EVDC_CD -- 현금영수증
+                        , '' AS TRADE_MEMO
+                        , @REGR_ID AS REGR_ID
+                        , @MODR_ID AS MODR_ID
+                      FROM dbo.CJB_CAR_TRADE_ITEM A
+                    WHERE A.AGENT_ID = @AGENT_ID
+                      AND A.TRADE_SCT_CD = '0' --매입
+                      AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
+                   ;`;
+
+
+    // 상사 매입비 상품화 비용에 추가 처리
+    const query4 = `INSERT INTO dbo.CJB_GOODS_FEE (
+                      AGENT_ID,
+                      CAR_REG_ID,
+                      EXPD_ITEM_CD,
+                      EXPD_ITEM_NM,
+                      EXPD_SCT_CD,
+                      EXPD_AMT,
+                      EXPD_SUP_PRC,
+                      EXPD_VAT,
+                      EXPD_DT,
+                      EXPD_METH_CD,
+                      EXPD_EVDC_CD,
+                      TAX_SCT_CD,   -- 0: 미공제, 1: 공제
+                      TXBL_ISSU_DT,     
+                      RMRK,
+                      ADJ_INCLUS_YN, -- 0: 미정산, 1: 정산
+                      CASH_RECPT_RCGN_NO,
+                      CASH_MGMTKEY,
+                      DEL_YN,
+                      REGR_ID,
+                      MODR_ID)
+                    SELECT @AGENT_ID,
+                      @CAR_REG_ID,
+                      '999',
+                      '상사매입비',
+                      '0',                    -- 0: 딜러선지출, 1: 상사선지출
+                      , TRADE_ITEM_AMT
+                      , ROUND(TRADE_ITEM_AMT/1.1, 0) TRADE_ITEM_SUP_PRC
+                      , TRADE_ITEM_AMT - ROUND(TRADE_ITEM_AMT/1.1, 0) AS TRADE_ITEM_VAT
+                      @CAR_PUR_DT,
+                      '001',        --001 : 계좌이체
+                      '004',        --004 : 현금영수증
+                      '0',
+                      '',
+                      @REGR_ID,
+                      @MODR_ID
+                     FROM dbo.CJB_CAR_TRADE_ITEM A
+                    WHERE A.AGENT_ID = @AGENT_ID
+                      AND A.TRADE_SCT_CD = '0' --매입
+                      AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
+                    ;`;
+
+
+
+    await Promise.all([request.query(query1), request.query(query2), request.query(query3)]);
 
   } catch (err) {
     console.error("Error inserting car pur:", err);
     throw err;
   }
+  
 };
 
 

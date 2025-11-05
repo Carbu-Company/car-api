@@ -2225,6 +2225,19 @@ exports.getAgentInfo = async (req, res, next) => {
   }
 };
 
+// 상사 매입비 기본값 조회
+exports.getAgentPurCst = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const agentPurCst = await carAgentModel.getAgentPurCst({ agentId });
+    res.status(200).json(agentPurCst);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
 // 차량 검색 설정 조회x
 exports.getCarSearchList = async (req, res, next) => {
   try {
