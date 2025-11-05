@@ -442,12 +442,13 @@ exports.insertCarPur = async ({
   , carPurDt                // 매입일   
   , agentPurCst             // 상사매입비
   , brokerageDate           // 상사매입비 입금일
+  , cstTypeCd               // 상사매입비 발행 코드
   , gainTax                 // 취득세
   , carNm                   // 차량명
   , carNo                   // 차량번호(매입후)
-  , purBefCarNo            // 차량번호(매입전)
-  , ownrTpCd               // 소유자 유형 코드
-  , ownrSsn                // 주민등록번호
+  , purBefCarNo             // 차량번호(매입전)
+  , ownrTpCd                // 소유자 유형 코드
+  , ownrSsn                 // 주민등록번호
   , ownrBrno               // 사업자등록번호
   , ownrNm                 // 고객명
   , ownrZip                // 우편번호
@@ -504,6 +505,7 @@ exports.insertCarPur = async ({
     request.input("GAIN_TAX", sql.Int, gainTax);                              // 취득 세              
     request.input("AGENT_PUR_CST", sql.Int, agentPurCst);                     // 상사 매입 비         
     request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);        // 상사 매입 비 입금일
+    request.input("AGENT_PUR_CST_ISSU_CD", sql.VarChar, cstTypeCd);              // 상사 매입 비 발행 코드
     request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);                     // 매입계산서 수령 여부 
     request.input("PURACSH_RCV_YN", sql.VarChar, txblRcvYn);                  // 매입계산서 수령 여부 
     request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);                   // 세금계산서 발행 일자 
@@ -555,6 +557,7 @@ exports.insertCarPur = async ({
                     GAIN_TAX,
                     AGENT_PUR_CST,
                     AGENT_PUR_CST_PAY_DT,
+                    AGENT_PUR_CST_ISSU_CD,
                     PURACSH_RCV_YN,
                     TXBL_RCV_YN,
                     TXBL_ISSU_DT,
@@ -608,6 +611,7 @@ exports.insertCarPur = async ({
                     @GAIN_TAX,
                     @AGENT_PUR_CST,
                     @AGENT_PUR_CST_PAY_DT,
+                    @AGENT_PUR_CST_ISSU_CD,
                     @PURACSH_RCV_YN,
                     @TXBL_RCV_YN,
                     @TXBL_ISSU_DT,
@@ -727,7 +731,7 @@ exports.insertCarPur = async ({
                    ;`;
 
 
-    // 상사 매입비 상품화 비용에 추가 처리
+    // 상사 매입비 상품화 비용에 추가 처리   (상사매입비 발행코드가 해당없음도 상품화 비용에 넣어줘야 ???)
     const query4 = `INSERT INTO dbo.CJB_GOODS_FEE (
                       AGENT_ID,
                       CAR_REG_ID,
@@ -749,30 +753,81 @@ exports.insertCarPur = async ({
                       DEL_YN,
                       REGR_ID,
                       MODR_ID)
-                    SELECT @AGENT_ID,
-                      @CAR_REG_ID,
-                      '999',
-                      '상사매입비',
-                      '0',                    -- 0: 딜러선지출, 1: 상사선지출
-                      , TRADE_ITEM_AMT
-                      , ROUND(TRADE_ITEM_AMT/1.1, 0) TRADE_ITEM_SUP_PRC
-                      , TRADE_ITEM_AMT - ROUND(TRADE_ITEM_AMT/1.1, 0) AS TRADE_ITEM_VAT
-                      @CAR_PUR_DT,
-                      '001',        --001 : 계좌이체
-                      '004',        --004 : 현금영수증
-                      '0',
-                      '',
-                      @REGR_ID,
-                      @MODR_ID
-                     FROM dbo.CJB_CAR_TRADE_ITEM A
-                    WHERE A.AGENT_ID = @AGENT_ID
-                      AND A.TRADE_SCT_CD = '0' --매입
-                      AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
+                    SELECT @AGENT_ID AS AGENT_ID
+                      , @CAR_REG_ID AS CAR_REG_ID
+                      , '999' AS EXPD_ITEM_CD
+                      , '상사매입비' AS EXPD_ITEM_NM
+                      , '0' AS EXPD_SCT_CD           -- 0: 딜러선지출, 1: 상사선지출 
+                      , @AGENT_PUR_CST AS EXPD_AMT
+                      , ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_SUP_PRC
+                      , @AGENT_PUR_CST - ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_VAT
+                      , @AGENT_PUR_CST_PAY_DT AS EXPD_DT
+                      , NULL AS EXPD_METH_CD
+                      , @CST_TYPE_CD AS EXPD_EVDC_CD
+                      , CASE WHEN @CST_TYPE_CD = '000' THEN '1' ELSE '0' END AS TAX_SCT_CD
+                      , NULL AS TXBL_ISSU_DT  -- 현금, 세금계산서 발행시 셋팅
+                      , NULL AS RMRK  -- REMARK
+                      , CASE WHEN @CST_TYPE_CD = '000' THEN '1' ELSE '0' END AS ADJ_INCLUS_YN
+                      , NULL AS CASH_RECPT_RCGN_NO
+                      , NULL AS CASH_MGMTKEY
+                      , 'N' AS DEL_YN
+                      , @REGR_ID AS REGR_ID
+                      , @MODR_ID AS MODR_ID
                     ;`;
 
 
 
-    await Promise.all([request.query(query1), request.query(query2), request.query(query3)]);
+    await Promise.all([request.query(query1), request.query(query2), request.query(query3), request.query(query4)]);
+
+
+    // gainTax 취득세가 존재 하면 상품화비용에 적재
+
+    if (gainTax > 0) {
+      const query5 = `INSERT INTO dbo.CJB_GOODS_FEE (
+        AGENT_ID,
+        CAR_REG_ID,
+        EXPD_ITEM_CD,
+        EXPD_ITEM_NM,
+        EXPD_SCT_CD,
+        EXPD_AMT,
+        EXPD_SUP_PRC,
+        EXPD_VAT,
+        EXPD_DT,
+        EXPD_METH_CD,
+        EXPD_EVDC_CD,
+        TAX_SCT_CD,   -- 0: 미공제, 1: 공제
+        TXBL_ISSU_DT,     
+        RMRK,
+        ADJ_INCLUS_YN, -- 0: 미정산, 1: 정산
+        CASH_RECPT_RCGN_NO,
+        CASH_MGMTKEY,
+        DEL_YN,
+        REGR_ID,
+        MODR_ID)
+      SELECT @AGENT_ID AS AGENT_ID
+        , @CAR_REG_ID AS CAR_REG_ID
+        , '998' AS EXPD_ITEM_CD
+        , '취득세' AS EXPD_ITEM_NM
+        , '0' AS EXPD_SCT_CD           -- 0: 딜러선지출, 1: 상사선지출 
+        , @GAIN_TAX AS EXPD_AMT
+        , 0 AS EXPD_SUP_PRC
+        , 0 AS EXPD_VAT
+        , NULL AS EXPD_DT
+        , NULL AS EXPD_METH_CD
+        , NULL AS EXPD_EVDC_CD
+        , NULL AS TAX_SCT_CD
+        , NULL AS TXBL_ISSU_DT  -- 현금, 세금계산서 발행시 셋팅
+        , NULL AS RMRK  -- REMARK
+        , '1' AS ADJ_INCLUS_YN
+        , NULL AS CASH_RECPT_RCGN_NO
+        , NULL AS CASH_MGMTKEY
+        , 'N' AS DEL_YN
+        , @REGR_ID AS REGR_ID
+        , @MODR_ID AS MODR_ID
+      ;`;
+
+      await Promise.all([request.query(query5)]);
+    }
 
   } catch (err) {
     console.error("Error inserting car pur:", err);

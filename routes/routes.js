@@ -33,7 +33,6 @@ router.get("/InsertCommCd", carController.insertCommCd);
 // 공통코드 수정
 router.get("/updateCommCd", carController.updateCommCd);
 
-
 // 딜러 조회
 router.get("/getDealerList", carController.getDealerList);
 
@@ -54,8 +53,6 @@ router.get("/getAgentPurCst", carController.getAgentPurCst);
 // 차량 검색 설정
 //***************************************************************************************** */
 router.get("/getCarSearchList", carController.getCarSearchList);
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
