@@ -1177,7 +1177,38 @@ exports.getCarTaxItemInfo = async (req, res, next) => {
 // 현금영수증 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 현금영수증 목록 조회
+// 거래 발행 리스트들 (현금영수증, 전자세금계산서)
+exports.getTradeIssueList = async (req, res, next) => {
+  try {
+    const carCashTaxList = await carCashModel.getTradeIssueList(req.body);
+    res.status(200).json(carCashTaxList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 거래 발행 리스트들 (현금영수증, 전자세금계산서) 합계 조회
+exports.getTradeIssueSummary = async (req, res, next) => {
+  try {
+    const tradeIssueSummary = await carCashModel.getTradeIssueSummary(req.body);
+    res.status(200).json(tradeIssueSummary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 현금영수증 합계 조회
+exports.getCarCashSummary = async (req, res, next) => {
+  try {
+    const carCashSummary = await carCashModel.getCarCashSummary(req.body);
+    res.status(200).json(carCashSummary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 현금영수증 발행 목록 데이터 조회
 exports.getCarCashList = async (req, res, next) => {
   try {
     const carCashList = await carCashModel.getCarCashList(req.body);
@@ -1186,7 +1217,6 @@ exports.getCarCashList = async (req, res, next) => {
     next(err);
   }
 };
-  
 // 현금영수증 합계 조회
 exports.getCarCashSummary = async (req, res, next) => {
   try {

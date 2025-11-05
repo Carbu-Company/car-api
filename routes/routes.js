@@ -241,6 +241,13 @@ router.post("/updateCarConcil", carController.updateCarConcil);
 // 현금영수증 2.0
 //***************************************************************************************** */
 
+// 거래 발행 리스트들 (현금영수증, 전자세금계산서) 목록 데이터 조회
+router.post("/getTradeIssueList", carController.getTradeIssueList);
+
+// 현금영수증 발행 목록 데이터 조회
+router.post("/getTradeIssueSummary", carController.getTradeIssueSummary);
+
+
 // 현금영수증 발행 목록 데이터 조회
 router.post("/getCarCashList", carController.getCarCashList);
 
