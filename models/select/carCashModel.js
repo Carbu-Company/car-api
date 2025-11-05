@@ -802,13 +802,47 @@ exports.getCarCashInfo = async ({ carRegId }) => {
 
 
 // 현금영수증 발행 상제 정보 조회
-exports.getTradeIssueInfo = async ({ carRegId }) => {
+exports.getTradeIssueInfo = async ({ tradeSeq }) => {
 
   try {
     const request = pool.request();
-    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+    request.input("TRADE_SEQ", sql.Int, tradeSeq);
 
-    const query = `SELECT * FROM dbo.CJB_CAR_TRADE_AMT WHERE CAR_REG_ID = @CAR_REG_ID`;
+    const query = ` SELECT dbo.CJB_FN_MK_CASH_MGMTKEY(@AGENT_ID) AS CASH_MGMTKEY
+                        , A.TRADE_DT AS TRADE_DT 
+                        , NULL TRADE_DTIME
+                        , '승인거래' AS TRADE_PROC_NM    -- 001 : 승인거래, 002 : 취소거래
+                        , '소득공제용' AS TRADE_SCT_NM     -- 001 : 소득공제용, 002 : 지출증빙용
+                        , NULL AS TRADE_TP_NM       
+                        , NULL AS TAX_SHP_NM
+                        , A.TRADE_ITEM_AMT 
+                        , A.TRADE_ITEM_SUP_PRC 
+                        , A.TRADE_ITEM_VAT 
+                        , 0 AS SRVC                -- 봉사료
+                        , B.BRNO 
+                        , NULL AS RCGNNO           -- 종사업장 식별번호
+                        , B.AGENT_NM 
+                        , B.PRES_NM 
+                        , B.ADDR1 + ' ' + B.ADDR2 AS ADDR
+                        , B.PHON 
+                        , NULL AS RCGN_NO -- 식별 번호
+                        , A.TRADE_TGT_NM    -- 고객명 
+                        , A.TRADE_MEMO      -- 주문 상품명  : 차량명 + 차량번호 + 비용 항목명 
+                        , NULL AS ORD_N0    -- 주문 번호 
+                        , A.TRADE_TGT_EMAIL
+                        , A.TRADE_TGT_PHON 
+                        , 'N' AS TRNS_YN      -- 핸드폰 전송 여부 (이건 어디서 설정 ?)
+                        , NULL AS CNCL_CAUS_CD     -- 취소 사유 코드 
+                        , NULL AS MEMO               --- 전송시  메모 내용
+                        , NULL AS EMAIL_TIT_NM     -- EMAIL 타이틀 ???
+                        , NULL AS CR_TRAN_STAT_CD  -- 현금영수증 전송 상태 코드 
+                      FROM dbo.CJB_CAR_TRADE_AMT A
+                        , dbo.CJB_AGENT B
+                    WHERE A.TRADE_SEQ = @TRADE_SEQ
+                      AND A.AGENT_ID = B.AGENT_ID
+                      `;
+
+                      
     const result = await request.query(query);
     return result.recordset[0];
   } catch (err) {

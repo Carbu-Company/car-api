@@ -1197,17 +1197,6 @@ exports.getTradeIssueSummary = async (req, res, next) => {
   }
 };
 
-// 현금영수증 합계 조회
-exports.getCarCashSummary = async (req, res, next) => {
-  try {
-    const carCashSummary = await carCashModel.getCarCashSummary(req.body);
-    res.status(200).json(carCashSummary);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
 // 현금영수증 발행 목록 데이터 조회
 exports.getCarCashList = async (req, res, next) => {
   try {
@@ -1233,6 +1222,37 @@ exports.getCarCashInfo = async (req, res, next) => {
     const { carRegId } = req.query;  
     const carCashDetail = await carCashModel.getCarCashInfo({ carRegId });
     res.status(200).json(carCashDetail);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 거래 발행 상세 정보 조회
+exports.getTradeIssueInfo = async (req, res, next) => {
+  try {
+    const { tradeSeq } = req.query;
+    const tradeIssueInfo = await carCashModel.getTradeIssueInfo({ tradeSeq });
+    res.status(200).json(tradeIssueInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 현금영수증 발행 정보 등록
+exports.insertCarCash = async (req, res, next) => {
+  try {
+    await carCashModel.insertCarCash(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 현금영수증 발행 정보 수정
+exports.updateCarCash = async (req, res, next) => {
+  try {
+    await carCashModel.updateCarCash(req.body);
+    res.status(200).json({ success: true });
   } catch (err) {
     next(err);
   }

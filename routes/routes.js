@@ -94,6 +94,8 @@ router.post("/getCarPurSummary", carController.getCarPurSummary);
 // 제시 차량 상세 조회
 router.get("/getCarPurInfo", carController.getCarPurInfo);    
 
+
+
 // 제시 등록
 router.post("/insertCarPur", carController.insertCarPur);
 
@@ -248,7 +250,6 @@ router.post("/getTradeIssueList", carController.getTradeIssueList);
 // 현금영수증 발행 목록 데이터 조회
 router.post("/getTradeIssueSummary", carController.getTradeIssueSummary);
 
-
 // 현금영수증 발행 목록 데이터 조회
 router.post("/getCarCashList", carController.getCarCashList);
 
@@ -257,6 +258,15 @@ router.post("/getCarCashSummary", carController.getCarCashSummary);
 
 // 현금영수증 상세 조회
 router.get("/getCarCashInfo", carController.getCarCashInfo);
+
+// 거래 발행 상세 정보 조회
+router.get("/getTradeIssueInfo", carController.getTradeIssueInfo);
+
+// 현금영수증 발행 정보 등록 
+router.post("/insertCarCash", carController.insertCarCash);
+
+// 현금영수증 발행 정보 수정 
+router.post("/updateCarCash", carController.updateCarCash);
 
 //***************************************************************************************** */
 // 전자세금계산서 2.0
