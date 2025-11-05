@@ -775,7 +775,7 @@ exports.insertCarPur = async ({
                       , @MODR_ID AS MODR_ID
                     ;`;
 
-
+    console.log("query4:", query4);
 
     await Promise.all([request.query(query1), request.query(query2), request.query(query3), request.query(query4)]);
 
