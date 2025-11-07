@@ -5,7 +5,7 @@ const pool = require("../../config/db");
 // 세금계산서 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 세금계산서 목록 조회
+// 세금계산서 발행된 목록 조회
 exports.getCarTaxList = async ({ 
     agentId, 
     page,
@@ -70,13 +70,13 @@ exports.getCarTaxList = async ({
       // 전체 카운트 조회
       const countQuery = `
       SELECT COUNT(*) as totalCount
-                FROM dbo.CJB_GOODS_FEE B
-                LEFT JOIN dbo.CJB_TXBL A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                FROM dbo.CJB_CAR_TRADE_AMT B
+                LEFT JOIN dbo.CJB_TXBL A ON (A.TRADE_SEQ = B.TRADE_SEQ)
                 LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                 LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
               WHERE B.AGENT_ID = @CAR_AGENT
                 AND C.CAR_DEL_YN = 'N'
-                AND B.EXPD_EVDC_CD = '001'
+                AND B.TRADE_EVDC_CD = '001'    -- 001 : 세금계산서 
                 ${carNo ? "AND (C.CAR_NO LIKE @CAR_NO OR C.PUR_BEF_CAR_NO LIKE @CAR_NO OR D.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (C.DLR_ID LIKE @DEALER OR D.DLR_ID LIKE @DEALER)" : ""}
                 ${startDt ? `AND ${dtGubun === '1' ? 'A.MK_DT' : dtGubun === '2' ? 'CONVERT(CHAR(10), A.TRADE_DTIME, 23)' : dtGubun === '3' ? 'D.CAR_SELE_DT' : 'C.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -129,7 +129,7 @@ exports.getCarTaxList = async ({
                         , A.TXBL_TRNS_STAT_CD
                         , dbo.CJB_FN_GET_CD_NM('22', A.TXBL_TRNS_STAT_CD) TXBL_TRNS_STAT_NM
                         , A.TAX_MGMTKEY
-                      FROM dbo.CJB_GOODS_FEE B
+                      FROM dbo.CJB_CAR_TRADE_AMT B
                       LEFT JOIN dbo.CJB_TXBL A ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
@@ -180,7 +180,7 @@ exports.getCarTaxList = async ({
     }
   };
   
-  // 세금계산서 합계 조회
+  // 세금계산서 발행된 합계 조회
   exports.getCarTaxSummary = async ({  
     agentId, 
     page,
@@ -249,7 +249,7 @@ exports.getCarTaxList = async ({
                           , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(A.TOT_VAT), 0) VAT
                       FROM dbo.CJB_TXBL A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_TRADE_AMT B ON (A.TRADE_SEQ = B.TRADE_SEQ)
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
@@ -273,7 +273,7 @@ exports.getCarTaxList = async ({
                           , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(A.TOT_VAT), 0) VAT
                       FROM dbo.CJB_TXBL A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_TRADE_AMT B ON (A.TRADE_SEQ = B.TRADE_SEQ)
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
@@ -297,7 +297,7 @@ exports.getCarTaxList = async ({
                           , ISNULL(SUM(A.TOT_SUP_PRC), 0) SUP_PRC
                           , ISNULL(SUM(A.TOT_VAT), 0) VAT
                       FROM dbo.CJB_TXBL A
-                      LEFT JOIN dbo.CJB_GOODS_FEE B ON (A.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ)
+                      LEFT JOIN dbo.CJB_CAR_TRADE_AMT B ON (A.TRADE_SEQ = B.TRADE_SEQ)
                       LEFT JOIN dbo.CJB_CAR_PUR C ON (B.CAR_REG_ID = C.CAR_REG_ID)
                       LEFT JOIN dbo.CJB_CAR_SEL D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE A.AGENT_ID = @CAR_AGENT
@@ -324,7 +324,7 @@ exports.getCarTaxList = async ({
     }
   };
   
-  // 세금계산서 상세 조회
+  // 차량 등록 ID에 해당되는 세금계산서 발행된 목록 조회
   exports.getCarTaxInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
@@ -365,10 +365,10 @@ exports.getCarTaxList = async ({
                             C.MOD_DTIME                     -- 수정 일시               
                             C.MODR_ID                       -- 수정자 ID               
                         FROM dbo.CJB_CAR_PUR A
-                           , dbo.CJB_GOODS_FEE B                           
+                           , dbo.CJB_CAR_TRADE_AMT B                           
                            , dbo.CJB_TXBL C
                         WHERE B.CAR_REG_ID = A.CAR_REG_ID
-                          AND C.GOODS_FEE_SEQ = B.GOODS_FEE_SEQ
+                          AND C.TRADE_SEQ = B.TRADE_SEQ
                           AND A.CAR_REG_ID = @CAR_REG_ID `;
   
       console.log('query:', query);
@@ -412,12 +412,88 @@ exports.getCarTaxList = async ({
     }
   };
 
-  
+// 전자세금계산서 발행시 필요한 정보를 조회 (공급자, 공급받는자 정보)
+exports.getTaxIssueInfo = async ({ tradeSeq }) => {
+
+  try {
+    const request = pool.request();
+    request.input("TRADE_SEQ", sql.Int, tradeSeq);
+
+    const query = `SELECT dbo.CJB_FN_MK_TAX_MGMTKEY('00011') AS TAX_MGMTKEY
+                        , A.AGENT_ID
+                        , A.CAR_REG_ID
+                        , A.TRADE_SEQ
+                        , A.TRADE_DT AS MK_DT
+                        , NULL TRADE_DTIME
+                        , NULL DEL_DTIME
+                        , '정발행' AS ISSU_SHP_NM         -- 발급 형태 명: 정발행, 역발행, 위수탁
+                        , '과세' AS TAX_SHP_NM          -- 과세 형태 명: 과세, 영세, 면세
+                        , '정과금' AS TAX_DRCN_NM         -- 과세 방향 명: 정과금, 역과금 
+                        , '영수' AS TAX_USE_NM         -- 과세 용도 명: 영수, 청구
+                        , A.TRADE_ITEM_AMT 
+                        , A.TRADE_ITEM_SUP_PRC 
+                        , A.TRADE_ITEM_VAT 
+                        , NULL NOTE1
+                        , B.BRNO AS SPLR_BRNO
+                        , NULL AS SPLR_MRPL_BIZ_RCGNNO           -- 종사업장 식별번호
+                        , B.AGENT_NM  AS SPLR_MTL_NM
+                        , B.PRES_NM  AS SPLR_PRES_NM
+                        , B.ADDR1 + ' ' + B.ADDR2 AS SPLR_ADDR
+                        , B.PHON 
+                        , B.BUCO AS SPLR_BUCO                       -- 업태
+                        , B.STK AS SPLR_STK                        -- 종목 
+                        , C.USR_NM AS SPLR_AEMP_NM                    -- 담당자명
+                        , C.USR_DEPT_NM AS SPLR_AEMP_DEPT_NM               -- 공급자 담당자 부서 명
+                        , B.PHON AS SPLR_PHON                       -- 공급자 (회사번호)
+                        , C.USR_PHON AS SPLR_HP                         -- 공급자 (담당자 폰)
+                        , C.USR_EMAIL AS SPLR_AEMP_EMAIL                 -- 공급자 담자자 이메일
+                        , 'N' AS SPLR_NTCCHR_TRNS_YN             -- 공급자 알림문자 전송 여부 
+                        , NULL AS BUYR_DOCNO              -- 공급받는자 문서번호
+                        , D.CUST_TP_CD AS  BUYR_TP_CD                      -- 공급받는자 유형 명   : 사업자 , 개인, 외국인   
+                        , dbo.CJB_FN_GET_CD_NM('04', D.CUST_TP_CD) BUYR_TP_NM
+                        , D.BRNO AS BUYR_BRNO                       -- 공급받는자 사업자 번호 /주민등록번호
+                        , NULL AS BUYR_MNR_BMAN_RCGNNO            -- 공급받는자 종사업장 식별번호
+                        , D.CUST_NM AS BUYR_MTL_NM                     -- 공급받는자 상호명 
+                        , D.PRES_NM AS BUYR_PRES_NM                    -- 공급받는자 대표자명   
+                        , D.ADDR1 + ' ' + D.ADDR2 AS BUYR_ADDR                       -- 공급받는자 주소 
+                        , D.BUCO AS CBUYR_BUCO                       -- 공급받는자 업태  
+                        , D.STK AS BUYR_STK                        -- 공급받는자 종목 
+                        , D.CUST_NM AS BUYR_AEMP_NM                    -- 공급받는자 담당자명 (고객에서 담당자 없는데 어떻게 ?)
+                        , D.DEPT_NM AS BUYR_AEMP_DEPT_NM               -- 공급받는자 담당자 부서명  
+                        , D.CUST_PHON AS BUYR_AEMP_PHON                  -- 공급받는자 담당자 전화번호
+                        , D.CUST_PHON AS BUYR_AEMP_HP                    -- 공급받는자 담당자 폰
+                        , D.CUST_EMAIL AS BUYR_AEMP_EMAIL                 -- 공급받는자 담당자 EMAIL
+                        , 'N' AS BUYR_NTCCHR_TRNS_YN             -- 공급받는자 담당자 알림문자 전송 여부 
+                        , NULL AS MOD_CAUS_CD                     -- 수정 사유 코드 
+                        , NULL AS PERSS_NTS_CONF_NO       -- 당초 국세청 승인 번호
+                        , NULL AS MEMO                    -- 메모
+                        , NULL AS TXBL_TRNS_STAT_CD               -- 세금계산서 전송 상태코드
+                        , NULL AS MK_TP_CD                        -- 작성 유형 명
+                      FROM dbo.CJB_CAR_TRADE_AMT A
+                        , dbo.CJB_AGENT B
+                        , dbo.CJB_USR C
+                        , dbo.CJB_CUST D
+                    WHERE 1 = 1
+                      AND A.TRADE_SEQ = 9
+                      AND A.AGENT_ID = B.AGENT_ID
+                      AND B.AEMP_ID = C.USR_ID
+                      AND A.TRADE_TGT_ID = CUST_NO
+                      `;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching trade issue info:", err);
+    throw err;
+  }
+};
+
+
 // 전자세금계산서 등록
 exports.insertCarTax = async ({
     taxMgmtkey,                   // 세금 관리키                  
     agentId,                      // 상사 ID                      
-    costSeq,                      // 비용 순번                    
+    tradeSeq,                     // 거래 순번                    
     mkDt,                         // 작성 일자                    
     tradeDtime,                   // 거래 일시                    
     delDtime,                     // 삭제 일시                    
@@ -470,7 +546,7 @@ exports.insertCarTax = async ({
 
     request.input("TAX_MGMTKEY", sql.VarChar, taxMgmtkey);
     request.input("AGENT_ID", sql.VarChar, agentId);
-    request.input("COST_SEQ", sql.Int, goodsFeeSeq);
+    request.input("TRADE_SEQ", sql.Int, tradeSeq);
     request.input("MK_DT", sql.VarChar, mkDt);
     request.input("TRADE_DTIME", sql.VarChar, tradeDtime);
     request.input("DEL_DTIME", sql.VarChar, delDtime);
@@ -517,41 +593,60 @@ exports.insertCarTax = async ({
     request.input("REGR_ID", sql.VarChar, regrId);
     request.input("MODR_ID", sql.VarChar, modrId);
 
-    const query1 = `INSERT INTO dbo.CJB_CASH_RECPT (
-                          CASH_MGMTKEY                  -- 현금 관리키                
-                        , NTS_CONF_NO                   -- 국세청 승인 번호           
-                        , TRADE_DT                      -- 거래 일자                  
-                        , TRADE_DTIME                   -- 거래 일시                  
-                        , TRADE_SHP_NM                  -- 거래 형태 명               
-                        , TRADE_SCT_NM                  -- 거래 구분 명               
-                        , TRADE_TP_NM                   -- 거래 유형 명               
-                        , TAX_SHP_NM                    -- 과세 형태 명               
-                        , TRADE_AMT                     -- 거래 금액                  
-                        , SUP_PRC                       -- 공급가                     
-                        , VAT                           -- 부가세                     
-                        , SRVC                          -- 봉사료                     
-                        , MERS_BRNO                     -- 가맹점 사업자등록번        
-                        , MERS_MRPL_BIZ_RCGNNO          -- 가맹점 종사업장 식별번호   
-                        , MERS_MTL_NM                   -- 가맹점 상호 명             
-                        , MERS_PRES_NM                  -- 가맹점 대표자              
-                        , MERS_ADDR                     -- 가맹점 주소                
-                        , MERS_PHON                     -- 가맹점 전화번호            
-                        , RCGN_NO                       -- 식별 번호                  
-                        , CUST_NM                       -- 고객 명                    
-                        , ORD_GOODS_NM                  -- 주문 상품 명               
-                        , ORD_NO                        -- 주문 번호                  
-                        , CUST_EMAIL                    -- 고객 이메일                
-                        , CUST_HP                       -- 고객 핸드폰                
-                        , CUST_NTCCHR_TRNS_YN           -- 고객 알림문자 전송 여부    
-                        , CNCL_CAUS_CD                  -- 취소 사유 코드             
-                        , MEMO                          -- 메모                       
-                        , EMAIL_TIT_NM                  -- 이메일 제목 명             
-                        , GOODS_FEE_SEQ                 -- 비용 순번                  
-                        , AGENT_ID                      -- 상사 ID                       
-                        , REG_DTIME                     -- 등록 일시                  
-                        , REGR_ID                       -- 등록자 ID                  
-                        , MOD_DTIME                     -- 수정 일시                  
-                        , MODR_ID                       -- 수정자 ID        
+    const query1 = `INSERT INTO dbo.CJB_TXBL (
+                          TAX_MGMTKEY             -- 세금 관리키                            
+                        , AGENT_ID                -- 상사 ID                      
+                        , CAR_REG_ID              -- 차량 등록 ID                 
+                        , TRADE_SEQ               -- 거래 순번                    
+                        , MK_DT                   -- 작성 일자                    
+                        , TRADE_DTIME             -- 거래 일시                    
+                        , DEL_DTIME               -- 삭제 일시                    
+                        , ISSU_SHP_NM             -- 발급 형태 명                 
+                        , TAX_SHP_NM              -- 과세 형태 명                 
+                        , TAX_DRCN_NM             -- 과세 방향 명                 
+                        , TAX_USE_NM              -- 과세 용도 명                 
+                        , TOT_AMT                 -- 총 금액                      
+                        , TOT_SUP_PRC             -- 총 공급가                    
+                        , TOT_VAT                 -- 총 부가세                    
+                        , NOTE1                   -- 비고1                        
+                        , SPLR_BRNO               -- 공급자 사업자등록번호        
+                        , SPLR_MRPL_BIZ_RCGNNO    -- 공급자 종사업장 식별번호     
+                        , SPLR_MTL_NM             -- 공급자 상호 명               
+                        , SPLR_PRES_NM            -- 공급자 대표자 명             
+                        , SPLR_ADDR               -- 공급자 주소                  
+                        , SPLR_BUCO               -- 공급자 업태                  
+                        , SPLR_STK                -- 공급자 종목                  
+                        , SPLR_AEMP_NM            -- 공급자 담당자 명             
+                        , SPLR_AEMP_DEPT_NM       -- 공급자 담당자 부서 명        
+                        , SPLR_PHON               -- 공급자 전화번호              
+                        , SPLR_HP                 -- 공급자 연락                  
+                        , SPLR_AEMP_EMAIL         -- 공급자 담당자 이메일         
+                        , SPLR_NTCCHR_TRNS_YN     -- 공급자 알림문자 전송 여부    
+                        , BUYR_DOCNO              -- 공급받는자 문서번호          
+                        , BUYR_TP_NM              -- 공급받는자 유형 명           
+                        , BUYR_BRNO               -- 공급받는자 사업자등록번호    
+                        , BUYR_MNR_BMAN_RCGNNO    -- 공급받는자 종사업자 식별번호 
+                        , BUYR_MTL_NM             -- 공급받는자 상호 명           
+                        , BUYR_PRES_NM            -- 공급받는자 대표자 명         
+                        , BUYR_ADDR               -- 공급받는자 주소              
+                        , BUYR_BUCO               -- 공급받는자 업태              
+                        , BUYR_STK                -- 공급받는자 종                
+                        , BUYR_AEMP_NM            -- 공급받는자 담당자 명         
+                        , BUYR_AEMP_DEPT_NM       -- 공급받는자 담당자 부서 명    
+                        , BUYR_AEMP_PHON          -- 공급받는자 담당자 전화번호   
+                        , BUYR_AEMP_HP            -- 공급받는자 담당자 휴대폰     
+                        , BUYR_AEMP_EMAIL         -- 공급받는자 담당자 이메일     
+                        , BUYR_NTCCHR_TRNS_YN     -- 공급받는자 알림문자 전송 여부
+                        , MOD_CAUS_CD             -- 수정 사유 코드               
+                        , PERSS_NTS_CONF_NO       -- 당초 국세청 승인 번호        
+                        , MEMO                    -- 메모                         
+                        , GOODS_FEE_SEQ           -- 상품화비 순번                
+                        , TXBL_TRNS_STAT_CD       -- [NULL]                       
+                        , MK_TP_NM                -- 작성 유형 명                 
+                        , REG_DTIME               -- 등록 일시                    
+                        , REGR_ID                 -- 등록자 ID                    
+                        , MOD_DTIME               -- 수정 일시                    
+                        , MODR_ID                 -- 수정자 ID                 
                   ) VALUES (
                     @CASH_MGMT_KEY,
                     @NTS_CONF_NO,

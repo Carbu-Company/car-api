@@ -260,7 +260,7 @@ router.post("/getCarCashSummary", carController.getCarCashSummary);
 router.get("/getCarCashInfo", carController.getCarCashInfo);
 
 // 거래 발행 상세 정보 조회
-router.get("/getTradeIssueInfo", carController.getTradeIssueInfo);
+router.get("/getCashIssueInfo", carController.getCashIssueInfo);
 
 // 현금영수증 발행 정보 등록 
 router.post("/insertCarCash", carController.insertCarCash);
@@ -284,6 +284,17 @@ router.get("/getCarTaxInfo", carController.getCarTaxInfo);
 // 전자세금계산서 항목 상세 조회
 router.get("/getCarTaxItemInfo", carController.getCarTaxItemInfo);
 
+// 전자세금계산서 발행 상세 정보 조회
+router.get("/getCarTaxIssueInfo", carController.getTaxIssueInfo);
+
+// 전자세금계산서 등록
+router.post("/insertCarTax", carController.insertCarTax);
+
+// 전자세금계산서 수정 등록
+router.post("/updateCarTax", carController.updateCarTax);
+
+// 전자세금계산서 삭제 
+router.get("/deleteCarTax", carController.deleteCarTax);
 
 //***************************************************************************************** */
 // 계좌 2.0
@@ -306,8 +317,6 @@ router.post("/insertCarAcctDetail", carController.insertCarAcctDetail);
 
 // 계좌 상세 수정
 router.post("/updateCarAcctDetail", carController.updateCarAcctDetail);
-
-
 
 //***************************************************************************************** */
 // 고객 2.0

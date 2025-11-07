@@ -1173,6 +1173,48 @@ exports.getCarTaxItemInfo = async (req, res, next) => {
 };
 
 
+// 전자세금계산서 발행 상세 정보 조회
+exports.getTaxIssueInfo = async (req, res, next) => {
+  try {
+    const { tradeSeq } = req.query;
+    const tradeIssueInfo = await carTaxModel.getTaxIssueInfo({ tradeSeq });
+    res.status(200).json(tradeIssueInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 전자세금계산서 등록
+exports.insertCarTax = async (req, res, next) => {
+  try {
+    await carTaxModel.insertCarTax(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 전자세금계산서 수정 등록
+exports.updateCarTax = async (req, res, next) => {
+  try {
+    await carTaxModel.updateCarTax(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 전자세금계산서 삭제 
+exports.deleteCarTax = async (req, res, next) => {
+  try {
+    const { taxMgmtkey } = req.query;
+    await carTaxModel.deleteCarTax({ taxMgmtkey });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 현금영수증 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1228,10 +1270,10 @@ exports.getCarCashInfo = async (req, res, next) => {
 };
 
 // 거래 발행 상세 정보 조회
-exports.getTradeIssueInfo = async (req, res, next) => {
+exports.getCashIssueInfo = async (req, res, next) => {
   try {
     const { tradeSeq } = req.query;
-    const tradeIssueInfo = await carCashModel.getTradeIssueInfo({ tradeSeq });
+    const tradeIssueInfo = await carCashModel.getCashIssueInfo({ tradeSeq });
     res.status(200).json(tradeIssueInfo);
   } catch (err) {
     next(err);
@@ -1722,36 +1764,6 @@ exports.getTaxInvoiceAmount = async (req, res, next) => {
       eInvoiceSeq,
     });
     res.status(200).json(taxInvoiceAmount);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 전자세금계산서 발행 리스트 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// 전자세금계산서 발행 리스트 조회
-exports.getTaxIssueList = async (req, res, next) => {
-  try {
-    const { agentId } = req.body;
-    const taxIssueList = await carSelectModel.getTaxIssueList({ agentId });
-
-    res.status(200).json(taxIssueList);
-  } catch (err) {
-    next(err);
-  }
-};
-
-
-// 전자세금계산서 발행 리스트 합계 조회
-exports.getTaxIssueSummary = async (req, res, next) => {
-  try {
-    const { agentId } = req.body;
-    const taxIssueSummary = await carSelectModel.getTaxIssueSummary({ agentId });
-
-    res.status(200).json(taxIssueSummary);
   } catch (err) {
     next(err);
   }

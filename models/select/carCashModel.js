@@ -7,7 +7,7 @@ const pool = require("../../config/db");
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// 현금영수증 목록 조회 (발행 대상 목록 정보 )
+// 현금영수증(004), 전자세금계산서(001) 목록 조회 (발행 대상 목록 정보 )
 exports.getTradeIssueList = async ({ 
   agentId, 
   page,
@@ -105,7 +105,8 @@ exports.getTradeIssueList = async ({
     console.log('countQuery:', countQuery);
   
     const dataQuery = `
-                 SELECT T.CAR_DT
+                 SELECT T.TRADE_SEQ
+                      , T.CAR_DT
                       , T.CAR_NM
                       , T.CAR_NO
                       , T.DLR_ID
@@ -131,7 +132,8 @@ exports.getTradeIssueList = async ({
                       , T.CUST_NM
                       , T.CUST_PHON
                       , T.CUST_BRNO
-                    FROM (SELECT B.CAR_PUR_DT + ' (매입)' CAR_DT
+                    FROM (SELECT TRADE_SEQ
+                          , B.CAR_PUR_DT + ' (매입)' CAR_DT
                           , B.CAR_NM
                           , B.CAR_NO
                           , B.DLR_ID
@@ -168,7 +170,8 @@ exports.getTradeIssueList = async ({
                         AND A.TRADE_EVDC_CD = @TAX_GUBUN -- 현금영수즈 코드 
                         AND A.TRADE_SCT_CD = '0' --- 매입자료 
                       UNION ALL
-                      SELECT C.SALE_REG_DT  + ' (매출)' CAR_DT
+                      SELECT A.TRADE_SEQ
+                          , C.SALE_REG_DT  + ' (매출)' CAR_DT
                           , B.CAR_NM
                           , B.CAR_NO
                           , B.DLR_ID
@@ -297,6 +300,7 @@ exports.getTradeIssueSummary = async ({
     if (dtlCrStat && dtlCrStat.length > 0) request.input("CR_MTS_STAT_CD", sql.VarChar, dtlCrStat.join(','));
     if (dtlRcgnNo) request.input("RCGN_NO", sql.VarChar, `%${dtlRcgnNo}%`);
     if (dtlNtsConfNo) request.input("NTS_CONF_NO", sql.VarChar, `%${dtlNtsConfNo}%`);
+    if (taxGubun) request.input("TAX_GUBUN", sql.VarChar, taxGubun);
 
     const query = `SELECT A.TRADE_TP_CD
                         , dbo.CJB_FN_GET_CD_NM('28', A.TRADE_TP_CD) TRADE_TP_NM
@@ -305,14 +309,14 @@ exports.getTradeIssueSummary = async ({
                         , ISNULL(SUM(A.TRADE_ITEM_AMT), 0) TRADE_AMT
                         , ISNULL(SUM(A.TRADE_ITEM_SUP_PRC), 0) SUP_PRC
                         , ISNULL(SUM(A.TRADE_ITEM_VAT), 0) VAT
-                        FROM dbo.CJB_CAR_TRADE_AMT A
-                        INNER JOIN dbo.CJB_CAR_TRADE_ITEM B ON (A.TRADE_ITEM_SEQ = B.TRADE_ITEM_SEQ)
-                        INNER JOIN dbo.CJB_CAR_SEL C ON (A.CAR_REG_ID = C.CAR_REG_ID)
-                        INNER JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
-                      WHERE 1 = 1
-                        AND B.AGENT_ID = @AGENT_ID -- 상사ID
-                        AND A.TRADE_PAY_DT IS NULL
-                        AND A.TRADE_EVDC_CD = '004' -- 현금영수즈 코드 
+                    FROM dbo.CJB_CAR_TRADE_AMT A
+                    INNER JOIN dbo.CJB_CAR_TRADE_ITEM B ON (A.TRADE_ITEM_SEQ = B.TRADE_ITEM_SEQ)
+                    INNER JOIN dbo.CJB_CAR_SEL C ON (A.CAR_REG_ID = C.CAR_REG_ID)
+                    INNER JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
+                    WHERE 1 = 1
+                      AND B.AGENT_ID = @AGENT_ID -- 상사ID
+                      AND A.TRADE_PAY_DT IS NULL
+                      AND A.TRADE_EVDC_CD = @TAX_GUBUN -- 현금영수즈 코드 
               ${carNo ? "AND (D.CAR_NO LIKE @CAR_NO OR D.PUR_BEF_CAR_NO LIKE @CAR_NO OR C.SALE_CAR_NO LIKE @CAR_NO)" : ""}
               ${dealer ? "AND (D.DLR_ID LIKE @DEALER OR C.DLR_ID LIKE @DEALER)" : ""}
               ${startDt ? `AND ${dtGubun === '1' ? 'D.TRADE_DT' : dtGubun === '2' ? 'C.CAR_SALE_DT' : 'B.CAR_PUR_DT'} >= @START_DT` : ""}
@@ -802,13 +806,18 @@ exports.getCarCashInfo = async ({ carRegId }) => {
 
 
 // 현금영수증 발행 상제 정보 조회
-exports.getTradeIssueInfo = async ({ tradeSeq }) => {
+exports.getCashIssueInfo = async ({ tradeSeq }) => {
 
   try {
     const request = pool.request();
+
+    console.log('tradeSeq:', tradeSeq);
     request.input("TRADE_SEQ", sql.Int, tradeSeq);
 
-    const query = ` SELECT dbo.CJB_FN_MK_CASH_MGMTKEY(@AGENT_ID) AS CASH_MGMTKEY
+
+
+
+    const query = ` SELECT dbo.CJB_FN_MK_CASH_MGMTKEY(A.AGENT_ID) AS CASH_MGMTKEY
                         , A.TRADE_DT AS TRADE_DT 
                         , NULL TRADE_DTIME
                         , '승인거래' AS TRADE_PROC_NM    -- 001 : 승인거래, 002 : 취소거래
@@ -842,7 +851,9 @@ exports.getTradeIssueInfo = async ({ tradeSeq }) => {
                       AND A.AGENT_ID = B.AGENT_ID
                       `;
 
-                      
+    console.log('query:', query);
+
+
     const result = await request.query(query);
     return result.recordset[0];
   } catch (err) {
