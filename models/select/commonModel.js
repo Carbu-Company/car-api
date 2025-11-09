@@ -10,7 +10,7 @@ const pool = require("../../config/db");
 exports.getMgtKey = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("agentId", sql.VarChar, agentId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
   
       const query = `
         SELECT DBO.SMJ_FN_MK_MGTKEY(A.AGENT_ID) AS MgtKey,
@@ -19,7 +19,7 @@ exports.getMgtKey = async ({ agentId }) => {
                CJB_USR B
          WHERE A.AGENT_ID = B.AGENT_ID
            AND B.USR_GRADE_CD = '9'
-           AND A.AGENT_ID = @agentId;
+           AND A.AGENT_ID = @AGENT_ID;
       `;
   
       const result = await request.query(query);

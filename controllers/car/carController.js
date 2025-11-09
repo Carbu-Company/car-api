@@ -1174,6 +1174,17 @@ exports.getCarTaxItemInfo = async (req, res, next) => {
 
 
 // 전자세금계산서 발행 상세 정보 조회
+exports.getCarTaxIssueInfo = async (req, res, next) => {
+  try {
+    const { carRegId } = req.query;
+    const carTaxIssueInfo = await carTaxModel.getCarTaxIssueInfo({ carRegId });
+    res.status(200).json(carTaxIssueInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 전자세금계산서 발행 상세 정보 조회
 exports.getTaxIssueInfo = async (req, res, next) => {
   try {
     const { tradeSeq } = req.query;

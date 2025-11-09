@@ -412,7 +412,84 @@ exports.getCarTaxList = async ({
     }
   };
 
-// 전자세금계산서 발행시 필요한 정보를 조회 (공급자, 공급받는자 정보)
+
+// 전자세금계산서 발행시 필요한 정보를 조회 (차량 한대 기준 - 공급자, 공급받는자 정보)
+exports.getCarTaxIssueInfo = async ({ carRegId }) => {
+
+  try {
+    const request = pool.request();
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);
+
+    const query = `SELECT dbo.CJB_FN_MK_TAX_MGMTKEY('00011') AS TAX_MGMTKEY
+                        , A.AGENT_ID
+                        , A.CAR_REG_ID
+                        , A.TRADE_SEQ
+                        , A.TRADE_DT AS MK_DT
+                        , NULL TRADE_DTIME
+                        , NULL DEL_DTIME
+                        , '정발행' AS ISSU_SHP_NM         -- 발급 형태 명: 정발행, 역발행, 위수탁
+                        , '과세' AS TAX_SHP_NM          -- 과세 형태 명: 과세, 영세, 면세
+                        , '정과금' AS TAX_DRCN_NM         -- 과세 방향 명: 정과금, 역과금 
+                        , '영수' AS TAX_USE_NM         -- 과세 용도 명: 영수, 청구
+                        , A.TRADE_ITEM_AMT 
+                        , A.TRADE_ITEM_SUP_PRC 
+                        , A.TRADE_ITEM_VAT 
+                        , NULL NOTE1
+                        , B.BRNO AS SPLR_BRNO
+                        , NULL AS SPLR_MRPL_BIZ_RCGNNO           -- 종사업장 식별번호
+                        , B.AGENT_NM  AS SPLR_MTL_NM
+                        , B.PRES_NM  AS SPLR_PRES_NM
+                        , B.ADDR1 + ' ' + B.ADDR2 AS SPLR_ADDR
+                        , B.PHON 
+                        , B.BUCO AS SPLR_BUCO                       -- 업태
+                        , B.STK AS SPLR_STK                        -- 종목 
+                        , C.USR_NM AS SPLR_AEMP_NM                    -- 담당자명
+                        , C.USR_DEPT_NM AS SPLR_AEMP_DEPT_NM               -- 공급자 담당자 부서 명
+                        , B.PHON AS SPLR_PHON                       -- 공급자 (회사번호)
+                        , C.USR_PHON AS SPLR_HP                         -- 공급자 (담당자 폰)
+                        , C.USR_EMAIL AS SPLR_AEMP_EMAIL                 -- 공급자 담자자 이메일
+                        , 'N' AS SPLR_NTCCHR_TRNS_YN             -- 공급자 알림문자 전송 여부 
+                        , NULL AS BUYR_DOCNO              -- 공급받는자 문서번호
+                        , D.CUST_TP_CD AS  BUYR_TP_CD                      -- 공급받는자 유형 명   : 사업자 , 개인, 외국인   
+                        , dbo.CJB_FN_GET_CD_NM('04', D.CUST_TP_CD) BUYR_TP_NM
+                        , D.BRNO AS BUYR_BRNO                       -- 공급받는자 사업자 번호 /주민등록번호
+                        , NULL AS BUYR_MNR_BMAN_RCGNNO            -- 공급받는자 종사업장 식별번호
+                        , D.CUST_NM AS BUYR_MTL_NM                     -- 공급받는자 상호명 
+                        , D.PRES_NM AS BUYR_PRES_NM                    -- 공급받는자 대표자명   
+                        , D.ADDR1 + ' ' + D.ADDR2 AS BUYR_ADDR                       -- 공급받는자 주소 
+                        , D.BUCO AS CBUYR_BUCO                       -- 공급받는자 업태  
+                        , D.STK AS BUYR_STK                        -- 공급받는자 종목 
+                        , D.CUST_NM AS BUYR_AEMP_NM                    -- 공급받는자 담당자명 (고객에서 담당자 없는데 어떻게 ?)
+                        , D.DEPT_NM AS BUYR_AEMP_DEPT_NM               -- 공급받는자 담당자 부서명  
+                        , D.CUST_PHON AS BUYR_AEMP_PHON                  -- 공급받는자 담당자 전화번호
+                        , D.CUST_PHON AS BUYR_AEMP_HP                    -- 공급받는자 담당자 폰
+                        , D.CUST_EMAIL AS BUYR_AEMP_EMAIL                 -- 공급받는자 담당자 EMAIL
+                        , 'N' AS BUYR_NTCCHR_TRNS_YN             -- 공급받는자 담당자 알림문자 전송 여부 
+                        , NULL AS MOD_CAUS_CD                     -- 수정 사유 코드 
+                        , NULL AS PERSS_NTS_CONF_NO       -- 당초 국세청 승인 번호
+                        , NULL AS MEMO                    -- 메모
+                        , NULL AS TXBL_TRNS_STAT_CD               -- 세금계산서 전송 상태코드
+                        , NULL AS MK_TP_CD                        -- 작성 유형 명
+                      FROM dbo.CJB_CAR_TRADE_AMT A
+                        , dbo.CJB_AGENT B
+                        , dbo.CJB_USR C
+                        , dbo.CJB_CUST D
+                    WHERE 1 = 1
+                      AND A.CAR_REG_ID = @CAR_REG_ID
+                      AND A.AGENT_ID = B.AGENT_ID
+                      AND B.AEMP_ID = C.USR_ID
+                      AND A.TRADE_TGT_ID = CUST_NO
+                      `;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching trade issue info:", err);
+    throw err;
+  }
+};
+
+// 전자세금계산서 발행시 필요한 정보를 조회 (개별 거래 기준 - 공급자, 공급받는자 정보)
 exports.getTaxIssueInfo = async ({ tradeSeq }) => {
 
   try {

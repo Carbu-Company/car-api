@@ -285,7 +285,10 @@ router.get("/getCarTaxInfo", carController.getCarTaxInfo);
 router.get("/getCarTaxItemInfo", carController.getCarTaxItemInfo);
 
 // 전자세금계산서 발행 상세 정보 조회
-router.get("/getCarTaxIssueInfo", carController.getTaxIssueInfo);
+router.get("/getCarTaxIssueInfo", carController.getCarTaxIssueInfo);
+
+// 전자세금계산서 발행 상세 정보 조회
+router.get("/getTaxIssueInfo", carController.getTaxIssueInfo);
 
 // 전자세금계산서 등록
 router.post("/insertCarTax", carController.insertCarTax);
