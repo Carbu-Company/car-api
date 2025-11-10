@@ -12,6 +12,7 @@ const carPurModel = require("../../models/select/carPurModel");
 const carSelModel = require("../../models/select/carSelModel");
 const carSystemModel = require("../../models/select/carSystemModel");
 const carTaxModel = require("../../models/select/carTaxModel");
+const carTradeItemModel = require("../../models/select/carTradeItemModel");
 const commonModel = require("../../models/select/commonModel");
 const usrReqModel = require("../../models/select/usrReqModel");
 
@@ -1068,6 +1069,118 @@ exports.deleteCarAgent = async (req, res, next) => {
     next(err);
   }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 상사 거래 항목 / 차량 거래 금액 2.0
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+// 상사 거래 항목 목록
+exports.getAgentTradeItemList = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const agentTradeItemList = await carTradeItemModel.getAgentTradeItemList({ agentId });
+    res.status(200).json(agentTradeItemList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 상사 거래 항목 상세 조회
+exports.getAgentTradeItemInfo = async (req, res, next) => {
+  try {
+    const { agentId, tradeSctCd, tradeItemCd } = req.query;
+    const agentTradeItemInfo = await carTradeItemModel.getAgentTradeItemInfo({ agentId, tradeSctCd, tradeItemCd });
+    res.status(200).json(agentTradeItemInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 거래 항목 등록
+exports.insertAgentTradeItem = async (req, res, next) => {
+  try {
+    await carTradeItemModel.insertAgentTradeItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 거래 항목 수정
+exports.updateAgentTradeItem = async (req, res, next) => {
+  try {
+    await carTradeItemModel.updateAgentTradeItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 거래 항목 삭제
+exports.deleteAgentTradeItem = async (req, res, next) => {
+  try {
+    const { agentId, tradeSctCd, tradeItemCd } = req.query;
+    await carTradeItemModel.deleteAgentTradeItem({ agentId, tradeSctCd, tradeItemCd });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 차량 거래 금액 목록
+exports.getCarTradeAmtList = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const carTradeAmtList = await carTradeAmtModel.getCarTradeAmtList({ agentId });
+    res.status(200).json(carTradeAmtList);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 차량 거래 금액 상세 조회
+exports.getCarTradeAmtInfo = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;  
+    const carTradeAmtInfo = await carTradeAmtModel.getCarTradeAmtInfo({ agentId });
+    res.status(200).json(carTradeAmtInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 차량 거래 금액 등록
+exports.insertCarTradeAmt = async (req, res, next) => {
+  try {
+    await carTradeAmtModel.insertCarTradeAmt(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 차량 거래 금액 수정
+exports.updateCarTradeAmt = async (req, res, next) => {
+  try {
+    await carTradeAmtModel.updateCarTradeAmt(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 차량 거래 금액 삭제
+exports.deleteCarTradeAmt = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    await carTradeAmtModel.deleteCarTradeAmt({ agentId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

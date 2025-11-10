@@ -353,56 +353,6 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
     }
   }
 
-// 고객 목록 조회
-/*
-exports.getCustomerList = async ({ agentId, search }) => {
-  try {
-    const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, agentId);
-    request.input("SEARCH", sql.VarChar, search);
-    const query = `SELECT CUSTNO,   
-                          NAME,
-                          CUSTKIND,
-                          TELNO1,
-                          EMAIL,
-                          SSNO,
-                          BUZNO,
-                          ZIP,
-                          ADDR1,
-                          ADDR2,
-                          DBO.SMJ_FN_GETCDNAME('04', CUSTKIND) AS CUSTKINDNAME
-                    FROM   (SELECT CUSTNO,
-                                  NAME,
-                                  CUSTKIND,
-                                  TELNO1,
-                                  EMAIL,
-                                  SSNO,
-                                  BUZNO,
-                                  ZIP,
-                                  ADDR1,
-                                  ADDR2,
-                                  ROW_NUMBER()
-                                    OVER(
-                                      ORDER BY NAME ASC) RN
-                            FROM   SMJ_CUSER
-                            WHERE  1 = 1
-                                  AND AGENT = @CAR_AGENT
-                                  AND ( NAME LIKE '%' + @SEARCH + '%'
-                                        OR TELNO1 LIKE '%' + @SEARCH + '%' )) AS LIST
-                    WHERE  LIST.RN BETWEEN 1 AND 10 ;
-    `;
-
-    const result = await request.query(query);
-    return result.recordset;
-  } catch (err) {
-    console.error("Error fetching customer list:", err);
-    throw err;
-  }
-};
-
-
-*/
-
 exports.getCustomerList = async ({ agentId, custNm }) => {
   try {
 

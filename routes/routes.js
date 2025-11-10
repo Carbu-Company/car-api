@@ -389,6 +389,42 @@ router.post("/updateCarAgent", carController.updateCarAgent);
 router.get("/deleteCarAgent", carController.deleteCarAgent);
 
 
+
+//***************************************************************************************** */
+// 상사 거래 항목 / 차량 거래 금액 2.0
+//***************************************************************************************** */
+
+// 상사 거래 항목 목록
+router.get("/getAgentTradeItemList", carController.getAgentTradeItemList);
+
+// 상사 거래 항목 상세 조회
+router.get("/getAgentTradeItemInfo", carController.getAgentTradeItemInfo);
+
+// 상사 거래 항목 등록
+router.post("/insertAgentTradeItem", carController.insertAgentTradeItem);
+
+// 상사 거래 항목 수정
+router.post("/updateAgentTradeItem", carController.updateAgentTradeItem);
+
+// 상사 거래 항목 삭제
+router.get("/deleteAgentTradeItem", carController.deleteAgentTradeItem);
+
+// 차량 거래 금액 목록
+router.post("/getCarTradeAmtList", carController.getCarTradeAmtList);
+
+// 차량 거래 금액 상세 조회
+router.get("/getCarTradeAmtInfo", carController.getCarTradeAmtInfo);
+
+// 차량 거래 금액 등록
+router.post("/insertCarTradeAmt", carController.insertCarTradeAmt);
+
+// 차량 거래 금액 수정
+router.post("/updateCarTradeAmt", carController.updateCarTradeAmt);
+
+// 차량 거래 금액 삭제
+router.get("/deleteCarTradeAmt", carController.deleteCarTradeAmt);
+
+
 //***************************************************************************************** */
 // DASH BOARD
 //***************************************************************************************** */
