@@ -814,9 +814,6 @@ exports.getCashIssueInfo = async ({ tradeSeq }) => {
     console.log('tradeSeq:', tradeSeq);
     request.input("TRADE_SEQ", sql.Int, tradeSeq);
 
-
-
-
     const query = ` SELECT dbo.CJB_FN_MK_CASH_MGMTKEY(A.AGENT_ID) AS CASH_MGMTKEY
                         , A.TRADE_DT AS TRADE_DT 
                         , NULL TRADE_DTIME
@@ -834,7 +831,7 @@ exports.getCashIssueInfo = async ({ tradeSeq }) => {
                         , B.PRES_NM 
                         , B.ADDR1 + ' ' + B.ADDR2 AS ADDR
                         , B.PHON 
-                        , NULL AS RCGN_NO -- 식별 번호
+                        , A.RCGN_NO AS RCGN_NO -- 식별 번호
                         , A.TRADE_TGT_NM    -- 고객명 
                         , A.TRADE_MEMO      -- 주문 상품명  : 차량명 + 차량번호 + 비용 항목명 
                         , NULL AS ORD_N0    -- 주문 번호 
@@ -852,7 +849,6 @@ exports.getCashIssueInfo = async ({ tradeSeq }) => {
                       `;
 
     console.log('query:', query);
-
 
     const result = await request.query(query);
     return result.recordset[0];
