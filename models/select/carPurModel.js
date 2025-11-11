@@ -127,8 +127,8 @@ exports.getCarPurList = async ({
          , A.OWNR_ZIP                
          , A.OWNR_ADDR1              
          , A.OWNR_ADDR2     
-         , SUBSTRING(A.OWNR_EMAIL, 1, CHARINDEX('@', A.OWNR_EMAIL) - 1) AS OWNR_EMAIL
-         , SUBSTRING(A.OWNR_EMAIL, CHARINDEX('@', A.OWNR_EMAIL) + 1, LEN(A.OWNR_EMAIL)) AS OWNR_EMAIL_DOMAIN
+         , A.OWNR_EMAIL
+         , A.OWNR_EMAIL_DOMAIN
          , A.PUR_AMT                 
          , A.PUR_SUP_PRC             
          , A.PUR_VAT                 
@@ -395,12 +395,14 @@ exports.getCarPurList = async ({
                             , OWNR_ADDR1            
                             , OWNR_ADDR2            
                             , OWNR_EMAIL            
+                            , OWNR_EMAIL_DOMAIN     
                             , PUR_AMT               
                             , PUR_SUP_PRC           
                             , PUR_VAT               
                             , GAIN_TAX              
                             , AGENT_PUR_CST         
                             , AGENT_PUR_CST_PAY_DT  
+                            , AGENT_PUR_CST_ISSU_CD
                             , TXBL_RCV_YN           
                             , PURACSH_RCV_YN        
                             , TXBL_ISSU_DT          
@@ -425,6 +427,10 @@ exports.getCarPurList = async ({
                             WHERE  A.CAR_REG_ID = @CAR_REG_ID `;
   
       const result = await request.query(query);
+
+      console.log("result:", result.recordset[0]);
+
+
       return result.recordset[0];
     } catch (err) {
       console.error("Error fetching car pur detail:", err);
@@ -498,14 +504,15 @@ exports.insertCarPur = async ({
     request.input("OWNR_ZIP", sql.VarChar, ownrZip);                           // 소유자 주소          
     request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);                       // 소유자 주소1         
     request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);                       // 소유자 주소2         
-    request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);   // 소유자 이메일        
+    request.input("OWNR_EMAIL", sql.VarChar, ownrEmail);                       // 소유자 이메일    
+    request.input("OWNR_EMAIL_DOMAIN", sql.VarChar, emailDomain);              // 소유자 이메일 도메인    
     request.input("PUR_AMT", sql.Int, purAmt);                                 // 매입금액액 금액            
     request.input("PUR_SUP_PRC", sql.Int, purSupPrc);                          // 공급가               
     request.input("PUR_VAT", sql.Int, purVat);                                 // 부가세               
     request.input("GAIN_TAX", sql.Int, gainTax);                              // 취득 세              
     request.input("AGENT_PUR_CST", sql.Int, agentPurCst);                     // 상사 매입 비         
     request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);        // 상사 매입 비 입금일
-    request.input("AGENT_PUR_CST_ISSU_CD", sql.VarChar, cstTypeCd);              // 상사 매입 비 발행 코드
+    request.input("AGENT_PUR_CST_ISSU_CD", sql.VarChar, cstTypeCd);           // 상사 매입 비 발행 코드
     request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);                     // 매입계산서 수령 여부 
     request.input("PURACSH_RCV_YN", sql.VarChar, txblRcvYn);                  // 매입계산서 수령 여부 
     request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);                   // 세금계산서 발행 일자 
@@ -551,6 +558,7 @@ exports.insertCarPur = async ({
                     OWNR_ADDR1,
                     OWNR_ADDR2,
                     OWNR_EMAIL,
+                    OWNR_EMAIL_DOMAIN,
                     PUR_AMT,
                     PUR_SUP_PRC,
                     PUR_VAT,
@@ -605,6 +613,7 @@ exports.insertCarPur = async ({
                     @OWNR_ADDR1,
                     @OWNR_ADDR2,
                     @OWNR_EMAIL,
+                    @OWNR_EMAIL_DOMAIN,
                     @PUR_AMT,
                     @PUR_SUP_PRC,
                     @PUR_VAT,
@@ -679,105 +688,110 @@ exports.insertCarPur = async ({
         @REGR_ID,
         @MODR_ID);`;
 
+    await Promise.all([request.query(query1), request.query(query2)]);
 
-    // 차량 거래 항목 (상사매입비) 참조하여 저장 처리 
-    const query3 = `INSERT dbo.CJB_CAR_TRADE_AMT (
-                      TRADE_ITEM_SEQ
-                      ,CAR_REG_ID
-                      ,TRADE_DT
-                      ,TRADE_SCT_CD
-                      ,TRADE_ITEM_CD
-                      ,TRADE_ITEM_NM
-                      ,TRADE_ITEM_AMT
-                      ,TRADE_ITEM_SUP_PRC
-                      ,TRADE_ITEM_VAT
-                      ,TRADE_PAY_AMT
-                      ,TRADE_PAY_DT
-                      ,TRADE_TGT_ID
-                      ,TRADE_TGT_NM
-                      ,TRADE_TGT_PHON
-                      ,TRADE_TGT_SCT_CD
-                      ,TRADE_TP_CD
-                      ,RCGN_NO
-                      ,TRADE_EVDC_CD
-                      ,TRADE_MEMO
-                      ,REGR_ID
-                      ,MODR_ID)
-                    SELECT TRADE_ITEM_SEQ
-                        , @CAR_REG_ID AS CAR_REG_ID
-                        , @CAR_PUR_DT AS CAR_PUR_DT 
-                        , TRADE_SCT_CD
-                        , TRADE_ITEM_CD
-                        , TRADE_ITEM_NM     
-                        , TRADE_ITEM_AMT
-                        , ROUND(TRADE_ITEM_AMT/1.1, 0) TRADE_ITEM_SUP_PRC
-                        , TRADE_ITEM_AMT - ROUND(TRADE_ITEM_AMT/1.1, 0) AS TRADE_ITEM_VAT
-                        , 0
-                        , NULL
-                        , @DLR_ID AS DLR_ID
-                        , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_NM
-                        , (SELECT USR_PHON FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_PHON
-                        , 'U' AS TRADE_TGT_SCT_CD
-                        , '001' TRADE_TP_CD  -- 소득공제 DEFAULT
-                        , '' RCGN_NO
-                        , '004'AS TRADE_EVDC_CD -- 현금영수증
-                        , '' AS TRADE_MEMO
-                        , @REGR_ID AS REGR_ID
-                        , @MODR_ID AS MODR_ID
-                      FROM dbo.CJB_CAR_TRADE_ITEM A
-                    WHERE A.AGENT_ID = @AGENT_ID
-                      AND A.TRADE_SCT_CD = '0' --매입
-                      AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
-                   ;`;
-
-
-    // 상사 매입비 상품화 비용에 추가 처리   (상사매입비 발행코드가 해당없음도 상품화 비용에 넣어줘야 ???)
-    const query4 = `INSERT INTO dbo.CJB_GOODS_FEE (
-                      AGENT_ID,
-                      CAR_REG_ID,
-                      EXPD_ITEM_CD,
-                      EXPD_ITEM_NM,
-                      EXPD_SCT_CD,
-                      EXPD_AMT,
-                      EXPD_SUP_PRC,
-                      EXPD_VAT,
-                      EXPD_DT,
-                      EXPD_METH_CD,
-                      EXPD_EVDC_CD,
-                      TAX_SCT_CD,   -- 0: 미공제, 1: 공제
-                      TXBL_ISSU_DT,     
-                      RMRK,
-                      ADJ_INCLUS_YN, -- 0: 미정산, 1: 정산
-                      CASH_RECPT_RCGN_NO,
-                      CASH_MGMTKEY,
-                      DEL_YN,
-                      REGR_ID,
-                      MODR_ID)
-                    SELECT @AGENT_ID AS AGENT_ID
-                      , @CAR_REG_ID AS CAR_REG_ID
-                      , '999' AS EXPD_ITEM_CD
-                      , '상사매입비' AS EXPD_ITEM_NM
-                      , '0' AS EXPD_SCT_CD           -- 0: 딜러선지출, 1: 상사선지출 
-                      , @AGENT_PUR_CST AS EXPD_AMT
-                      , ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_SUP_PRC
-                      , @AGENT_PUR_CST - ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_VAT
-                      , @AGENT_PUR_CST_PAY_DT AS EXPD_DT
-                      , NULL AS EXPD_METH_CD
-                      , @CST_TYPE_CD AS EXPD_EVDC_CD
-                      , CASE WHEN @CST_TYPE_CD = '000' THEN '1' ELSE '0' END AS TAX_SCT_CD
-                      , NULL AS TXBL_ISSU_DT  -- 현금, 세금계산서 발행시 셋팅
-                      , NULL AS RMRK  -- REMARK
-                      , CASE WHEN @CST_TYPE_CD = '000' THEN '1' ELSE '0' END AS ADJ_INCLUS_YN
-                      , NULL AS CASH_RECPT_RCGN_NO
-                      , NULL AS CASH_MGMTKEY
-                      , 'N' AS DEL_YN
-                      , @REGR_ID AS REGR_ID
-                      , @MODR_ID AS MODR_ID
+    /**
+     * cstTypeCd 해당사항 없음 이면 등록 안되게
+     */
+    if (cstTypeCd && cstTypeCd !== '000') {
+      // 차량 거래 항목 (상사매입비) 참조하여 저장 처리 
+      const query3 = `INSERT dbo.CJB_CAR_TRADE_AMT (
+                        TRADE_ITEM_SEQ
+                        ,CAR_REG_ID
+                        ,TRADE_DT
+                        ,TRADE_SCT_CD
+                        ,TRADE_ITEM_CD
+                        ,TRADE_ITEM_NM
+                        ,TRADE_ITEM_AMT
+                        ,TRADE_ITEM_SUP_PRC
+                        ,TRADE_ITEM_VAT
+                        ,TRADE_PAY_AMT
+                        ,TRADE_PAY_DT
+                        ,TRADE_TGT_ID
+                        ,TRADE_TGT_NM
+                        ,TRADE_TGT_PHON
+                        ,TRADE_TGT_SCT_CD
+                        ,TRADE_TP_CD
+                        ,RCGN_NO
+                        ,TRADE_EVDC_CD
+                        ,TRADE_MEMO
+                        ,REGR_ID
+                        ,MODR_ID)
+                      SELECT TRADE_ITEM_SEQ
+                          , @CAR_REG_ID AS CAR_REG_ID
+                          , @CAR_PUR_DT AS CAR_PUR_DT 
+                          , TRADE_SCT_CD
+                          , TRADE_ITEM_CD
+                          , TRADE_ITEM_NM     
+                          , TRADE_ITEM_AMT
+                          , ROUND(TRADE_ITEM_AMT/1.1, 0) TRADE_ITEM_SUP_PRC
+                          , TRADE_ITEM_AMT - ROUND(TRADE_ITEM_AMT/1.1, 0) AS TRADE_ITEM_VAT
+                          , 0
+                          , NULL
+                          , @DLR_ID AS DLR_ID
+                          , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_NM
+                          , (SELECT USR_PHON FROM dbo.CJB_USR WHERE USR_ID = @DLR_ID) AS DLR_PHON
+                          , 'U' AS TRADE_TGT_SCT_CD
+                          , '001' TRADE_TP_CD  -- 소득공제 DEFAULT
+                          , '' RCGN_NO
+                          , '004'AS TRADE_EVDC_CD -- 현금영수증
+                          , '' AS TRADE_MEMO
+                          , @REGR_ID AS REGR_ID
+                          , @MODR_ID AS MODR_ID
+                        FROM dbo.CJB_CAR_TRADE_ITEM A
+                      WHERE A.AGENT_ID = @AGENT_ID
+                        AND A.TRADE_SCT_CD = '0' --매입
+                        AND A.TRADE_ITEM_CD = '001'  -- 상사매입비
                     ;`;
 
-    console.log("query4:", query4);
 
-    await Promise.all([request.query(query1), request.query(query2), request.query(query3), request.query(query4)]);
+        // 상사 매입비 상품화 비용에 추가 처리   (상사매입비 발행코드가 해당없음도 상품화 비용에 넣어줘야 ???)
+        const query4 = `INSERT INTO dbo.CJB_GOODS_FEE (
+                          AGENT_ID,
+                          CAR_REG_ID,
+                          EXPD_ITEM_CD,
+                          EXPD_ITEM_NM,
+                          EXPD_SCT_CD,
+                          EXPD_AMT,
+                          EXPD_SUP_PRC,
+                          EXPD_VAT,
+                          EXPD_DT,
+                          EXPD_METH_CD,
+                          EXPD_EVDC_CD,
+                          TAX_SCT_CD,   -- 0: 미공제, 1: 공제
+                          TXBL_ISSU_DT,     
+                          RMRK,
+                          ADJ_INCLUS_YN, -- 0: 미정산, 1: 정산
+                          CASH_RECPT_RCGN_NO,
+                          CASH_MGMTKEY,
+                          DEL_YN,
+                          REGR_ID,
+                          MODR_ID)
+                        SELECT @AGENT_ID AS AGENT_ID
+                          , @CAR_REG_ID AS CAR_REG_ID
+                          , '999' AS EXPD_ITEM_CD
+                          , '상사매입비' AS EXPD_ITEM_NM
+                          , '0' AS EXPD_SCT_CD           -- 0: 딜러선지출, 1: 상사선지출 
+                          , @AGENT_PUR_CST AS EXPD_AMT
+                          , ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_SUP_PRC
+                          , @AGENT_PUR_CST - ROUND(@AGENT_PUR_CST/1.1, 0) AS EXPD_VAT
+                          , @AGENT_PUR_CST_PAY_DT AS EXPD_DT
+                          , NULL AS EXPD_METH_CD
+                          , @AGENT_PUR_CST_ISSU_CD AS EXPD_EVDC_CD
+                          , CASE WHEN @AGENT_PUR_CST_ISSU_CD = '000' THEN '1' ELSE '0' END AS TAX_SCT_CD
+                          , NULL AS TXBL_ISSU_DT  -- 현금, 세금계산서 발행시 셋팅
+                          , NULL AS RMRK  -- REMARK
+                          , CASE WHEN @AGENT_PUR_CST_ISSU_CD = '000' THEN '1' ELSE '0' END AS ADJ_INCLUS_YN
+                          , NULL AS CASH_RECPT_RCGN_NO
+                          , NULL AS CASH_MGMTKEY
+                          , 'N' AS DEL_YN
+                          , @REGR_ID AS REGR_ID
+                          , @MODR_ID AS MODR_ID
+                        ;`;
+
+        await Promise.all([request.query(query3), request.query(query4)]);
+    }
+
 
 
     // gainTax 취득세가 존재 하면 상품화비용에 적재
@@ -848,6 +862,7 @@ exports.updateCarPur = async ({
     carPurDt,                                                  // 매입일   
     agentPurCst,                                               // 상사매입비
     brokerageDate,                                             // 상사매입비 입금일
+    cstTypeCd,                                                 // 상사매입비 발행 코드
     gainTax,                                                   // 취득세
     carNm,                                                     // 차량명
     carNo,                                                     // 차량번호(매입후)
@@ -899,13 +914,15 @@ try {
   request.input("OWNR_ZIP", sql.VarChar, ownrZip);
   request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);
   request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);
-  request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);
+  request.input("OWNR_EMAIL", sql.VarChar, ownrEmail);
+  request.input("OWNR_EMAIL_DOMAIN", sql.VarChar, emailDomain);
   request.input("PUR_AMT", sql.Decimal, purAmt);
   request.input("PUR_SUP_PRC", sql.Decimal, purSupPrc);
   request.input("PUR_VAT", sql.Decimal, purVat);
   request.input("GAIN_TAX", sql.Decimal, gainTax);
   request.input("AGENT_PUR_CST", sql.Decimal, agentPurCst);
   request.input("AGENT_PUR_CST_PAY_DT", sql.VarChar, brokerageDate);
+  request.input("AGENT_PUR_CST_ISSU_CD", sql.VarChar, cstTypeCd);
   request.input("TXBL_RCV_YN", sql.VarChar, txblRcvYn);
   request.input("TXBL_ISSU_DT", sql.VarChar, txblIssuDt);
   request.input("FCT_CNDC_YN", sql.VarChar, fctCndcYn);
@@ -939,12 +956,14 @@ try {
         OWNR_ADDR1 = @OWNR_ADDR1,
         OWNR_ADDR2 = @OWNR_ADDR2,
         OWNR_EMAIL = @OWNR_EMAIL,
+        OWNR_EMAIL_DOMAIN = @OWNR_EMAIL_DOMAIN,
         PUR_AMT = @PUR_AMT,
         PUR_SUP_PRC = @PUR_SUP_PRC,
         PUR_VAT = @PUR_VAT,
         GAIN_TAX = @GAIN_TAX,
         AGENT_PUR_CST = @AGENT_PUR_CST,
         AGENT_PUR_CST_PAY_DT = @AGENT_PUR_CST_PAY_DT,
+        AGENT_PUR_CST_ISSU_CD = @AGENT_PUR_CST_ISSU_CD,
         TXBL_RCV_YN = @TXBL_RCV_YN,
         TXBL_ISSU_DT = @TXBL_ISSU_DT,
         FCT_CNDC_YN = @FCT_CNDC_YN,
