@@ -86,7 +86,7 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
                     WHERE  AGENT_ID = @CAR_AGENT
                            AND AGENT_CD > 0
                            AND dbo.CJB_FN_DATEFMT('D', GETDATE()) BETWEEN USR_STRT_DT AND USR_END_DT
-                           AND USR_GRADE_CD NOT IN ('9', '4')
+                           AND USR_GRADE_CD NOT IN ('9', '4')  -- 사무장, 대표 제외 
                     ORDER  BY USR_NM 
       `;
   
