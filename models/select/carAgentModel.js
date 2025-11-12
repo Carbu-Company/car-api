@@ -116,6 +116,11 @@ exports.getCarAgentList = async ({
   };
   
   // 상사 상세 조회
+  
+  /**
+   * 이 데이터 쿼리 말고 공통에 있는 쿼리로 변경해야 함
+   */
+  /*
   exports.getAgentInfo = async ({ agentId }) => {
     try {
       const request = pool.request();
@@ -157,6 +162,7 @@ exports.getCarAgentList = async ({
       throw err;
     }
   };
+*/
 
   // 상사 매입비 기본값 조회
   exports.getAgentPurCst = async ({ agentId }) => {

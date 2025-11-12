@@ -2374,7 +2374,7 @@ exports.getCustomerList = async (req, res, next) => {
 exports.getAgentInfo = async (req, res, next) => {
   try {
     const { agentId } = req.query;
-    const agentInfo = await carAgentModel.getAgentInfo({ agentId });
+    const agentInfo = await commonModel.getAgentInfo({ agentId });
     res.status(200).json(agentInfo);
   } catch (err) {
     next(err);

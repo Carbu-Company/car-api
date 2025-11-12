@@ -796,7 +796,7 @@ exports.getCarCashInfo = async ({ carRegId }) => {
 
     console.log('query:', query);
 
-    const result = await request.query(query);
+    const result = await request.query(query);j
     return result.recordset[0];
   } catch (err) {
     console.error("Error fetching car pur detail:", err);

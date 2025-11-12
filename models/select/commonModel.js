@@ -77,6 +77,8 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
                        USR_PHON,
                        USR_EMAIL,
                        USR_ENTR_DT,     -- 입사일
+                       USR_STRT_DT,     -- 등록일
+                       USR_END_DT,       -- 퇴사일
                        ZIP,
                        ADDR1,
                        ADDR2,
@@ -85,7 +87,7 @@ exports.getCombineDealerList = async ({ carCombineAgent }) => {
                     FROM   dbo.CJB_USR A
                     WHERE  AGENT_ID = @CAR_AGENT
                            AND AGENT_CD > 0
-                           AND dbo.CJB_FN_DATEFMT('D', GETDATE()) BETWEEN USR_STRT_DT AND USR_END_DT
+                           AND dbo.CJB_FN_DATEFMT('D', GETDATE()) BETWEEN USR_STRT_DT AND ISNULL(USR_END_DT, '2999-12-31')
                            AND USR_GRADE_CD NOT IN ('9', '4')  -- 사무장, 대표 제외 
                     ORDER  BY USR_NM 
       `;
@@ -550,19 +552,20 @@ exports.getCompanyLoanLimit = async ({ agentId }) => {
 exports.getAgentInfo = async ({ agentId }) => {
   try {
     const request = pool.request();
-    request.input("CAR_AGENT", sql.VarChar, agentId);
+    request.input("AGENT_ID", sql.VarChar, agentId);
 
     const query = `SELECT AGENT_NM  AS COMNAME
                         , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
                         , BRNO
                         , PRES_NM 
-                        , SUBSTRING(EMAIL, 1, CHARINDEX('@', EMAIL) - 1) AS EMAIL_ID
-                        , SUBSTRING(EMAIL, CHARINDEX('@', EMAIL) + 1, LEN(EMAIL)) AS EMAIL_DOMAIN
+                        , PRES_PHON
+                        , EMAIL
                         , AGRM_AGR_YN
                         , FIRM_YN
                         , AGENT_STAT_CD
                         , dbo.SMJ_FN_GETCDNAME('06', AGENT_STAT_CD) AS AGENT_STAT_CD_NM
                         , PHON
+                        , (SELECT TOP 1 USR_PHON FROM dbo.CJB_USR WHERE AGENT_ID = @AGENT_ID) AS USR_PHON
                         , FAX
                         , ZIP
                         , ADDR1
@@ -571,7 +574,7 @@ exports.getAgentInfo = async ({ agentId }) => {
                         , CMBT_AGENT_CD
                         , CMBT_AGENT_STAT_NM
                     FROM dbo.CJB_AGENT A
-                    WHERE A.AGENT_ID = @CAR_AGENT`;
+                    WHERE A.AGENT_ID = @AGENT_ID`;
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {
