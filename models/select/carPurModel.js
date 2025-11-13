@@ -696,8 +696,7 @@ exports.insertCarPur = async ({
     if (cstTypeCd && cstTypeCd !== '000') {
       // 차량 거래 항목 (상사매입비) 참조하여 저장 처리 
       const query3 = `INSERT dbo.CJB_CAR_TRADE_AMT (
-                        TRADE_ITEM_SEQ
-                        ,CAR_REG_ID
+                        CAR_REG_ID
                         ,TRADE_DT
                         ,TRADE_SCT_CD
                         ,TRADE_ITEM_CD
@@ -717,8 +716,7 @@ exports.insertCarPur = async ({
                         ,TRADE_MEMO
                         ,REGR_ID
                         ,MODR_ID)
-                      SELECT TRADE_ITEM_SEQ
-                          , @CAR_REG_ID AS CAR_REG_ID
+                      SELECT @CAR_REG_ID AS CAR_REG_ID
                           , @CAR_PUR_DT AS CAR_PUR_DT 
                           , TRADE_SCT_CD
                           , TRADE_ITEM_CD

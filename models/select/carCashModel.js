@@ -310,7 +310,6 @@ exports.getTradeIssueSummary = async ({
                         , ISNULL(SUM(A.TRADE_ITEM_SUP_PRC), 0) SUP_PRC
                         , ISNULL(SUM(A.TRADE_ITEM_VAT), 0) VAT
                     FROM dbo.CJB_CAR_TRADE_AMT A
-                    INNER JOIN dbo.CJB_CAR_TRADE_ITEM B ON (A.TRADE_ITEM_SEQ = B.TRADE_ITEM_SEQ)
                     INNER JOIN dbo.CJB_CAR_SEL C ON (A.CAR_REG_ID = C.CAR_REG_ID)
                     INNER JOIN dbo.CJB_CAR_PUR D ON (C.CAR_REG_ID = D.CAR_REG_ID)
                     WHERE 1 = 1
