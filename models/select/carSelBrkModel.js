@@ -2,11 +2,11 @@ const sql = require("mssql");
 const pool = require("../../config/db");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 알선 2.0
+// 판매시 알선 처리 ( 매입딜러 -> 판매딜러 가 다른 경우 알선 ) 2.0
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 알선 목록 조회 
-exports.getCarConcilList = async ({ 
+exports.getCarSelBrkList = async ({ 
     agentId, 
     page,
     pageSize,
@@ -84,7 +84,6 @@ exports.getCarConcilList = async ({
                 ${dtlCustNm ? "AND B.BUYER_NM LIKE @DTL_CUST_NM" : ""}
                 ${dtlEvdcGubun ? "AND B.SEL_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
                 ${dtlBrkMemo ? "AND C.BRK_MEMO LIKE @DTL_BRK_MEMO" : ""}
-
       `;
     
       const dataQuery = `
@@ -158,7 +157,7 @@ exports.getCarConcilList = async ({
   };
   
   // 알선 합계 조회
-  exports.getCarConcilSummary = async ({  
+  exports.getCarSelBrkSummary = async ({  
     agentId, 
     page,
     pageSize,
@@ -307,7 +306,7 @@ exports.getCarConcilList = async ({
   };
   
   // 알선 상세 조회
-  exports.getCarConcilInfo = async ({ carRegId }) => {
+  exports.getCarSelBrkInfo = async ({ carRegId }) => {
     try {
       const request = pool.request();
       request.input("CAR_REG_ID", sql.VarChar, carRegId);   
@@ -347,7 +346,7 @@ exports.getCarConcilList = async ({
   };
 
 // 알선 판매 등록
-exports.insertCarConcil = async ({
+exports.insertCarSelBrk = async ({
   agentId,                                                  // 상사 ID              
   dealerId,                                                  // 판매딜러 ID
   tradeItemCd,                                               // 거래항목 코드
@@ -462,7 +461,7 @@ exports.insertCarConcil = async ({
 };
 
 // 알선 판매 수정
-exports.updateCarConcil = async ({
+exports.updateCarSelBrk = async ({
   brkSeq,                                                    // 알선 판매 순번
   agentId,                                                  // 상사 ID              
   dealerId,                                                  // 판매딜러 ID
