@@ -844,7 +844,7 @@ exports.getCashIssueInfo = async ({ tradeSeq }) => {
                       FROM dbo.CJB_CAR_TRADE_AMT A
                         , dbo.CJB_AGENT B
                     WHERE A.TRADE_SEQ = @TRADE_SEQ
-                      AND A.AGENT_ID = B.AGENT_ID
+                      --AND A.AGENT_ID = B.AGENT_ID
                       `;
 
     console.log('query:', query);
