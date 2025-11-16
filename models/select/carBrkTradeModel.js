@@ -85,13 +85,19 @@ exports.getCarBrkTradeList = async ({
       const dataQuery = `
                 SELECT A.BRK_TRADE_SEQ    
                     , A.SALE_DLR_ID      
+                    , (SELECT USR_NM FROM dbo.CJB_USR B WHERE B.USR_ID = A.SALE_DLR_ID) SALE_DLR_NM
                     , A.TRADE_ITEM_CD    
                     , A.TRADE_ITEM_NM    
                     , A.BRK_SALE_DT      
                     , A.TRADE_AMT        
-                    , A.DEDT_AMT         
+                    , A.TRADE_SUP_PRC    
+                    , A.TRADE_VAT        
+                    , A.DEDT_AMT       
+                    , A.WTTX
+                    , A.TAX_SUM_AMT  
                     , A.DLR_PAY_AMT      
-                    , A.SALE_EVDC_CD     
+                    , A.SALE_EVDC_CD   
+                    , dbo.CJB_FN_GET_CD_NM('07', A.SALE_EVDC_CD) SALE_EVDC_NM  
                     , A.CAR_NM           
                     , A.CAR_KND_CD       
                     , A.CAR_NO           
@@ -101,7 +107,7 @@ exports.getCarBrkTradeList = async ({
                     , A.BRK_MEMO      
                     , A.REGR_ID          
                     , A.MODR_ID          
-                FROM dbo.CJB_CAR_SEL_BRK A
+                FROM dbo.CJB_CAR_BRK_TRADE A
               WHERE  1 = 1
                 AND A.AGENT_ID = @CAR_AGENT
                 AND A.DEL_YN = 'N'
@@ -206,12 +212,14 @@ exports.getCarBrkTradeList = async ({
 
 
       const query = `SELECT '알선수수료' AS BRK_TRADE_ITEM_NM
-                            , COUNT(C.BRK_TRADE_SEQ) CNT
-                            , ISNULL(SUM(C.TRADE_AMT), 0) TRADE_AMT
-                            , ISNULL(SUM(C.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
-                            , ISNULL(SUM(C.TRADE_VAT), 0) TRADE_VAT
-                            , ISNULL(SUM(C.DEDT_AMT), 0) DEDT_AMT
-                            , ISNULL(SUM(C.DLR_PAY_AMT), 0) DLR_PAY_AMT
+                            , COUNT(A.BRK_TRADE_SEQ) CNT
+                            , ISNULL(SUM(A.TRADE_AMT), 0) TRADE_AMT
+                            , ISNULL(SUM(A.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
+                            , ISNULL(SUM(A.TRADE_VAT), 0) TRADE_VAT
+                            , ISNULL(SUM(A.DEDT_AMT), 0) DEDT_AMT
+                            , ISNULL(SUM(A.WTTX), 0) WTTX
+                            , ISNULL(SUM(A.TAX_SUM_AMT), 0) TAX_SUM_AMT
+                            , ISNULL(SUM(A.DLR_PAY_AMT), 0) DLR_PAY_AMT
                         FROM dbo.CJB_CAR_BRK_TRADE A
                         WHERE A.AGENT_ID = @CAR_AGENT
                             AND A.DEL_YN = 'N'
@@ -228,12 +236,14 @@ exports.getCarBrkTradeList = async ({
                 ${dtlBrkMemo ? "AND A.BRK_MEMO LIKE @DTL_BRK_MEMO" : ""}
                       UNION ALL
                         SELECT '알선수익금' AS BRK_TRADE_ITEM_NM
-                            , COUNT(C.BRK_TRADE_SEQ) CNT
-                            , ISNULL(SUM(C.TRADE_AMT), 0) TRADE_AMT
-                            , ISNULL(SUM(C.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
-                            , ISNULL(SUM(C.TRADE_VAT), 0) TRADE_VAT
-                            , ISNULL(SUM(C.DEDT_AMT), 0) DEDT_AMT
-                            , ISNULL(SUM(C.DLR_PAY_AMT), 0) DLR_PAY_AMT
+                            , COUNT(A.BRK_TRADE_SEQ) CNT
+                            , ISNULL(SUM(A.TRADE_AMT), 0) TRADE_AMT
+                            , ISNULL(SUM(A.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
+                            , ISNULL(SUM(A.TRADE_VAT), 0) TRADE_VAT
+                            , ISNULL(SUM(A.DEDT_AMT), 0) DEDT_AMT
+                            , ISNULL(SUM(A.WTTX), 0) WTTX
+                            , ISNULL(SUM(A.TAX_SUM_AMT), 0) TAX_SUM_AMT
+                            , ISNULL(SUM(A.DLR_PAY_AMT), 0) DLR_PAY_AMT
                         FROM dbo.CJB_CAR_BRK_TRADE A
                         WHERE A.AGENT_ID = @CAR_AGENT
                             AND A.DEL_YN = 'N'
@@ -250,12 +260,14 @@ exports.getCarBrkTradeList = async ({
                 ${dtlBrkMemo ? "AND A.BRK_MEMO LIKE @DTL_BRK_MEMO" : ""}
                       UNION ALL
                       SELECT '합계' AS BRK_TRADE_ITEM_NM
-                            , COUNT(C.BRK_TRADE_SEQ) CNT
-                            , ISNULL(SUM(C.TRADE_AMT), 0) TRADE_AMT
-                            , ISNULL(SUM(C.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
-                            , ISNULL(SUM(C.TRADE_VAT), 0) TRADE_VAT
-                            , ISNULL(SUM(C.DEDT_AMT), 0) DEDT_AMT
-                            , ISNULL(SUM(C.DLR_PAY_AMT), 0) DLR_PAY_AMT
+                            , COUNT(A.BRK_TRADE_SEQ) CNT
+                            , ISNULL(SUM(A.TRADE_AMT), 0) TRADE_AMT
+                            , ISNULL(SUM(A.TRADE_SUP_PRC), 0) TRADE_SUP_PRC
+                            , ISNULL(SUM(A.TRADE_VAT), 0) TRADE_VAT
+                            , ISNULL(SUM(A.DEDT_AMT), 0) DEDT_AMT
+                            , ISNULL(SUM(A.WTTX), 0) WTTX
+                            , ISNULL(SUM(A.TAX_SUM_AMT), 0) TAX_SUM_AMT
+                            , ISNULL(SUM(A.DLR_PAY_AMT), 0) DLR_PAY_AMT
                         FROM dbo.CJB_CAR_BRK_TRADE A
                         WHERE A.AGENT_ID = @CAR_AGENT
                             AND A.DEL_YN = 'N'
@@ -280,13 +292,14 @@ exports.getCarBrkTradeList = async ({
   };
   
   // 알선 상세 조회
-  exports.getCarBrkTradeInfo = async ({ carRegId }) => {
+  exports.getCarBrkTradeInfo = async ({ brkTradeSeq }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REG_ID", sql.VarChar, carRegId);   
+      request.input("BRK_TRADE_SEQ", sql.Int, brkTradeSeq);   
   
       const query = `SELECT A.BRK_TRADE_SEQ    
                           , A.SALE_DLR_ID      
+                          , (SELECT USR_NM FROM dbo.CJB_USR B WHERE B.USR_ID = A.SALE_DLR_ID) SALE_DLR_NM
                           , A.TRADE_ITEM_CD    
                           , A.TRADE_ITEM_NM    
                           , A.BRK_SALE_DT      
@@ -294,6 +307,8 @@ exports.getCarBrkTradeList = async ({
                           , A.TRADE_SUP_PRC      
                           , A.TRADE_VAT      
                           , A.DEDT_AMT         
+                          , A.WTTX
+                          , A.TAX_SUM_AMT
                           , A.DLR_PAY_AMT      
                           , A.SALE_EVDC_CD     
                           , A.CAR_NM           
@@ -308,7 +323,7 @@ exports.getCarBrkTradeList = async ({
                        FROM dbo.CJB_CAR_BRK_TRADE A
                       WHERE A.BRK_TRADE_SEQ = @BRK_TRADE_SEQ `;
 
-        //console.log('query:', query);
+      console.log('query:', query);
   
       const result = await request.query(query);
       return result.recordset[0];
@@ -319,7 +334,8 @@ exports.getCarBrkTradeList = async ({
   };
 
 // 알선 판매 등록
-exports.insertCarConcil = async ({
+exports.insertCarBrkTrade = async ({
+  agentId,                   // AGENT_ID: 알선 상사 ID
   saleDlrId,                 // SALE_DLR_ID: 판매딜러 ID
   tradeItemCd,               // TRADE_ITEM_CD: 거래항목 코드
   tradeItemNm,               // TRADE_ITEM_NM: 거래항목명
@@ -328,6 +344,8 @@ exports.insertCarConcil = async ({
   tradeSupPrc,                 // TRADE_SUP_PRC: 공급가액
   tradeVat,                    // TRADE_VAT: 부가세
   dedtAmt,                // DEDT_AMT: 공제비용
+  wttx,                    // WTTX: 미수금
+  taxSumAmt,                    // TAX_SUM_AMT: 세액
   dlrPayAmt,                 // DLR_PAY_AMT: 딜러지급액
   saleEvdcCd,                    // SALE_EVDC_CD: 증빙종류 코드
   carNm,                     // CAR_NM: 차량명
@@ -337,16 +355,13 @@ exports.insertCarConcil = async ({
   custNm,                    // CUST_NM: 고객명/상사명
   custPhon,                  // CUST_PHON: 연락처  
   brkMemo,                   // BRK_MEMO: 특이사항
-  usrId,                     // REGR_ID: 등록자 ID
-  usrId,                     // MODR_ID: 수정자 ID
-  carRegId                   // 차량 등록 ID
+  usrId                     // REGR_ID: 등록자 ID
 }) => {
   try {
-    const request = pool.request();
-
-    // BRK_TRADE_SEQ는 자동 생성(IDENTITY)로 입력하지 않음
+    const request = pool.request(); 
 
     // Insert를 위한 input 매핑
+    request.input("AGENT_ID", sql.VarChar, agentId);                    // 알선 상사 ID
     request.input("SALE_DLR_ID", sql.VarChar, saleDlrId);                // 딜러 ID
     request.input("TRADE_ITEM_CD", sql.VarChar, tradeItemCd);            // 거래항목 코드
     request.input("TRADE_ITEM_NM", sql.VarChar, tradeItemNm);            // 거래항목명
@@ -355,6 +370,8 @@ exports.insertCarConcil = async ({
     request.input("TRADE_SUP_PRC", sql.Int, tradeSupPrc);                // 공급가액
     request.input("TRADE_VAT", sql.Int, tradeVat);                       // 부가세
     request.input("DEDT_AMT", sql.Int, dedtAmt);                         // 공제비용
+    request.input("WTTX", sql.Int, wttx);                         // 미수금
+    request.input("TAX_SUM_AMT", sql.Int, taxSumAmt);                         // 세액
     request.input("DLR_PAY_AMT", sql.Int, dlrPayAmt);                    // 딜러지급액
     request.input("SALE_EVDC_CD", sql.VarChar, saleEvdcCd);              // 증빙종류 코드
     request.input("CAR_NM", sql.VarChar, carNm);                         // 차량명
@@ -368,6 +385,7 @@ exports.insertCarConcil = async ({
     request.input("MODR_ID", sql.VarChar, usrId);                        // 수정자 ID
 
     const query1 = `INSERT INTO dbo.CJB_CAR_BRK_TRADE (
+                        AGENT_ID,
                         SALE_DLR_ID,      
                         TRADE_ITEM_CD,    
                         TRADE_ITEM_NM,    
@@ -376,6 +394,8 @@ exports.insertCarConcil = async ({
                         TRADE_SUP_PRC,      
                         TRADE_VAT,      
                         DEDT_AMT,         
+                        WTTX,
+                        TAX_SUM_AMT,
                         DLR_PAY_AMT,      
                         SALE_EVDC_CD,     
                         CAR_NM,           
@@ -388,6 +408,7 @@ exports.insertCarConcil = async ({
                         REGR_ID,          
                         MODR_ID       
                   ) VALUES (
+                    @AGENT_ID,
                     @SALE_DLR_ID,
                     @TRADE_ITEM_CD,
                     @TRADE_ITEM_NM,
@@ -396,6 +417,8 @@ exports.insertCarConcil = async ({
                     @TRADE_SUP_PRC,
                     @TRADE_VAT,
                     @DEDT_AMT,
+                    @WTTX,
+                    @TAX_SUM_AMT,
                     @DLR_PAY_AMT,
                     @SALE_EVDC_CD,
                     @CAR_NM,
@@ -410,40 +433,37 @@ exports.insertCarConcil = async ({
                   )`;
 
 
-    const query2 = `UPDATE dbo.CJB_CAR_SEL
-                   SET MODR_ID = @MODR_ID
-                   WHERE CAR_REG_ID = @CAR_REG_ID;`;
-
-    await Promise.all([request.query(query1), request.query(query2)]);
+    await Promise.all([request.query(query1)]);
 
   } catch (err) {
-    console.error("Error inserting car concil:", err);
+    console.error("Error inserting car brk trade:", err);
     throw err;
   }
 };
 
 // 알선 판매 수정
 exports.updateCarBrkTrade = async ({
-  brkTradeSeq,                // BRK_TRADE_SEQ: 알선 판매 순번
+  brkTradeSeq,               // BRK_TRADE_SEQ: 알선 판매 순번
   saleDlrId,                 // SALE_DLR_ID: 판매딜러 ID
   tradeItemCd,               // TRADE_ITEM_CD: 거래항목 코드
   tradeItemNm,               // TRADE_ITEM_NM: 거래항목명
   brkSaleDt,                 // BRK_SALE_DT: 알선판매일  
-  tradeAmt,                    // TRADE_AMT: 알선금액
-  tradeSupPrc,                 // TRADE_SUP_PRC: 공급가액
-  tradeVat,                    // TRADE_VAT: 부가세
-  dedtAmt,                // DEDT_AMT: 공제비용
+  tradeAmt,                  // TRADE_AMT: 알선금액
+  tradeSupPrc,               // TRADE_SUP_PRC: 공급가액
+  tradeVat,                  // TRADE_VAT: 부가세
+  dedtAmt,                   // DEDT_AMT: 공제비용
+  wttx,                      // WTTX: 미수금
+  taxSumAmt,                 // TAX_SUM_AMT: 세액
   dlrPayAmt,                 // DLR_PAY_AMT: 딜러지급액
-  saleEvdcCd,                    // SALE_EVDC_CD: 증빙종류 코드
+  saleEvdcCd,                // SALE_EVDC_CD: 증빙종류 코드
   carNm,                     // CAR_NM: 차량명
   carKndCd,                  // CAR_KND_CD: 차량 유형 코드
   carNo,                     // CAR_NO: 차량번호
-  brkAgentNm,                   // BRK_AGENT_NM: 고객상사명(상사명)
+  brkAgentNm,                // BRK_AGENT_NM: 고객상사명(상사명)
   custNm,                    // CUST_NM: 고객명/상사명
   custPhon,                  // CUST_PHON: 연락처  
   brkMemo,                   // BRK_MEMO: 특이사항
-  usrId,                     // REGR_ID: 등록자 ID
-  usrId,                     // MODR_ID: 수정자 ID
+  usrId                      // REGR_ID: 등록자 ID 
 }) => {
   try {
     const request = pool.request();
@@ -458,12 +478,14 @@ exports.updateCarBrkTrade = async ({
     request.input("TRADE_SUP_PRC", sql.Int, tradeSupPrc);                // 공급가액
     request.input("TRADE_VAT", sql.Int, tradeVat);                       // 부가세
     request.input("DEDT_AMT", sql.Int, dedtAmt);                         // 공제비용
+    request.input("WTTX", sql.Int, wttx);                         // 미수금
+    request.input("TAX_SUM_AMT", sql.Int, taxSumAmt);                         // 세액
     request.input("DLR_PAY_AMT", sql.Int, dlrPayAmt);                    // 딜러지급액
     request.input("SALE_EVDC_CD", sql.VarChar, saleEvdcCd);              // 증빙종류 코드
     request.input("CAR_NM", sql.VarChar, carNm);                         // 차량명
     request.input("CAR_KND_CD", sql.VarChar, carKndCd);                  // 차량 종류 코드
     request.input("CAR_NO", sql.VarChar, carNo);                         // 차량번호
-    request.input("BRK_AGENT_NM", sql.VarChar, brkAgentNm);             // 고객상사명(상사명)
+    request.input("BRK_AGENT_NM", sql.VarChar, brkAgentNm);              // 고객상사명(상사명)
     request.input("CUST_NM", sql.VarChar, custNm);                       // 고객명/상사명
     request.input("CUST_PHON", sql.VarChar, custPhon);                   // 연락처
     request.input("BRK_MEMO", sql.VarChar, brkMemo);                     // 특이사항
@@ -479,6 +501,8 @@ exports.updateCarBrkTrade = async ({
                         TRADE_SUP_PRC = @TRADE_SUP_PRC,
                         TRADE_VAT = @TRADE_VAT,
                         DEDT_AMT = @DEDT_AMT,
+                        WTTX = @WTTX,
+                        TAX_SUM_AMT = @TAX_SUM_AMT,
                         DLR_PAY_AMT = @DLR_PAY_AMT,
                         SALE_EVDC_CD = @SALE_EVDC_CD,
                         CAR_NM = @CAR_NM,
@@ -492,19 +516,34 @@ exports.updateCarBrkTrade = async ({
                         MODR_ID = @MODR_ID
                   WHERE BRK_TRADE_SEQ = @BRK_TRADE_SEQ`;
 
-                  console.log('query1:', query1);
-                  
-
-    const query2 = `UPDATE dbo.CJB_CAR_SEL
-                   SET MODR_ID = @MODR_ID
-                   WHERE CAR_REG_ID = @CAR_REG_ID;`;
-
-    await Promise.all([request.query(query1), request.query(query2)]);
+    await Promise.all([request.query(query1)]);
 
   } catch (err) {
-    console.error("Error inserting car concil:", err);
+    console.error("Error updating car brk trade:", err);
     throw err;
   }
 };
 
 
+// 알선 판매 삭제
+exports.deleteCarBrkTrade = async ({
+  brkTradeSeq,                // BRK_TRADE_SEQ: 알선 판매 순번
+}) => {
+  try {
+    const request = pool.request();
+
+    // Update를 위한 input 매핑
+    request.input("BRK_TRADE_SEQ", sql.Int, brkTradeSeq);                // 알선 판매 순번
+
+
+    const query1 = `UPDATE dbo.CJB_CAR_BRK_TRADE
+                   SET DEL_YN = 'Y'
+                   WHERE BRK_TRADE_SEQ = @BRK_TRADE_SEQ`;
+
+    await Promise.all([request.query(query1)]);
+
+  } catch (err) {
+    console.error("Error deleting car brk trade:", err);
+    throw err;
+  }
+};

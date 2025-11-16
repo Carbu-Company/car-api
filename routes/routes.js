@@ -300,6 +300,28 @@ router.post("/updateCarTax", carController.updateCarTax);
 router.get("/deleteCarTax", carController.deleteCarTax);
 
 //***************************************************************************************** */
+// 타상사알선거래 2.0
+//***************************************************************************************** */
+
+// 타상사알선거래 목록 조회
+router.post("/getCarBrkTradeList", carController.getCarBrkTradeList);
+
+// 타상사알선거래 합계 조회
+router.post("/getCarBrkTradeSummary", carController.getCarBrkTradeSummary);
+
+// 타상사알선거래 상세 조회
+router.get("/getCarBrkTradeInfo", carController.getCarBrkTradeInfo);
+
+// 타상사알선거래 등록
+router.post("/insertCarBrkTrade", carController.insertCarBrkTrade);
+
+// 타상사알선거래 수정
+router.post("/updateCarBrkTrade", carController.updateCarBrkTrade);
+
+// 타상사알선거래 삭제
+router.get("/deleteCarBrkTrade", carController.deleteCarBrkTrade);
+
+//***************************************************************************************** */
 // 계좌 2.0
 //***************************************************************************************** */
 
@@ -336,6 +358,25 @@ router.post("/insertCarCust", carController.insertCarCust);
 
 // 고객 상세 조회
 router.post("/getCarCustExist", carController.getCarCustExist);
+
+//***************************************************************************************** */
+// 사용자 2.0
+//***************************************************************************************** */
+
+// 사용자 목록 조회
+router.post("/getUsrList", carController.getUsrList); 
+
+// 사용자 상세 조회
+router.get("/getUsrDetail", carController.getUsrDetail);
+
+// 사용자 등록
+router.post("/insertUsr", carController.insertUsr);
+
+// 사용자 수정
+router.post("/updateUsr", carController.updateUsr);
+
+// 사용자 삭제
+router.get("/deleteUsr", carController.deleteUsr);
 
 
 //***************************************************************************************** */
@@ -447,6 +488,25 @@ router.get("/getInquiryStatus", carController.getInquiryStatus);
 // 문의 조회
 router.get("/getNoticeStatus", carController.getNoticeStatus);
 
+
+//***************************************************************************************** */
+// 공지 게시판 2.0
+//***************************************************************************************** */
+
+// 공지 목록 조회
+router.post("/getNoticeList", carController.getNoticeList);
+
+// 공지 상세 조회
+router.get("/getNoticeInfo", carController.getNoticeInfo);
+
+// 공지 등록
+router.post("/insertNotice", carController.insertNotice);
+
+// 공지 수정
+router.post("/updateNotice", carController.updateNotice);
+
+// 공지 삭제
+router.get("/deleteNotice", carController.deleteNotice);
 
 //***************************************************************************************** */
 // FAQ 게시판
