@@ -137,6 +137,8 @@ exports.getCarCustList = async ({
     try {
       const request = pool.request();
 
+      console.log("agentId****************:", agentId);
+
       /**
        * 고객번호 획득
        */
@@ -175,7 +177,7 @@ exports.getCarCustList = async ({
             REGR_ID,
             MODR_ID ) 
         VALUES 
-          ( @CUST_NO
+          ( @CUST_NO,
             @AGENT_ID,
             @CUST_NM,
             @CUST_TP_CD,
@@ -201,6 +203,12 @@ exports.getCarCustList = async ({
 
 
   // 고객 상세 조회
+
+  /**
+   * 고객 정보 조회 - 사용하지 말고,, 그냥 고객정보를 저장처리.
+   * @param {고객명, 주민번호, 사업자번호, 연락처} param0 
+   * @returns {고객정보}
+   */
   exports.getCarCustExist = async ({ custNm, ssn, brno, custPhon }) => {
     try {
       const request = pool.request();

@@ -56,7 +56,6 @@ exports.getCarSelList = async ({
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
   
-  
       if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
       if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
       if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
@@ -528,10 +527,59 @@ exports.updateCarSel = async ({
   realFeeAmt, 
   saleCrIssuYn, 
   modrId,
-  buyerCustomers
+  buyerCustomers,
+  alsonDlrId,
+  alsonSelCost,
+  alsonFeeAmt,
+  alsonSsn,
+  alsonPhon,
+  alsonAgentNm,
+  alsonAcntNo,
 }) => {
     try {
       const request = pool.request();
+
+
+      console.log('carRegId:', carRegId);
+      console.log('carSaleDt:', carSaleDt);
+      console.log('saleRegDt:', saleRegDt);
+      console.log('agentId:', agentId);
+      console.log('dlrId:', dlrId);
+      console.log('saleTpCd:', saleTpCd);
+      console.log('buyerNm:', buyerNm);
+      console.log('buyerTpCd:', buyerTpCd);
+      console.log('buyerSsn:', buyerSsn);
+      console.log('buyerBrno:', buyerBrno);
+      console.log('buyerPhon:', buyerPhon);
+      console.log('buyerZip:', buyerZip);
+      console.log('buyerAddr1:', buyerAddr1);
+      console.log('buyerAddr2:', buyerAddr2);
+      console.log('saleAmt:', saleAmt);
+      console.log('saleSupPrc:', saleSupPrc);
+      console.log('saleVat:', saleVat);
+      console.log('saleCarNo:', saleCarNo);
+      console.log('agentSelCost:', agentSelCost);
+      console.log('perfInfeAmt:', perfInfeAmt);
+      console.log('txblIssuYn:', txblIssuYn);
+      console.log('selcstInclusYn:', selcstInclusYn);
+      console.log('selEvdcCd:', selEvdcCd);
+      console.log('selEvdcCont:', selEvdcCont);
+      console.log('selEvdcDt:', selEvdcDt);
+      console.log('adjFinYn:', adjFinYn);
+      console.log('attachedFiles:', attachedFiles);
+      console.log('totFeeAmt:', totFeeAmt);
+      console.log('realFeeAmt:', realFeeAmt);
+      console.log('saleCrIssuYn:', saleCrIssuYn);
+      console.log('saleDesc:', saleDesc);
+      console.log('modrId:', modrId);
+      console.log('buyerCustomers:', buyerCustomers);
+      console.log('alsonDlrId:', alsonDlrId);
+      console.log('alsonSelCost:', alsonSelCost);
+      console.log('alsonFeeAmt:', alsonFeeAmt);
+      console.log('alsonSsn:', alsonSsn);
+      console.log('alsonPhon:', alsonPhon);
+      console.log('alsonAgentNm:', alsonAgentNm);
+      console.log('alsonAcntNo:', alsonAcntNo);
   
       request.input("CAR_REG_ID", sql.VarChar, carRegId);
       request.input("CAR_SALE_DT", sql.VarChar, carSaleDt);
@@ -559,7 +607,6 @@ exports.updateCarSel = async ({
       request.input("SEL_EVDC_CONT", sql.VarChar, selEvdcCont);
       request.input("SEL_EVDC_DT", sql.VarChar, selEvdcDt);
       request.input("ADJ_FIN_YN", sql.VarChar, adjFinYn);
-      request.input("ATTACHED_FILES", sql.VarChar, attachedFiles);
       request.input("TOT_FEE_AMT", sql.Decimal, totFeeAmt);
       request.input("REAL_FEE_AMT", sql.Decimal, realFeeAmt);
       request.input("SALE_CR_ISSU_YN", sql.VarChar, saleCrIssuYn);
@@ -567,38 +614,40 @@ exports.updateCarSel = async ({
       request.input("MODR_ID", sql.VarChar, modrId);
   
       const query1 = `UPDATE dbo.CJB_CAR_SEL
-                        SET   CAR_SALE_DT = @carSaleDt,       -- 차량 판매 일자
-                              SALE_REG_DT = @saleRegDt,      -- 매출 등록 일자
-                              AGENT_ID = @agentId,       -- 상사 ID
-                              DLR_ID = @dlrId,          -- 담당딜러 ID (판매)
-                              SALE_TP_CD = @saleTpCd,   -- 판매유형코드
-                              BUYER_NM = @buyerNm,       -- 매입자명
-                              BUYER_TP_CD = @buyerTpCd,   -- 매입자 유형코드
-                              BUYER_SSN = @buyerSsn,      -- 매입자 주민번호
-                              BUYER_BRNO = @buyerBrno,    -- 매입자 사업자번호
-                              BUYER_PHON = @buyerPhon,    -- 매입자 전화번호
-                              BUYER_ZIP = @buyerZip,      -- 매입자 우편번호
-                              BUYER_ADDR1 = @buyerAddr1,    -- 매입자 주소
-                              BUYER_ADDR2 = @buyerAddr2,    -- 매입자 상세주소
-                              SALE_AMT = @saleAmt,          -- 매도 금액
-                              SALE_SUP_PRC = @saleSupPrc,   -- 매도 공급가액
-                              SALE_VAT = @saleVat,          -- 매도 부가세
-                              SALE_CAR_NO = @saleCarNo,        -- 판매 차량 번호
-                              AGENT_SEL_COST = @agentSelCost, -- 상사 매도 비용
-                              PERF_INFE_AMT = @perfInfeAmt, -- 성능 보험료 금액
-                              TXBL_ISSU_YN = @txblIssuYn,    -- 세금 발행 여부
-                              SELCST_INCLUS_YN = @selcstInclusYn, -- 세무비 포함 여부
-                              SEL_EVDC_CD = @selEvdcCd,      -- 증빙종류
-                              SEL_EVDC_CONT = @selEvdcCont,  -- 증빙내용
-                              SEL_EVDC_DT = @selEvdcDt,      -- 증빙일자
-                              ADJ_FIN_YN = @adjFinYn,        -- 정산산 완료 여부
-                              TOT_FEE_AMT = @totFeeAmt,      -- 총 비용
-                              REAL_FEE_AMT = @realFeeAmt,    -- 실제 비용
-                              SALE_CR_ISSU_YN = @saleCrIssuYn, -- 차량 판매 증서 발행 여부
-                              SALE_DESC = @saleDesc,          -- 매도 설명
-                              MOD_DTIME = GETDATE(),         -- 수정 일자
-                              MODR_ID = @modrId               -- 수정자
+                        SET   CAR_SALE_DT = @CAR_SALE_DT,       -- 차량 판매 일자
+                              SALE_REG_DT = @SALE_REG_DT,        -- 매출 등록 일자
+                              AGENT_ID = @AGENT_ID,              -- 상사 ID
+                              DLR_ID = @DLR_ID,                  -- 담당딜러 ID (판매)
+                              SALE_TP_CD = @SALE_TP_CD,          -- 판매유형코드
+                              BUYER_NM = @BUYER_NM,              -- 매입자명
+                              BUYER_TP_CD = @BUYER_TP_CD,        -- 매입자 유형코드
+                              BUYER_SSN = @BUYER_SSN,            -- 매입자 주민번호
+                              BUYER_BRNO = @BUYER_BRNO,          -- 매입자 사업자번호
+                              BUYER_PHON = @BUYER_PHON,          -- 매입자 전화번호
+                              BUYER_ZIP = @BUYER_ZIP,            -- 매입자 우편번호
+                              BUYER_ADDR1 = @BUYER_ADDR1,        -- 매입자 주소
+                              BUYER_ADDR2 = @BUYER_ADDR2,        -- 매입자 상세주소
+                              SALE_AMT = @SALE_AMT,              -- 매도 금액
+                              SALE_SUP_PRC = @SALE_SUP_PRC,      -- 매도 공급가액
+                              SALE_VAT = @SALE_VAT,              -- 매도 부가세
+                              SALE_CAR_NO = @SALE_CAR_NO,        -- 판매 차량 번호
+                              AGENT_SEL_COST = @AGENT_SEL_COST,  -- 상사 매도 비용
+                              PERF_INFE_AMT = @PERF_INFE_AMT,    -- 성능 보험료 금액
+                              TXBL_ISSU_YN = @TXBL_ISSU_YN,      -- 세금 발행 여부
+                              SELCST_INCLUS_YN = @SELCST_INCLUS_YN, -- 세무비 포함 여부
+                              SEL_EVDC_CD = @SEL_EVDC_CD,        -- 증빙종류
+                              SEL_EVDC_CONT = @SEL_EVDC_CONT,    -- 증빙내용
+                              SEL_EVDC_DT = @SEL_EVDC_DT,        -- 증빙일자
+                              ADJ_FIN_YN = @ADJ_FIN_YN,          -- 정산산 완료 여부
+                              TOT_FEE_AMT = @TOT_FEE_AMT,        -- 총 비용
+                              REAL_FEE_AMT = @REAL_FEE_AMT,      -- 실제 비용
+                              SALE_CR_ISSU_YN = @SALE_CR_ISSU_YN, -- 차량 판매 증서 발행 여부
+                              SALE_DESC = @SALE_DESC,            -- 매도 설명
+                              MOD_DTIME = GETDATE(),             -- 수정 일자
+                              MODR_ID = @MODR_ID                 -- 수정자
                         WHERE  CAR_REG_ID = @CAR_REG_ID;`;
+
+      await request.query(query1);
   
       // 첨부파일
       attachedFiles.forEach(async (file) => {
@@ -641,20 +690,41 @@ exports.updateCarSel = async ({
       /**
        * 고객정보에 먼저 등록하고 고객번호을 가지고 매입자 고객정보에 등록한다.
        */
-      buyerCustomers.forEach(async (cust) => {
+      buyerCustomers.forEach(async (cust, index) => {
 
         /**
          * 총 4개의 항목으로 검색해서 존재하지 않으면 신규 등록 하고, 존재하면 고객번호를 가지고 등록
          */
+          console.log("customerNo:", cust.customerNo);
           console.log("customerName:", cust.customerName);
           console.log("residentNumber:", cust.residentNumber);
           console.log("businessNumber:", cust.businessNumber);
           console.log("phone:", cust.phone);
           console.log("zip:", cust.zip);
           console.log("address:", cust.address);
+          console.log("addressDetail:", cust.addressDetail);
           console.log("memo:", cust.memo);
           console.log("shareRate:", cust.shareRate);
 
+          /**
+           * 사업자번호가 있으면 사업자로 
+           */
+          let custTpCd = '001';
+          if(cust.businessNumber)
+          {
+            custTpCd = '002';  // 사업자
+          }
+          else
+          {
+            custTpCd = '001';  // 개인
+          }
+
+
+          /**
+           * 고객 정보 조회 - 사용하지 말고,, 그냥 고객정보를 저장처리.
+           */
+
+          /*
           const custInfo = carCustModel.getCarCustExist(
             cust.customerName,
             cust.residentNumber,
@@ -663,30 +733,37 @@ exports.updateCarSel = async ({
           );
 
           console.log('custInfo:********' + custInfo);
+          */
 
           /**
-           * 미 등록 고객이면
+           * 미 등록 고객이면 (무조건)
            */
-          if(!custInfo.CUST_NO)
-          {
-            const insCust = carCustModel.insertCarCust
-                              ( agentId, 
-                                cust.customerName,
-                                custTpCd,    // 사업자 번호 있으면 ... 사업자 ?!
-                                cust.phone,
-                                '',
-                                cust.residentNumber,
-                                cust.businessNumber,
-                                cust.zip,
-                                cust.address1,
-                                cust.address2,
-                                usrId )
 
-            newCustNo = insCust.custNo;
+
+          console.log("&&&&&&&&&&&agentId****************:", agentId);
+
+          let newCustNo = '';
+          if (!cust.customerNo) {
+            // insertCarCust is async, so await its result.
+            const insCust = await carCustModel.insertCarCust({ 
+              agentId: agentId, 
+              custNm: cust.customerName, 
+              custTpCd: custTpCd,
+              custPhon: cust.phone, 
+              custEmail: '', 
+              ssn: cust.residentNumber, 
+              brno: cust.businessNumber, 
+              zip: cust.zip, 
+              addr1: cust.address, 
+              addr2: cust.addressDetail, 
+              usrId: modrId
+            });
+
+            newCustNo = insCust?.custNo || '';
           }
           else
           {
-            newCustNo = custInfo.CUST_NO;
+            newCustNo = cust.customerNo;
           }
 
           const custRequest = pool.request();
@@ -713,50 +790,106 @@ exports.updateCarSel = async ({
             */
 
           custRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
-          custRequest.input("RCV_ITEM_CD", sql.VarChar, cust.rcvItemCd);
+          custRequest.input("BUY_SEQ", sql.Int, parseInt(index) + 1); // 순번
           custRequest.input("CUST_NO", sql.VarChar, newCustNo);
-          custRequest.input("RCV_SHR_RT", sql.VarChar, cust.shareRate);
-          custRequest.input("RCV_SHR_AMT", sql.VarChar, cust.shareAmt);
-          custRequest.input("EVDC_SCT_CD", sql.VarChar, cust.evdcSctCd);
-          custRequest.input("EVDC_ISSU_DT", sql.VarChar, null);
+          custRequest.input("CUST_NM", sql.VarChar, cust.customerName);
+          custRequest.input("CUST_SSN", sql.VarChar, cust.residentNumber);
+          custRequest.input("CUST_BRNO", sql.VarChar, cust.businessNumber);
+          custRequest.input("CUST_PHON", sql.VarChar, cust.phone);
+          custRequest.input("CUST_ZIP", sql.VarChar, cust.zip);
+          custRequest.input("CUST_ADDR1", sql.VarChar, cust.address);
+          custRequest.input("CUST_ADDR2", sql.VarChar, cust.addressDetail);
           custRequest.input("CUST_MEMO", sql.VarChar, cust.memo);
-          custRequest.input("REGR_ID", sql.VarChar, usrId);
-          custRequest.input("MODR_ID", sql.VarChar, usrId);
+          custRequest.input("BUY_SHR_RT", sql.VarChar, cust.shareRate);
+          custRequest.input("REGR_ID", sql.VarChar, modrId);
+          custRequest.input("MODR_ID", sql.VarChar, modrId);
 
-          await custRequest.query(`INSERT INTO dbo.CJB_CAR_RCV_CUST_RT (
+          await custRequest.query(`INSERT INTO dbo.CJB_CAR_BUY_CUST (
                                               CAR_REG_ID,
-                                              RCV_ITEM_CD,
-                                              CUST_NO,
-                                              RCV_SHR_RT,
-                                              RCV_SHR_AMT,
-                                              EVDC_SCT_CD,
-                                              EVDC_ISSU_DT,
+                                              BUY_SEQ,
+                                              CUST_NM,
+                                              CUST_SSN,
+                                              CUST_BRNO,
+                                              CUST_PHON,
+                                              CUST_ZIP,
+                                              CUST_ADDR1,
+                                              CUST_ADDR2,
                                               CUST_MEMO,
+                                              BUY_SHR_RT,
+                                              CUST_NO,
                                               REGR_ID,
                                               MODR_ID) VALUES (
                                               @CAR_REG_ID,
-                                              @RCV_ITEM_CD,
-                                              @UST_NO,
-                                              @RCV_SHR_RT,
-                                              @RCV_SHR_AMT,
-                                              @EVDC_SCT_CD,
-                                              @EVDC_ISSU_DT,
+                                              @BUY_SEQ,
+                                              @CUST_NM,
+                                              @CUST_SSN,
+                                              @CUST_BRNO,
+                                              @CUST_PHON,
+                                              @CUST_ZIP,
+                                              @CUST_ADDR1,
+                                              @CUST_ADDR2,
                                               @CUST_MEMO,
+                                              @BUY_SHR_RT,
+                                              @CUST_NO,
                                               @REGR_ID, 
                                               @MODR_ID)`);
 
       });
-  
 
-    // 차량상태코드 (매입 -> 일반판매)
-    const query2 = `UPDATE dbo.CJB_CAR_PUR
-                       SET CAR_STAT_CD = '002' -- 일반판매
-                         , MODR_ID = @MODR_ID
-                     WHERE CAR_REG_ID = @CAR_REG_ID
-                       AND PRSN_SCT_CD = '0'   -- 상사
-                       `;
+    /**
+     * 알선 ID가 존재하면 알선판매로 설정. 기본은 일반판매
+     */
+    let carStatCd =  '002';    // 일반판매
 
-    await Promise.all([request.query(query1), request.query(query2)]);
+    if(alsonDlrId)
+    {
+      carStatCd = '003';      // 알선판매
+
+      const alsonRequest = pool.request();
+      alsonRequest.input("CAR_REG_ID", sql.VarChar, carRegId);
+      alsonRequest.input("DLR_ID", sql.VarChar, alsonDlrId);
+      alsonRequest.input("SEL_COST", sql.Decimal, alsonSelCost);
+      alsonRequest.input("FEE_AMT", sql.Decimal, alsonFeeAmt);
+      alsonRequest.input("SSN", sql.VarChar, alsonSsn);
+      alsonRequest.input("PHON", sql.VarChar, alsonPhon);
+      alsonRequest.input("AGENT_NM", sql.VarChar, alsonAgentNm);
+      alsonRequest.input("ACNT_NO", sql.VarChar, alsonAcntNo);
+      alsonRequest.input("REGR_ID", sql.VarChar, modrId);
+      alsonRequest.input("MODR_ID", sql.VarChar, modrId);
+      
+      await alsonRequest.query(`INSERT INTO dbo.CJB_CAR_SEL_BRK (
+        CAR_REG_ID,
+        DLR_ID,
+        SEL_COST,
+        FEE_AMT,
+        SSN,
+        PHON,
+        AGENT_NM,
+        ACNT_NO,
+        REGR_ID,
+        MODR_ID) VALUES (
+        @CAR_REG_ID,
+        @DLR_ID,
+        @SEL_COST,
+        @FEE_AMT,
+        @SSN,
+        @PHON,
+        @AGENT_NM,
+        @ACNT_NO,
+        @REGR_ID,
+        @MODR_ID)`);
+
+
+    }
+
+    request.input("CAR_STAT_CD", sql.VarChar, carStatCd);
+          
+    await request.query(`UPDATE dbo.CJB_CAR_PUR
+                         SET CAR_STAT_CD = @CAR_STAT_CD
+                           , MODR_ID = @MODR_ID
+                       WHERE CAR_REG_ID = @CAR_REG_ID
+                         AND PRSN_SCT_CD = '0'   -- 상사
+                         `);
 
     } catch (err) {
       console.error("Error updating car sel info:", err);

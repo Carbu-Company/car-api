@@ -1,3 +1,4 @@
+const adminModel = require("../../models/select/adminModel");
 const carAcctModel = require("../../models/select/carAcctModel");
 const carAdjModel = require("../../models/select/carAdjModel");
 const carAgentModel = require("../../models/select/carAgentModel");
@@ -18,6 +19,21 @@ const carTradeItemModel = require("../../models/select/carTradeItemModel");
 const carUsrModal = require("../../models/select/carUsrModel");
 const commonModel = require("../../models/select/commonModel");
 const usrReqModel = require("../../models/select/usrReqModel"); 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 관리자 2.0
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// 관리자 상사정보관리 조회
+exports.getAdminAgentList = async (req, res, next) => {
+  try {
+    const agentList = await adminModel.getAdminAgentList(req.body);
+    res.status(200).json(agentList);
+  } catch (err) {
+    next(err);
+  }
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 제시 2.0
@@ -2473,6 +2489,29 @@ exports.getMgtKey = async (req, res, next) => {
   }
 };
 
+
+// 현금 관리키 조회
+exports.getCashMgmtKey = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const cashMgmtKey = await commonModel.getCashMgmtKey({ agentId });
+    res.status(200).json(cashMgmtKey);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 세금 관리키 조회
+exports.getTaxMgmtKey = async (req, res, next) => {
+  try {
+    const { agentId } = req.query;
+    const taxMgmtKey = await commonModel.getTaxMgmtKey({ agentId });
+    res.status(200).json(taxMgmtKey);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // 딜러 조회
 exports.getDealerList = async (req, res, next) => {
   try {
@@ -2563,6 +2602,18 @@ exports.getAgentInfo = async (req, res, next) => {
     next(err);
   }
 };
+
+
+// 상사정보관리 조회
+exports.getAgentList = async (req, res, next) => {
+  try {
+    const agentList = await adminModel.getAgentList(req.body);
+    res.status(200).json(agentList);
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 // 상사 매입비 기본값 조회
 exports.getAgentPurCst = async (req, res, next) => {

@@ -60,6 +60,7 @@ exports.getUsrList = async ({
                     , A.SALE_FEE_SCT_CD
                     , A.AGENT_CD
                     , A.DLR_CD
+                    , A.SYS_ADMIN_YN
                     , A.LOGIN_IP
                     , A.LAST_LOGIN_DTIME
                     , A.REG_DTIME

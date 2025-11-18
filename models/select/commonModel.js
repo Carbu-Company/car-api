@@ -7,30 +7,51 @@ const pool = require("../../config/db");
 
 
 // 관리키 조회  dbo.SMJ_FN_MK_REGID   car_reg_id 값 만드는 함수 
-exports.getMgtKey = async ({ agentId }) => {
-    try {
-      const request = pool.request();
-      request.input("AGENT_ID", sql.VarChar, agentId);
+exports.getCashMgmtKey = async ({ agentId }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agentId);
+
+    const query = `
+      SELECT dbo.CJB_FN_MK_CASH_MGMTKEY(A.AGENT_ID) AS MgtKey,
+              AGENT_NM AS FranchiseCorpName
+        FROM dbo.CJB_AGENT A
+        WHERE A.AGENT_ID = @AGENT_ID
+    `;
+
+    const result = await request.query(query);
+
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching management key:", err);
+    throw err;
+  }
+};
   
-      const query = `
-        SELECT DBO.SMJ_FN_MK_MGTKEY(A.AGENT_ID) AS MgtKey,
-               AGENT_NM AS FranchiseCorpName
-          FROM CJB_AGENT A,
-               CJB_USR B
-         WHERE A.AGENT_ID = B.AGENT_ID
-           AND B.USR_GRADE_CD = '9'
-           AND A.AGENT_ID = @AGENT_ID;
-      `;
-  
-      const result = await request.query(query);
-      return result.recordset;
-    } catch (err) {
-      console.error("Error fetching management key:", err);
-      throw err;
-    }
-  };
-  
-  
+
+// 관리키 조회  dbo.SMJ_FN_MK_REGID   car_reg_id 값 만드는 함수 
+exports.getTaxMgmtKey = async ({ agentId }) => {
+  try {
+    const request = pool.request();
+    request.input("AGENT_ID", sql.VarChar, agentId);
+
+    const query = `
+      SELECT dbo.CJB_FN_MK_TAX_MGMTKEY(A.AGENT_ID) AS MgtKey,
+              AGENT_NM AS FranchiseCorpName
+        FROM dbo.CJB_AGENT A
+        WHERE A.AGENT_ID = @AGENT_ID
+    `;
+
+    const result = await request.query(query);
+
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching management key:", err);
+    throw err;
+  }
+};
+
+
 // 조합 전산 딜러 조회
 exports.getCombineDealerList = async ({ carCombineAgent }) => {
     try {
@@ -582,3 +603,4 @@ exports.getAgentInfo = async ({ agentId }) => {
     throw err;
   }
 };
+

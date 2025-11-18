@@ -27,7 +27,7 @@ exports.getSystemUseRequest = async ({ agentId }) => {
   }
 };
 
- // 인증번호 조회
+ // 조합상사코드 조회
 exports.checkSangsaCode = async ({ SangsaCode }) => {
   try {
     const request = pool.request();
@@ -81,7 +81,17 @@ exports.checkPhoneAuthNumber = async ({ representativePhone, authNumber }) => {
 };
 
 // 사용 요청 등록
-exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, UserId, UserPw, UsrNm, UsrTel }) => {
+exports.registerUser = async ({
+  AgentNm,
+  AgentRegNo,
+  CeoNm,
+  Email,
+  CombAgentCd,
+  UserId,
+  UserPw,
+  UsrNm,
+  UsrTel
+}) => {
     try {
       const request = pool.request();
   
@@ -123,11 +133,12 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
         request.input("AGENT_NM", sql.VarChar, AgentNm);
         request.input("AGENT_REG_NO", sql.VarChar, AgentRegNo);
         request.input("CEO_NM", sql.VarChar, CeoNm);
-        request.input("AGRM_AGR_YN", sql.VarChar, 'N');
+        request.input("AGRM_AGR_YN", sql.VarChar, 'Y');
         request.input("CMBT_AGENT_CD", sql.VarChar, CombAgentCd);
+        request.input("AEMP_ID", sql.VarChar, UserId);   // 담당자 ID
         request.input("FIRM_YN", sql.VarChar, 'N');
-        request.input("REGR_ID", sql.VarChar, 'USER');
-        request.input("MODR_ID", sql.VarChar, 'USER');
+        request.input("REGR_ID", sql.VarChar, 'ADMIN');
+        request.input("MODR_ID", sql.VarChar, 'ADMIN');
   
         const query = `INSERT INTO dbo.CJB_AGENT (AGENT_ID
                                                    , AGENT_NM
@@ -135,6 +146,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                                    , PRES_NM
                                                    , AGRM_AGR_YN
                                                    , CMBT_AGENT_CD
+                                                   , AEMP_ID
                                                    , FIRM_YN
                                                    , REGR_ID
                                                    , MODR_ID) VALUES 
@@ -144,6 +156,7 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                                    , @CEO_NM
                                                    , @AGRM_AGR_YN
                                                    , @CMBT_AGENT_CD
+                                                   , @AEMP_ID
                                                    , @FIRM_YN
                                                    , @REGR_ID
                                                    , @MODR_ID);`;
@@ -180,6 +193,8 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                             , SALE_FEE_SCT_CD
                                             , AGENT_CD
                                             , DLR_CD
+                                            , ADMIN_CONF_YN    -- 관리자 승인여부
+                                            , SYS_ADMIN_YN     -- 시스템 관리자 여부
                                             , LOGIN_IP
                                             , LAST_LOGIN_DTIME
                                             , REGR_ID
@@ -207,10 +222,12 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                                           , '0'                                      -- SALE_FEE_SCT_CD   
                                           , DL_SANGSA_CODE                           -- AGENT_CD          
                                           , DL_CODE                                  -- DLR_CD            
+                                          , 'N'                                      -- ADMIN_CONF_YN     
+                                          , 'N'                                      -- SYS_ADMIN_YN      
                                           , ''                                       -- LOGIN_IP          
                                           , NULL                                     -- LAST_LOGIN_DTIME  
-                                          , 'USER'                                   -- REGR_ID           
-                                          , 'USER'                                   -- MODR_ID          
+                                          , 'ADMIN'                                  -- REGR_ID           
+                                          , 'ADMIN'                                  -- MODR_ID          
                                       FROM dbo.KU_DEALER
                                      WHERE DL_SANGSA_CODE = @CombAgentCd
                                       ;`;
@@ -252,6 +269,8 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                 , LOGIN_PASSWD                 --  로그인 비밀번호       INPUT
                 , USR_NM                       --  사용자 명            INPUT
                 , USR_GRADE_CD                 --  사용자 등급코드       '9'
+                , ADMIN_CONF_YN                --  관리자 승인여부       'N'
+                , SYS_ADMIN_YN                 --  시스템 관리자 여부     'N'
                 , USR_PHON                     --  사용자 전화번호       INPUT          
                 , USR_EMAIL                    --  사용자 이메일         INPUT
                 , USR_STRT_DT                  --  사용자 시작 일자      GETDATE()
@@ -265,12 +284,15 @@ exports.registerUser = async ({ AgentNm, AgentRegNo, CeoNm, Email, CombAgentCd, 
                 , @login_passwd
                 , @usr_nm
                 , '9'
+                , 'N'
+                , 'N'
                 , @phone
                 , @email
                 , GETDATE()
-                , '2999-12-31'
+                , NULL --'2999-12-31'
                 , @agent_cd
-                , @login_ip);`;
+                , NULL --@login_ip
+                );`;
   
   
       console.log(query);

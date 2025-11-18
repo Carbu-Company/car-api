@@ -463,7 +463,6 @@ exports.insertCarPur = async ({
   , prsnSctCd              // 제시 구분 코드
   , ownrPhon               // 연락처
   , ownrEmail              // 이메일 아이디
-  , emailDomain            // 이메일 도메인
   , txblIssuDt             // 세금계산서 발행 일자
   , purDesc                // 매입 설명
   , ownrAddr1              // 주소
@@ -505,7 +504,6 @@ exports.insertCarPur = async ({
     request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);                       // 소유자 주소1         
     request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);                       // 소유자 주소2         
     request.input("OWNR_EMAIL", sql.VarChar, ownrEmail);                       // 소유자 이메일    
-    request.input("OWNR_EMAIL_DOMAIN", sql.VarChar, emailDomain);              // 소유자 이메일 도메인    
     request.input("PUR_AMT", sql.Int, purAmt);                                 // 매입금액액 금액            
     request.input("PUR_SUP_PRC", sql.Int, purSupPrc);                          // 공급가               
     request.input("PUR_VAT", sql.Int, purVat);                                 // 부가세               
@@ -558,7 +556,6 @@ exports.insertCarPur = async ({
                     OWNR_ADDR1,
                     OWNR_ADDR2,
                     OWNR_EMAIL,
-                    OWNR_EMAIL_DOMAIN,
                     PUR_AMT,
                     PUR_SUP_PRC,
                     PUR_VAT,
@@ -613,7 +610,6 @@ exports.insertCarPur = async ({
                     @OWNR_ADDR1,
                     @OWNR_ADDR2,
                     @OWNR_EMAIL,
-                    @OWNR_EMAIL_DOMAIN,
                     @PUR_AMT,
                     @PUR_SUP_PRC,
                     @PUR_VAT,
@@ -875,7 +871,6 @@ exports.updateCarPur = async ({
     prsnSctCd,                                                 // 제시 구분
     ownrPhon,                                                  // 연락처
     ownrEmail,                                                 // 이메일 아이디
-    emailDomain,                                               // 이메일 도메인
     txblIssuDt,                                                // 세금 납부일
     purDesc,                                                   // 매입설명
     ownrAddr1,                                                 // 주소
@@ -913,7 +908,6 @@ try {
   request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);
   request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);
   request.input("OWNR_EMAIL", sql.VarChar, ownrEmail);
-  request.input("OWNR_EMAIL_DOMAIN", sql.VarChar, emailDomain);
   request.input("PUR_AMT", sql.Decimal, purAmt);
   request.input("PUR_SUP_PRC", sql.Decimal, purSupPrc);
   request.input("PUR_VAT", sql.Decimal, purVat);
@@ -954,7 +948,6 @@ try {
         OWNR_ADDR1 = @OWNR_ADDR1,
         OWNR_ADDR2 = @OWNR_ADDR2,
         OWNR_EMAIL = @OWNR_EMAIL,
-        OWNR_EMAIL_DOMAIN = @OWNR_EMAIL_DOMAIN,
         PUR_AMT = @PUR_AMT,
         PUR_SUP_PRC = @PUR_SUP_PRC,
         PUR_VAT = @PUR_VAT,

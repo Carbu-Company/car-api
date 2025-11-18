@@ -1087,7 +1087,7 @@ exports.updateCarCash = async ({
     request.input("OWNR_ZIP", sql.VarChar, ownrZip);
     request.input("OWNR_ADDR1", sql.VarChar, ownrAddr1);
     request.input("OWNR_ADDR2", sql.VarChar, ownrAddr2);
-    request.input("OWNR_EMAIL", sql.VarChar, ownrEmail + '@' + emailDomain);
+    request.input("OWNR_EMAIL", sql.VarChar, ownrEmail);
     request.input("PUR_AMT", sql.Decimal, purAmt);
     request.input("PUR_SUP_PRC", sql.Decimal, purSupPrc);
     request.input("PUR_VAT", sql.Decimal, purVat);
