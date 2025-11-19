@@ -27,7 +27,7 @@ exports.getCarPurList = async ({
   }) => {
     try {
       const request = pool.request();
-  /*
+/*
       console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
@@ -47,12 +47,13 @@ exports.getCarPurList = async ({
       console.log('dtlCarNoBefore:', dtlCarNoBefore);
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
+  
   */
+
       request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
-  
-  
+
       if (carNo) request.input("CAR_NO", sql.VarChar, `%${carNo}%`);
       if (dealer) request.input("DEALER", sql.VarChar, `%${dealer}%`);
       if (dtGubun) request.input("DT_GUBUN", sql.VarChar, dtGubun);
@@ -78,8 +79,8 @@ exports.getCarPurList = async ({
                 AND A.CAR_STAT_CD = '001'  -- 매입 ( 제시 차량 )
                 ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
-                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                ${startDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
                 ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
                 ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
@@ -157,8 +158,8 @@ exports.getCarPurList = async ({
                   AND A.CAR_STAT_CD = '001'  -- 매입 ( 제시 차량 )
                 ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                 ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-                ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
-                ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                ${startDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} >= @START_DT` : ""}
+                ${endDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} <= @END_DT` : ""}
                 ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
                 ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
                 ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
@@ -226,7 +227,7 @@ exports.getCarPurList = async ({
   }) => {
     try {
       const request = pool.request();
-  /*
+/*
       console.log('agentId:', agentId);
       console.log('pageSize:', pageSize);
       console.log('page:', page);
@@ -246,7 +247,8 @@ exports.getCarPurList = async ({
       console.log('dtlCarNoBefore:', dtlCarNoBefore);
       console.log('orderItem:', orderItem);
       console.log('ordAscDesc:', ordAscDesc);
-  */
+*/
+
       request.input("CAR_AGENT", sql.VarChar, agentId);
       request.input("PAGE_SIZE", sql.Int, pageSize);
       request.input("PAGE", sql.Int, page);
@@ -281,8 +283,8 @@ exports.getCarPurList = async ({
                           AND PRSN_SCT_CD = '0'  -- 상사
                         ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                         ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
-                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${startDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} <= @END_DT` : ""}
                         ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
                         ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
                         ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
@@ -308,8 +310,8 @@ exports.getCarPurList = async ({
                           AND A.PRSN_SCT_CD = '1'  -- 고객위탁
                         ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                         ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
-                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${startDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} <= @END_DT` : ""}
                         ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
                         ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
                         ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
@@ -334,8 +336,8 @@ exports.getCarPurList = async ({
                           AND A.CAR_DEL_YN = 'N'
                         ${carNo ? "AND (A.CAR_NO LIKE @CAR_NO OR A.PUR_BEF_CAR_NO LIKE @CAR_NO OR B.SALE_CAR_NO LIKE @CAR_NO)" : ""}
                         ${dealer ? "AND (A.DLR_ID LIKE @DEALER OR B.DLR_ID LIKE @DEALER)" : ""}
-                        ${startDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} >= @START_DT` : ""}
-                        ${endDt ? `AND ${dtGubun === '1' ? 'A.CAR_PUR_DT' : dtGubun === '2' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), REG_DTIME, 23)'} <= @END_DT` : ""}
+                        ${startDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} >= @START_DT` : ""}
+                        ${endDt ? `AND ${dtGubun === '01' ? 'A.CAR_PUR_DT' : dtGubun === '02' ? 'A.CAR_REG_DT' : 'CONVERT(CHAR(10), A.REG_DTIME, 23)'} <= @END_DT` : ""}
                         ${dtlCustomerName ? "AND A.OWNR_NM LIKE @DTL_CUSTOMER_NAME" : ""}
                         ${dtlCustGubun ? "AND A.OWNR_TP_CD = @DTL_CUST_GUBUN" : ""}
                         ${dtlEvdcGubun ? "AND A.PUR_EVDC_CD = @DTL_EVDC_GUBUN" : ""}
