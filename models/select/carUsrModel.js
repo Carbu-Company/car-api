@@ -291,7 +291,7 @@ exports.getUsrList = async ({
     }
   }
 
-  // 계좌정보 상세 수정
+  // 유저정보 수정
   exports.updateUsr = async ({ 
     usrId, 
     agentId, 
@@ -382,7 +382,47 @@ exports.getUsrList = async ({
 
       return { success: true };
     } catch (err) {
-      console.error("Error updating car acct detail:", err);
+      console.error("Error updating car usr detail:", err);
+      throw err;
+    }
+  }
+
+  
+  // 유저정보 수정 (환경설정)
+  exports.updateUsrPasswd = async ({ 
+    usrId, 
+    loginId, 
+    loginPasswd, 
+    usrPhon, 
+    usrEmail, 
+    modrId
+  }) => {
+    try {
+      const request = pool.request();
+
+      request.input("USR_ID", sql.VarChar, usrId);  
+      request.input("LOGIN_ID", sql.VarChar, loginId);
+      request.input("LOGIN_PASSWD", sql.VarChar, loginPasswd);
+      request.input("USR_PHON", sql.VarChar, usrPhon);
+      request.input("USR_EMAIL", sql.VarChar, usrEmail);
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      const query = `
+        UPDATE dbo.CJB_USR
+           SET LOGIN_PASSWD = @LOGIN_PASSWD,
+               USR_PHON = @USR_PHON,
+               USR_EMAIL = @USR_EMAIL,
+               MOD_DTIME = getdate(),
+               MODR_ID = @MODR_ID
+        WHERE 
+          USR_ID = @USR_ID 
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating car usr passwd:", err);
       throw err;
     }
   }

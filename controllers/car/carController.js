@@ -2604,6 +2604,17 @@ exports.getAgentInfo = async (req, res, next) => {
 };
 
 
+// 로그인 조회
+exports.getLoginInfo = async (req, res, next) => {
+  try {
+    const { usrId } = req.query;
+    const loginInfo = await commonModel.getLoginInfo({ usrId });
+    res.status(200).json(loginInfo);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // 상사정보관리 조회
 exports.getAgentList = async (req, res, next) => {
   try {

@@ -284,24 +284,18 @@ exports.getCarAgentList = async ({
     }
   }
 
-  // 상사 수정
+  // 상사 수정  (환경설정)
   exports.updateCarAgent = async ({ 
     agentId,
     agentNm, 
     brno, 
     presNm, 
     email, 
-    agrmAgrYn, 
-    firmYn,
-    agentStatCd,
     phon,
     fax,
     zip,
     addr1,
     addr2,
-    feeSctCd,
-    cmbtAgentCd,
-    cmbtAgentStatNm,
     usrId
   }) => {
     try {
@@ -312,17 +306,11 @@ exports.getCarAgentList = async ({
       request.input("BRNO", sql.VarChar, brno);
       request.input("PRES_NM", sql.VarChar, presNm);
       request.input("EMAIL", sql.VarChar, email);
-      request.input("AGRM_AGR_YN", sql.VarChar, agrmAgrYn);
-      request.input("FIRM_YN", sql.VarChar, firmYn);
-      request.input("AGENT_STAT_CD", sql.VarChar, agentStatCd);
       request.input("PHON", sql.VarChar, phon);
       request.input("FAX", sql.VarChar, fax);
       request.input("ZIP", sql.VarChar, zip);
       request.input("ADDR1", sql.VarChar, addr1);
       request.input("ADDR2", sql.VarChar, addr2);
-      request.input("FEE_SCT_CD", sql.VarChar, feeSctCd);
-      request.input("CMBT_AGENT_CD", sql.VarChar, cmbtAgentCd);
-      request.input("CMBT_AGENT_STAT_CD", sql.VarChar, cmbtAgentStatNm);
       request.input("MODR_ID", sql.VarChar, usrId);
 
       const query = `
@@ -331,16 +319,11 @@ exports.getCarAgentList = async ({
                BRNO = @BRNO,
                PRES_NM = @PRES_NM,
                EMAIL = @EMAIL,
-               AGRM_AGR_YN = @AGRM_AGR_YN,
-               FIRM_YN = @FIRM_YN,
                PHON = @PHON,
                FAX = @FAX,
                ZIP = @ZIP,
                ADDR1 = @ADDR1,
-               ADDR2 = @ADDR2,
-               FEE_SCT_CD = @FEE_SCT_CD,
-               CMBT_AGENT_CD = @CMBT_AGENT_CD,
-               CMBT_AGENT_STAT_CD = @CMBT_AGENT_STAT_CD
+               ADDR2 = @ADDR2
                MOD_DTIME = GETDATE(),
                MODR_ID = @MODR_ID
         WHERE 

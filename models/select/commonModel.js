@@ -607,3 +607,33 @@ exports.getAgentInfo = async ({ agentId }) => {
   }
 };
 
+
+
+// 로그인 조회
+exports.getLoginInfo = async ({ usrId }) => {
+  try {
+    const request = pool.request();
+    request.input("USR_ID", sql.VarChar, usrId);
+
+    const query = `SELECT LOGIN_ID
+                        , LOGIN_PASSWD
+                        , USR_NM
+                        , USR_PHON
+                        , USR_EMAIL
+                        , USR_STAT_CD
+                        , USR_STRT_DT
+                        , ISNULL(USR_END_DT, '2999-12-31') AS USR_END_DT
+                        , USR_GRADE_CD
+                        , dbo.SMJ_FN_GETCDNAME('07', USR_GRADE_CD) AS USR_GRADE_NM
+                    FROM dbo.CJB_USR A
+                    WHERE A.USR_ID = @USR_ID`;
+
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    console.error("Error fetching login info:", err);
+    throw err;
+  }
+};
+
+
