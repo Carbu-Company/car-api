@@ -67,11 +67,14 @@ exports.getFaqList = async ({
         request.query(dataQuery)
       ]);
   
-      const totalCount = countResult.recordset[0].totalCount;
+      // Handle case where countResult or countResult.recordset is undefined or empty
+      const totalCount = countResult && countResult.recordset && countResult.recordset.length > 0 && countResult.recordset[0].totalCount !== undefined
+        ? countResult.recordset[0].totalCount
+        : 0;
       const totalPages = Math.ceil(totalCount / pageSize);
-  
+
       return {
-        faqlist: dataResult.recordset,
+        faqlist: dataResult && dataResult.recordset ? dataResult.recordset : [],
         pagination: {
           currentPage: page,
           pageSize: pageSize,
