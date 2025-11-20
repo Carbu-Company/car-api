@@ -201,6 +201,9 @@ router.post("/getCarLoanSummary", carController.getCarLoanSummary);
 // 차량 대출 정보 조회
 router.get("/getCarLoanInfo", carController.getCarLoanInfo);
 
+// 상사 대출 업체 목록 조회
+router.get("/getAgentLoanCorpList", carController.getAgentLoanCorpList);
+
 // 재고금융 등록
 router.post("/insertCarLoan", carController.insertCarLoan);
 
@@ -567,7 +570,13 @@ router.post("/getCompanySangsaDealer", carController.getCompanySangsaDealer);
 router.post("/getPurchaseCost", carController.getPurchaseCost);
 
 // 매도비 설정 합계 조회
-router.post("/getSellCostSummary", carController.getSellCostSummary);
+router.post("/getSellCost", carController.getSellCost);
+
+// 지출항목설정 조회
+router.post("/getExpenseItem", carController.getExpenseItem);
+
+// 수입항목설정 조회
+router.post("/getIncomeItem", carController.getIncomeItem);
 
 // 상사지출항목설정 조회
 router.post("/getCompanyExpense", carController.getCompanyExpense);

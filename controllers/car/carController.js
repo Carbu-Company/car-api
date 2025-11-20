@@ -4,7 +4,7 @@ const carAdjModel = require("../../models/select/carAdjModel");
 const carAgentModel = require("../../models/select/carAgentModel");
 const carBrkTradeModel = require("../../models/select/carBrkTradeModel");
 const carCashModel = require("../../models/select/carCashModel");
-//const carCostModel = require("../../models/select/carCostModel");
+const carCostModel = require("../../models/select/carCostModel");
 const carCustModel = require("../../models/select/carCustModel");
 const carDashBoardModel = require("../../models/select/carDashBoardModel");
 const carFaqBoardModel = require("../../models/select/carFaqBoardModel");
@@ -705,11 +705,11 @@ exports.getCarLoanSummary = async (req, res, next) => {
 
 
 // 차량 대출 정보 조회
-exports.getCarLoanInfo = async (req, res, next) => {
+exports.getAgentLoanCorpList = async (req, res, next) => {
   try {
-    const { carRegId } = req.query;
-    const carLoanInfo = await carLoanModel.getCarLoanInfo({ carRegId });
-    res.status(200).json(carLoanInfo);
+    const { agentId } = req.query;
+    const agentLoanCorpList = await carLoanModel.getAgentLoanCorpList({ agentId });
+    res.status(200).json(agentLoanCorpList);
   } catch (err) {
     next(err);
   }
@@ -2430,7 +2430,7 @@ exports.getCompanyDealer = async (req, res, next) => {
 exports.getPurchaseCost = async (req, res, next) => {
   try {
     const { agentId } = req.body;
-    const purchaseCost = await carSelectModel.getPurchaseCost({ agentId });
+    const purchaseCost = await carCostModel.getPurchaseCost({ agentId });
     res.status(200).json(purchaseCost);
   } catch (err) {
     next(err);
@@ -2439,16 +2439,38 @@ exports.getPurchaseCost = async (req, res, next) => {
 
 
 // 매도비 설정 합계 조회
-exports.getSellCostSummary = async (req, res, next) => {
+exports.getSellCost = async (req, res, next) => {
   try {
     const { agentId } = req.body;
-    const sellCostSummary = await carSelectModel.getSellCostSummary({ agentId });  
-    res.status(200).json(sellCostSummary);
+    const sellCost = await carCostModel.getSellCost({ agentId });  
+    res.status(200).json(sellCost);
   } catch (err) {
     next(err);
   }
 };
 
+
+// 지출항목설정 조회
+exports.getExpenseItem = async (req, res, next) => {
+  try {
+    const { agentId } = req.body;
+    const expenseItem = await carCostModel.getExpenseItem({ agentId });
+    res.status(200).json(expenseItem);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 수입항목 설정 조회
+exports.getIncomeItem = async (req, res, next) => {
+  try {
+    const { agentId } = req.body;
+    const incomeItem = await carCostModel.getIncomeItem({ agentId });
+    res.status(200).json(incomeItem);
+  } catch (err) {
+    next(err);
+  }
+};
 
 // 상사지출항목설정 조회  
 exports.getCompanyExpense = async (req, res, next) => {

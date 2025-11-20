@@ -105,7 +105,7 @@ exports.getUsrList = async ({
     }
   };
 
-  // 현금영수증 상세 조회
+  // 사용자 상세 조회
   exports.getUsrDetail = async ({ usrId }) => {
     try {
       const request = pool.request();
@@ -159,7 +159,7 @@ exports.getUsrList = async ({
     }
   };
 
-  // 계 좌정보 상세 저장
+  // 사용자 저장
   exports.insertUsr = async ({ 
     usrId,
     agentId,
@@ -388,8 +388,8 @@ exports.getUsrList = async ({
   }
 
   
-  // 유저정보 수정 (환경설정)
-  exports.updateUsrPasswd = async ({ 
+  // 로그인 정보 수정 (환경설정)
+  exports.updateSettingLogin = async ({ 
     usrId, 
     loginId, 
     loginPasswd, 
@@ -427,4 +427,160 @@ exports.getUsrList = async ({
     }
   }
 
+  // 딜러 정보 저장
+  exports.insertSettingDealer = async ({ 
+    usrId,
+    agentId,
+    usrNm,
+    usrPhon,
+    usrEmail,
+    usrStrtDt,
+    usrEndDt,
+    zip,
+    addr1,
+    addr2,  
+    usrid,
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("USR_ID", sql.VarChar, usrId);
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("USR_NM", sql.VarChar, usrNm); 
+      request.input("USR_GRADE_CD", sql.VarChar, '0');
+      request.input("USR_STAT_CD", sql.VarChar, '0');
+      request.input("USR_PHON", sql.VarChar, usrPhon);
+      request.input("USR_EMAIL", sql.VarChar, usrEmail);
+      request.input("USR_STRT_DT", sql.VarChar, usrStrtDt);
+      request.input("USR_END_DT", sql.VarChar, usrEndDt);
+      request.input("ZIP", sql.VarChar, zip);
+      request.input("ADDR1", sql.VarChar, addr1);
+      request.input("ADDR2", sql.VarChar, addr2);
+      request.input("REGR_ID", sql.VarChar, usrid);
+      request.input("MODR_ID", sql.VarChar, usrid);
+
+      const query = `
+        INSERT INTO dbo.CJB_USR
+            ( USR_ID,
+              AGENT_ID,
+              USR_NM,
+              USR_GRADE_CD,
+              USR_STAT_CD,
+              USR_PHON,
+              USR_EMAIL,
+              USR_STRT_DT,
+              USR_END_DT,
+              ZIP,
+              ADDR1,
+              ADDR2,
+              REGR_ID,
+              MODR_ID ) 
+        VALUES 
+          ( @USR_ID,
+            @AGENT_ID,
+            @USR_NM,
+            @USR_GRADE_CD,
+            @USR_STAT_CD,
+            @USR_PHON,
+            @USR_EMAIL,
+            @USR_STRT_DT,
+            @USR_END_DT,
+            @ZIP,
+            @ADDR1,
+            @ADDR2,
+            @REGR_ID,
+            @MODR_ID
+          );
+      `;
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error inserting car acct detail:", err);
+      throw err;
+    }
+  }
+
   
+  
+  // 딜러 정보 수정 (환경설정)
+  exports.updateSettingDealer = async ({ 
+    usrId,
+    usrNm,
+    usrPhon,
+    usrEmail,
+    usrStrtDt,
+    usrEndDt,
+    zip,
+    addr1,
+    addr2,  
+    modrId,
+  }) => {
+    try {
+      const request = pool.request();
+
+      request.input("USR_ID", sql.VarChar, usrId);  
+      request.input("USR_NM", sql.VarChar, usrNm);
+      request.input("USR_PHON", sql.VarChar, usrPhon);
+      request.input("USR_EMAIL", sql.VarChar, usrEmail);
+      request.input("USR_STRT_DT", sql.VarChar, usrStrtDt);
+      request.input("USR_END_DT", sql.VarChar, usrEndDt);
+      request.input("ZIP", sql.VarChar, zip);
+      request.input("ADDR1", sql.VarChar, addr1);
+      request.input("ADDR2", sql.VarChar, addr2);
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      const query = `
+        UPDATE dbo.CJB_USR
+           SET USR_NM = @USR_NM,
+               USR_PHON = @USR_PHON,
+               USR_EMAIL = @USR_EMAIL,
+               USR_STRT_DT = @USR_STRT_DT,
+               USR_END_DT = @USR_END_DT,
+               ZIP = @ZIP,
+               ADDR1 = @ADDR1,
+               ADDR2 = @ADDR2,
+               MOD_DTIME = getdate(),
+               MODR_ID = @MODR_ID
+        WHERE 
+          USR_ID = @USR_ID 
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating car dealer detail:", err);
+      throw err;
+    }
+  }
+
+
+    
+  // 딜러 정보 삭제 (환경설정)
+  exports.deleteSettingDealer = async ({ 
+    usrId,
+    modrId,
+  }) => {
+    try {
+      const request = pool.request();
+
+      request.input("USR_ID", sql.VarChar, usrId);  
+      request.input("MODR_ID", sql.VarChar, modrId);
+
+      const query = `
+        UPDATE dbo.CJB_USR
+           SET USR_END_DT = convert(varchar, dateadd(day, -1, getdate()), 23),
+               MOD_DTIME = getdate(),
+               MODR_ID = @MODR_ID
+        WHERE 
+          USR_ID = @USR_ID 
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error deleting car dealer detail:", err);
+      throw err;
+    }
+  }

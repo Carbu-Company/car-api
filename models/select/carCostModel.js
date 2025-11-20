@@ -468,3 +468,358 @@ exports.getCostList = async ({
       throw err;
     }
   }
+
+
+
+  // 매입비 설정 조회  (환경설정)
+  exports.getPurchaseCost = async ({ agentId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      const query = `SELECT TRADE_ITEM_SEQ
+                        , TRADE_SCT_CD
+                        , TRADE_ITEM_CD
+                        , TRADE_ITEM_NM
+                        , TRADE_ITEM_RT
+                        , TRADE_ITEM_AMT
+                        , TRADE_ITEM_SUP_PRC
+                        , TRADE_ITEM_VAT
+                        , CR_ISSU_YN
+                        , ELEC_TXBL_ISSU_YN
+                        , ADJ_RFLN_YN
+                        , TAX_INCLUS_YN
+                        , DEL_YN
+                        , REGR_ID
+                        , CONVERT(VARCHAR, REG_DTIME, 23) AS REG_DTIME
+                        , MODR_ID
+                        , CONVERT(VARCHAR, MOD_DTIME, 23) AS MOD_DTIME 
+                        FROM dbo.CJB_CAR_TRADE_ITEM 
+                        WHERE AGENT_ID = @AGENT_ID 
+                          AND TRADE_SCT_CD = '0' --매입
+                          AND DEL_YN = 'N' -- 삭제 여부
+                        ;`;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching purchase cost:", err);
+      throw err;
+    }
+  }
+
+
+
+  
+  // 매도비 설정 조회  (환경설정)
+  exports.getSellCost = async ({ agentId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      const query = `SELECT TRADE_ITEM_SEQ
+                        , TRADE_SCT_CD
+                        , TRADE_ITEM_CD
+                        , TRADE_ITEM_NM
+                        , TRADE_ITEM_RT
+                        , TRADE_ITEM_AMT
+                        , TRADE_ITEM_SUP_PRC
+                        , TRADE_ITEM_VAT
+                        , CR_ISSU_YN
+                        , ELEC_TXBL_ISSU_YN
+                        , ADJ_RFLN_YN
+                        , TAX_INCLUS_YN
+                        , DEL_YN
+                        , REGR_ID
+                        , CONVERT(VARCHAR, REG_DTIME, 23) AS REG_DTIME
+                        , MODR_ID
+                        , CONVERT(VARCHAR, MOD_DTIME, 23) AS MOD_DTIME
+                        FROM dbo.CJB_CAR_TRADE_ITEM 
+                        WHERE AGENT_ID = @AGENT_ID 
+                          AND TRADE_SCT_CD = '1' --매도
+                          AND DEL_YN = 'N' -- 삭제 여부
+                        ;`;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching purchase cost:", err);
+      throw err;
+    }
+  }
+
+
+  // 상사 지출항목 설정 조회  (환경설정)
+  exports.getExpenseItem = async ({ agentId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      const query = `SELECT EXPD_ITEM_CD
+                        , EXPD_ITEM_NM
+                        , BASE_AMT
+                        , SORT_SEQ
+                        , USE_YN  
+                        , REGR_ID
+                        , CONVERT(VARCHAR, REG_DTIME, 23) AS REG_DTIME
+                        , MODR_ID
+                        , CONVERT(VARCHAR, MOD_DTIME, 23) AS MOD_DTIME
+                        FROM dbo.CJB_AGENT_EXPD_ITEM 
+                        WHERE AGENT_ID = @AGENT_ID
+                   --       AND USE_YN = 'Y' -- 사용 여부
+                        ;`;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching expense item:", err);
+      throw err;
+    }
+  }
+
+
+  // 상사 수입항목 설정 조회  (환경설정)
+  exports.getIncomeItem = async ({ agentId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      const query = `SELECT IMP_ITEM_CD
+                        , IMP_ITEM_NM
+                        , BASE_AMT
+                        , SORT_SEQ
+                        , USE_YN
+                        , REGR_ID
+                        , CONVERT(VARCHAR, REG_DTIME, 23) AS REG_DTIME
+                        , MODR_ID
+                        , CONVERT(VARCHAR, MOD_DTIME, 23) AS MOD_DTIME
+                        FROM dbo.CJB_AGENT_IMP_ITEM 
+                        WHERE AGENT_ID = @AGENT_ID
+                         -- AND USE_YN = 'Y' -- 사용 여부
+                        ;`;
+      const result = await request.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("Error fetching income item:", err);
+      throw err;
+    }
+  }
+
+
+  // 상사 지출항목 등록 (환경설정)
+  exports.insertExpenseItem = async ({ agentId, expdItemCd, expdItemNm, baseAmt, sortSeq, useYn, userId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
+      request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
+      request.input("BASE_AMT", sql.Int, baseAmt);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("REGR_ID", sql.VarChar, userId);
+      request.input("MODR_ID", sql.VarChar, userId);
+
+      const query = `
+        INSERT INTO dbo.CJB_AGENT_EXPD_ITEM (
+          AGENT_ID,
+          EXPD_ITEM_CD,
+          EXPD_ITEM_NM,
+          BASE_AMT,
+          SORT_SEQ,
+          USE_YN,
+          REGR_ID,
+          MODR_ID
+        ) VALUES (
+          @AGENT_ID,
+          @EXPD_ITEM_CD,
+          @EXPD_ITEM_NM,
+          @BASE_AMT,
+          @SORT_SEQ,
+          @USE_YN,
+          @REGR_ID,
+          @MODR_ID
+        )
+      `;
+      await request.query(query);
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error inserting expense item:", err);
+      throw err;
+    }
+  }
+
+  // 상사 수입항목 등록 (환경설정)
+  exports.insertIncomeItem = async ({ agentId, impItemCd, impItemNm, baseAmt, sortSeq, useYn, userId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("IMP_ITEM_CD", sql.VarChar, impItemCd);
+      request.input("IMP_ITEM_NM", sql.VarChar, impItemNm);
+      request.input("BASE_AMT", sql.Int, baseAmt);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("REGR_ID", sql.VarChar, userId);
+      request.input("MODR_ID", sql.VarChar, userId);
+
+      const query = `
+        INSERT INTO dbo.CJB_AGENT_IMP_ITEM (
+          AGENT_ID,
+          IMP_ITEM_CD,
+          IMP_ITEM_NM,
+          BASE_AMT,
+          SORT_SEQ,
+          USE_YN,
+          REGR_ID,
+          MODR_ID
+        ) VALUES (
+          @AGENT_ID,
+          @IMP_ITEM_CD,
+          @IMP_ITEM_NM,
+          @BASE_AMT,
+          @SORT_SEQ,
+          @USE_YN,
+          @REGR_ID,
+          @MODR_ID
+        )
+      `;
+      await request.query(query);
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error inserting income item:", err);
+      throw err;
+    }
+  }
+
+
+  // 상사 지출항목 삭제 (환경설정) 
+  exports.deleteExpenseItem = async ({ agentId, expdItemCd }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
+      const query = `DELETE dbo.CJB_AGENT_EXPD_ITEM 
+                      WHERE AGENT_ID = @AGENT_ID 
+                      AND EXPD_ITEM_CD = @EXPD_ITEM_CD`;
+      await request.query(query);
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error deleting expense item:", err);
+      throw err;
+    }
+  }
+
+  // 상사 수입항목 삭제 (환경설정)
+  exports.deleteIncomeItem = async ({ agentId, impItemCd }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("IMP_ITEM_CD", sql.VarChar, impItemCd);
+          const query = `DELETE dbo.CJB_AGENT_IMP_ITEM 
+                          WHERE AGENT_ID = @AGENT_ID  
+                            AND IMP_ITEM_CD = @IMP_ITEM_CD`;
+      await request.query(query);
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error deleting income item:", err);
+      throw err;
+    }
+  }
+
+  // 상사 지출항목 수정 (환경설정)
+  exports.updateExpenseItem = async ({ 
+    agentId, 
+    expdItemCd, 
+    expdItemNm, 
+    baseAmt, 
+    sortSeq, 
+    useYn, 
+    userId 
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("EXPD_ITEM_CD", sql.VarChar, expdItemCd);
+      request.input("EXPD_ITEM_NM", sql.VarChar, expdItemNm);
+      request.input("BASE_AMT", sql.Int, baseAmt);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("REGR_ID", sql.VarChar, userId);
+      request.input("MODR_ID", sql.VarChar, userId);
+      const query = `UPDATE dbo.CJB_AGENT_EXPD_ITEM 
+                        SET EXPD_ITEM_NM = @EXPD_ITEM_NM, 
+                            BASE_AMT = @BASE_AMT, 
+                            SORT_SEQ = @SORT_SEQ, 
+                            USE_YN = @USE_YN, 
+                            MOD_DTIME = GETDATE(), 
+                            MODR_ID = @MODR_ID 
+                      WHERE AGENT_ID = @AGENT_ID 
+                        AND EXPD_ITEM_CD = @EXPD_ITEM_CD`;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating income item:", err);
+      throw err;
+    }
+  }
+  // 상사 수입항목 수정 (환경설정)
+  exports.updateIncomeItem = async ({ 
+    agentId,
+    impItemCd,
+    impItemNm,
+    baseAmt,
+    sortSeq,
+    useYn,
+    userId
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("IMP_ITEM_CD", sql.VarChar, impItemCd);
+      request.input("IMP_ITEM_NM", sql.VarChar, impItemNm);
+      request.input("BASE_AMT", sql.Int, baseAmt);
+      request.input("SORT_SEQ", sql.Int, sortSeq);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("REGR_ID", sql.VarChar, userId);
+      request.input("MODR_ID", sql.VarChar, userId);
+      const query = `UPDATE dbo.CJB_AGENT_IMP_ITEM 
+                        SET IMP_ITEM_NM = @IMP_ITEM_NM, 
+                            BASE_AMT = @BASE_AMT, 
+                            SORT_SEQ = @SORT_SEQ, 
+                            USE_YN = @USE_YN, 
+                            MOD_DTIME = GETDATE(), 
+                            MODR_ID = @MODR_ID 
+                      WHERE AGENT_ID = @AGENT_ID 
+                        AND IMP_ITEM_CD = @IMP_ITEM_CD`;
+      await request.query(query);
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error updating income item:", err);
+      throw err;
+    }
+  }
+
+
+
+
+
+
+/**
+ * 상사 지출, 수입 항목 등록 쿼리 
+ * 
+ * insert into dbo.cjb_agent_expd_item (agent_id, EXPD_ITEM_CD ,EXPD_ITEM_NM, BASE_AMT, USE_YN, SORT_SEQ , regr_id, modr_id)
+select distinct '00011', code1, name, 0, 'Y', row_number() over (order by code1 asc) as sort, 'admin', 'admin'
+  from dbo.SMJ_CODE sc 
+  where agent = '00001'
+  and code1 <> '###'
+  and indexcd = '80'
+  and code1 < '013'
+  ;
+
+insert into dbo.cjb_agent_imp_item (agent_id, IMP_ITEM_CD ,IMP_ITEM_NM, BASE_AMT, USE_YN, SORT_SEQ , regr_id, modr_id)
+select distinct '00011', code1, name, 0, 'Y', row_number() over (order by code1 asc) as sort, 'admin', 'admin'
+  from dbo.SMJ_CODE sc 
+  where agent = '00001'
+  and indexcd = '81'
+  and code1 <> '###'
+  and code1 < '023'
+  ;
+
+ */

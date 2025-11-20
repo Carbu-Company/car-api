@@ -409,26 +409,33 @@ exports.getCarLoanList = async ({   agentId,
   };
     
   // 차량 대출 정보 조회
-  exports.getCarLoanCorpInfo = async ({ carRegId }) => {
+  exports.getAgentLoanCorpList = async ({ agentId }) => {
     try {
       const request = pool.request();
-      request.input("CAR_REG_ID", sql.VarChar, carRegId);
-      const query = `SELECT A.LOAN_AMT
-                        , A.LOAN_CORP_INTR_RT 
-                        , A.LOAN_DT
-                        , (SELECT ISNULL(SUM(INTR_PAY_AMT), 0) FROM dbo.CJB_LOAN_INTR_PAY WHERE LOAN_ID = B.LOAN_ID) AS TOT_INTR_PAY_AMT
-                    FROM dbo.CJB_CAR_LOAN A
-                    WHERE  A.CAR_REG_ID = @CAR_REG_ID
-                    ;`;
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      const query = `SELECT LOAN_CORP_CD, 
+                             LOAN_CORP_NM,       -- 캐피탈사사
+                             TOT_LMT_AMT,        -- 총 대출한도액
+                             TOT_LOAN_AMT,       -- 총 대출액
+                             (TOT_LMT_AMT - TOT_LOAN_AMT) AS LMT_AMT, -- 남은 한도액
+                             (TOT_LOAN_AMT/TOT_LMT_AMT) * 100 AS RT, -- 사용률률
+                             TOT_CNT,            -- 총 실행건수
+                             RCNT_UTIL_DT,       -- 최근 사용일
+                             INTR_PAY_DD        -- 이자납입일
+                     FROM dbo.CJB_AGENT_LOAN_CORP A
+                     WHERE A.AGENT_ID = @AGENT_ID
+                     ORDER BY LOAN_CORP_CD;`;
+
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
-      console.error("Error fetching car loan info:", err);
+      console.error("Error fetching agent loan corp list:", err);
       throw err;
     }
   };
 
   // 재고 금융 등록
+  /*
   exports.insertAgentLoanCorp = async ({
     agentId                     // 상사 ID        
   , loanCorpCd                  // 대출 업체 코드
@@ -477,135 +484,181 @@ exports.getCarLoanList = async ({   agentId,
                     @REGR_ID,
                     @MODR_ID
                   )`;
-  
-   
+    
+    
     // 재고 금융
     const query2 = `UPDATE dbo.CJB_CAR_PUR
             SET CAR_LOAN_CNT = CAR_LOAN_CNT + 1
                 , CAR_LOAN_AMT = CAR_LOAN_AMT + @TOT_LOAN_AMT
             WHERE AGENT_ID = @AGENT_ID
               AND LOAN_CORP_CD = @LOAN_CORP_CD;
-  `;
-  
-    await Promise.all([request.query(query1), request.query(query2)]);
-  
-  } catch (err) {
-    console.error("Error inserting car loan:", err);
-    throw err;
-  }
+    `;
+    
+      await Promise.all([request.query(query1), request.query(query2)]);
+    
+    } catch (err) {
+      console.error("Error inserting car loan:", err);
+      throw err;
+    }
   };
+  */
+
+  exports.insertAgentLoanCorp = async ({
+    agentId                     // 상사 ID        
+  , loanCorpCd                  // 대출 업체 코드
+  , loanCorpNm                  // 대출 업체 명  
+  , totLmtAmt                   // 총 한도 금액  
+  , intrPayDd                   // 이자납입일
+  , usrId                       // 사용자 ID
+  }) => {
+  try {
+    const request = pool.request();
+    
+    request.input("AGENT_ID", sql.VarChar, agentId);                         // 상사 ID
+    request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출 업체 코드 
+    request.input("LOAN_CORP_NM", sql.VarChar, loanCorpNm);                  // 대출 업체 명
+    request.input("TOT_LMT_AMT", sql.Int, totLmtAmt);                        // 총 한도 금액
+    request.input("INTR_PAY_DD", sql.VarChar, intrPayDd);                    // 상환 예정 일자
+    request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID
+    request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID
   
-      
-  // 재고 금융 등록
-exports.insertCarLoan = async ({
-  agentId,                // 상사 ID
-  carRegId,               // 차량 등록 ID
-  loanCorpCd,             // 대출 업체 코드
-  loanStatCd,             // 대출 상태 코드
-  loanAmt,                // 대출금액
-  loanDt,                 // 대출실행일
-  loanMmCnt,              // 대출기간
-  corpIntrRt,             // 캐피탈 이자율
-  corpMmIntrAmt,          // 월 이자액
-  corpTotPayIntrAmt,      // 총 납입 이자액
-  dlrIntrRt,              // 딜러 이자율
-  dlrMmIntrAmt,           // 월 이자액
-  dlrTotPayIntrAmt,       // 총 납입 이자액
-  rpyFcstDt,              // 상환 예정 일자
-  loanSctCd,              // 대출 구분 코드
-  loanMemo,               // 대출 메모
-  usrId                   // 사용자 ID
-}) => {
-try {
-  const request = pool.request();
+    const query1 = `INSERT INTO dbo.CJB_AGENT_LOAN_CORP (
+                    AGENT_ID,
+                    LOAN_CORP_CD,
+                    LOAN_CORP_NM,
+                    TOT_LMT_AMT,
+                    INTR_PAY_DD,
+                    REGR_ID,
+                    MODR_ID
+                  ) VALUES (
+                    @AGENT_ID,
+                    @LOAN_CORP_CD,
+                    @LOAN_CORP_NM,
+                    @TOT_LMT_AMT,
+                    @INTR_PAY_DD,
+                    @REGR_ID,
+                    @MODR_ID
+                  )`;
 
-  // loan_id 만들기
-  request.input("AGENT_ID", sql.VarChar, agentId); 
-  const loanID = await request.query(`SELECT dbo.CJB_FN_MK_LOAN_NO(@AGENT_ID) as LOAN_ID`);
-  const newLoanId = loanID.recordset[0].LOAN_ID;
-  request.input("LOAN_ID", sql.VarChar, newLoanId);                        // 대출 ID
-  request.input("CAR_REG_ID", sql.VarChar, carRegId);                      // 차량 등록 ID
-  request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출회사 코드
-  request.input("LOAN_STAT_CD", sql.VarChar, loanStatCd);                  // 대출 상태 코드
-  request.input("LOAN_AMT", sql.Int, loanAmt);                             // 대출 금액
-  request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 실행 일자
-  request.input("LOAN_MM_CNT", sql.Int, loanMmCnt);                        // 대출 기간
-  request.input("CORP_INTR_RT", sql.Decimal, corpIntrRt);                  // 캐피탈 이자율
-  request.input("CORP_MM_INTR_AMT", sql.Decimal, corpMmIntrAmt);           // 캐피탈 월 이자액
-  request.input("CORP_TOT_PAY_INTR_AMT", sql.Decimal, corpTotPayIntrAmt);  // 캐피탈 총 납입 이자액
-  request.input("DLR_INTR_RT", sql.Decimal, dlrIntrRt);                    // 딜러 이자율
-  request.input("DLR_MM_INTR_AMT", sql.Decimal, dlrMmIntrAmt);             // 딜러 월 이자액
-  request.input("DLR_TOT_PAY_INTR_AMT", sql.Decimal, dlrTotPayIntrAmt);    // 딜러 총 납입 이자액
-  request.input("RPY_FCST_DT", sql.VarChar, rpyFcstDt);                    // 상환 예정 일자
-  request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
-  request.input("LOAN_MEMO", sql.VarChar, loanMemo);                       // 대출 메모
-  request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID
-  request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID
+      await request.query(query1);
+    
+    } catch (err) {
+      console.error("Error inserting agent loan corp:", err);
+      throw err;
+    }
+  };
 
-  // 재고 금융
-  const query1 = `INSERT INTO dbo.CJB_CAR_LOAN (
-                    LOAN_ID
-                  , CAR_REG_ID
-                  , LOAN_SCT_CD
-                  , LOAN_STAT_CD
-                  , LOAN_DT
-                  , LOAN_AMT
-                  , LOAN_MM_CNT
-                  , CORP_INTR_RT
-                  , CORP_MM_INTR_AMT
-                  , CORP_TOT_PAY_INTR_AMT
-                  , DLR_INTR_RT
-                  , DLR_MM_INTR_AMT
-                  , DLR_TOT_PAY_INTR_AMT
-                  , RPY_FCST_DT
-                  , LOAN_MEMO
-                  , AGENT_ID
-                  , LOAN_CORP_CD
-                  , REGR_ID
-                  , MODR_ID
-                ) VALUES (
-                    @LOAN_ID
-                  , @CAR_REG_ID
-                  , @LOAN_SCT_CD
-                  , @LOAN_STAT_CD
-                  , @LOAN_DT
-                  , @LOAN_AMT
-                  , @LOAN_MM_CNT
-                  , @CORP_INTR_RT
-                  , @CORP_MM_INTR_AMT
-                  , @CORP_TOT_PAY_INTR_AMT
-                  , @DLR_INTR_RT
-                  , @DLR_MM_INTR_AMT
-                  , @DLR_TOT_PAY_INTR_AMT
-                  , @RPY_FCST_DT
-                  , @LOAN_MEMO
-                  , @AGENT_ID
-                  , @LOAN_CORP_CD
-                  , @REGR_ID
-                  , @MODR_ID
-                )`;
- 
-  // 재고 금융 업체 
-  const query2 = `UPDATE dbo.CJB_AGENT_LOAN_CORP
-          SET TOT_LOAN_AMT = TOT_LOAN_AMT + @LOAN_AMT
-            , TOT_CNT = TOT_CNT + 1
-            , RCNT_UTIL_DT = GETDATE()
-            , MOD_DTIME = GETDATE()
-            , MODR_ID = @MODR_ID
-          WHERE AGENT_ID = @AGENT_ID
-            AND LOAN_CORP_CD = @LOAN_CORP_CD;
-`;
+  // 차량 대출 등록
+  exports.insertCarLoan = async ({
+    agentId,                // 상사 ID
+    carRegId,               // 차량 등록 ID
+    loanCorpCd,             // 대출 업체 코드
+    loanStatCd,             // 대출 상태 코드
+    loanAmt,                // 대출금액
+    loanDt,                 // 대출실행일
+    loanMmCnt,              // 대출기간
+    corpIntrRt,             // 캐피탈 이자율
+    corpMmIntrAmt,          // 월 이자액
+    corpTotPayIntrAmt,      // 총 납입 이자액
+    dlrIntrRt,              // 딜러 이자율
+    dlrMmIntrAmt,           // 월 이자액
+    dlrTotPayIntrAmt,       // 총 납입 이자액
+    rpyFcstDt,              // 상환 예정 일자
+    loanSctCd,              // 대출 구분 코드
+    loanMemo,               // 대출 메모
+    usrId                   // 사용자 ID
+  }) => {
+  try {
+    const request = pool.request();
 
-  await Promise.all([request.query(query1), request.query(query2)]);
+    // loan_id 만들기
+    request.input("AGENT_ID", sql.VarChar, agentId); 
+    const loanID = await request.query(`SELECT dbo.CJB_FN_MK_LOAN_NO(@AGENT_ID) as LOAN_ID`);
+    const newLoanId = loanID.recordset[0].LOAN_ID;
+    request.input("LOAN_ID", sql.VarChar, newLoanId);                        // 대출 ID
+    request.input("CAR_REG_ID", sql.VarChar, carRegId);                      // 차량 등록 ID
+    request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출회사 코드
+    request.input("LOAN_STAT_CD", sql.VarChar, loanStatCd);                  // 대출 상태 코드
+    request.input("LOAN_AMT", sql.Int, loanAmt);                             // 대출 금액
+    request.input("LOAN_DT", sql.VarChar, loanDt);                           // 대출 실행 일자
+    request.input("LOAN_MM_CNT", sql.Int, loanMmCnt);                        // 대출 기간
+    request.input("CORP_INTR_RT", sql.Decimal, corpIntrRt);                  // 캐피탈 이자율
+    request.input("CORP_MM_INTR_AMT", sql.Decimal, corpMmIntrAmt);           // 캐피탈 월 이자액
+    request.input("CORP_TOT_PAY_INTR_AMT", sql.Decimal, corpTotPayIntrAmt);  // 캐피탈 총 납입 이자액
+    request.input("DLR_INTR_RT", sql.Decimal, dlrIntrRt);                    // 딜러 이자율
+    request.input("DLR_MM_INTR_AMT", sql.Decimal, dlrMmIntrAmt);             // 딜러 월 이자액
+    request.input("DLR_TOT_PAY_INTR_AMT", sql.Decimal, dlrTotPayIntrAmt);    // 딜러 총 납입 이자액
+    request.input("RPY_FCST_DT", sql.VarChar, rpyFcstDt);                    // 상환 예정 일자
+    request.input("LOAN_SCT_CD", sql.VarChar, loanSctCd);                    // 대출 구분 코드
+    request.input("LOAN_MEMO", sql.VarChar, loanMemo);                       // 대출 메모
+    request.input("REGR_ID", sql.VarChar, usrId);                            // 등록자 ID
+    request.input("MODR_ID", sql.VarChar, usrId);                            // 수정자 ID
 
-} catch (err) {
-  console.error("Error inserting car loan:", err);
-  throw err;
-}
-};
+    // 재고 금융
+    const query1 = `INSERT INTO dbo.CJB_CAR_LOAN (
+                      LOAN_ID
+                    , CAR_REG_ID
+                    , LOAN_SCT_CD
+                    , LOAN_STAT_CD
+                    , LOAN_DT
+                    , LOAN_AMT
+                    , LOAN_MM_CNT
+                    , CORP_INTR_RT
+                    , CORP_MM_INTR_AMT
+                    , CORP_TOT_PAY_INTR_AMT
+                    , DLR_INTR_RT
+                    , DLR_MM_INTR_AMT
+                    , DLR_TOT_PAY_INTR_AMT
+                    , RPY_FCST_DT
+                    , LOAN_MEMO
+                    , AGENT_ID
+                    , LOAN_CORP_CD
+                    , REGR_ID
+                    , MODR_ID
+                  ) VALUES (
+                      @LOAN_ID
+                    , @CAR_REG_ID
+                    , @LOAN_SCT_CD
+                    , @LOAN_STAT_CD
+                    , @LOAN_DT
+                    , @LOAN_AMT
+                    , @LOAN_MM_CNT
+                    , @CORP_INTR_RT
+                    , @CORP_MM_INTR_AMT
+                    , @CORP_TOT_PAY_INTR_AMT
+                    , @DLR_INTR_RT
+                    , @DLR_MM_INTR_AMT
+                    , @DLR_TOT_PAY_INTR_AMT
+                    , @RPY_FCST_DT
+                    , @LOAN_MEMO
+                    , @AGENT_ID
+                    , @LOAN_CORP_CD
+                    , @REGR_ID
+                    , @MODR_ID
+                  )`;
+  
+    // 재고 금융 업체 
+    const query2 = `UPDATE dbo.CJB_AGENT_LOAN_CORP
+            SET TOT_LOAN_AMT = TOT_LOAN_AMT + @LOAN_AMT
+              , TOT_CNT = TOT_CNT + 1
+              , RCNT_UTIL_DT = GETDATE()
+              , MOD_DTIME = GETDATE()
+              , MODR_ID = @MODR_ID
+            WHERE AGENT_ID = @AGENT_ID
+              AND LOAN_CORP_CD = @LOAN_CORP_CD;
+    `;
+
+      await Promise.all([request.query(query1), request.query(query2)]);
+
+    } catch (err) {
+      console.error("Error inserting car loan:", err);
+      throw err;
+    }
+  };
 
 
 // 재고 금융 수정
+/*
 exports.updateAgentLoanCorp = async ({ 
     agentId                     // 상사 ID        
   , loanCorpCd                  // 대출 업체 코드
@@ -633,7 +686,7 @@ exports.updateAgentLoanCorp = async ({
     request.input("MODR_ID", sql.VarChar, modrId);                           // 수정자 ID
 
     const query1 = `
-      UPDATE CJB_AGENT_LOAN_CORP  
+      UPDATE dbo.CJB_AGENT_LOAN_CORP  
       SET LOAN_CORP_NM = @LOAN_CORP_NM,
           TOT_LMT_AMT = @TOT_LMT_AMT, 
           TOT_LOAN_AMT = @TOT_LOAN_AMT,
@@ -653,7 +706,45 @@ exports.updateAgentLoanCorp = async ({
     throw err;
   }
 };
+*/
 
+// 재고 금융 수정
+exports.updateAgentLoanCorp = async ({ 
+  agentId                     // 상사 ID        
+, loanCorpCd                  // 대출 업체 코드
+, loanCorpNm                  // 대출 업체 명  
+, totLmtAmt                   // 총 한도 금액  
+, intrPayDd                   // 이자납입일
+, usrId                      // 수정자 ID     
+}) => {
+  try {
+    const request = pool.request();
+
+    request.input("AGENT_ID", sql.VarChar, agentId);                         // 상사 ID
+    request.input("LOAN_CORP_CD", sql.VarChar, loanCorpCd);                  // 대출 업체 코드 
+    request.input("LOAN_CORP_NM", sql.VarChar, loanCorpNm);                  // 대출 업체 명
+    request.input("TOT_LMT_AMT", sql.Int, totLmtAmt);                        // 총 한도 금액
+    request.input("INTR_PAY_DD", sql.VarChar, intrPayDd);                    // 이자납입일
+    request.input("MODR_ID", sql.VarChar, usrId);                           // 수정자 ID
+
+    const query1 = `
+      UPDATE dbo.CJB_AGENT_LOAN_CORP  
+      SET LOAN_CORP_NM = @LOAN_CORP_NM,
+          TOT_LMT_AMT = @TOT_LMT_AMT, 
+          INTR_PAY_DD = @INTR_PAY_DD,
+          MOD_DTIME = GETDATE(),
+          MODR_ID = @MODR_ID
+      WHERE AGENT_ID = @AGENT_ID
+        AND LOAN_CORP_CD = @LOAN_CORP_CD;
+    `;  
+
+    await Promise.all([request.query(query1)]);
+
+  } catch (err) {
+    console.error("Error updating agent loan corp:", err);
+    throw err;
+  }
+};
 
 // 재고 금융 수정
 exports.updateCarLoan = async ({ 
@@ -884,34 +975,46 @@ exports.deleteCarLoan = async ({loanId, loanAmt}) => {
 };
 
 
-// 재고 금융 삭제
+// 재고 금융 업체 삭제
 exports.deleteAgentLoanCorp = async ({agentId, loan_corp_cd, flag_type}) => {
   try {
     const request = pool.request();
     request.input("AGENT_ID", sql.VarChar, agentId);
     request.input("LOAN_CORP_CD", sql.VarChar, loan_corp_cd);
 
-    let query = "";
 
-    if(flag_type == "1") {
+    /* 삭제 처리전 체크 사항
+     * 1. TOT_LOAN_AMT가 0이 아닌 경우 삭제 못함.
+     */
 
-      query = `DELETE CJB_AGENT_LOAN_CORP
-                        WHERE AGENT_ID = @AGENT_ID
-                        AND LOAN_CORP_CD = @LOAN_CORP_CD
-            `;  
-    } else {
-      query = `UPDATE CJB_AGENT_LOAN_CORP
-                        SET MOD_DTIME = GETDATE()
-                          , MODR_ID = @MODR_ID
-                        WHERE AGENT_ID = @AGENT_ID
-                        AND LOAN_CORP_CD = @LOAN_CORP_CD;
-            `;  
+    // 전체 카운트 조회
+    const countQuery = `SELECT COUNT(*) as totalCount
+                          FROM dbo.CJB_AGENT_LOAN_CORP A
+                          WHERE 1 = 1
+                            AND TOT_LOAN_AMT > 0
+                            AND AGENT_ID = @AGENT_ID
+                            AND LOAN_CORP_CD = @LOAN_CORP_CD
+        `;
+        
+    const countResult = await request.query(countQuery);
+    const totalCount = countResult.recordset[0].totalCount;
+
+    if(totalCount > 0) {
+      console.error("Error deleting agent loan corp:", err);
+      throw err;
+    }
+    else {
+      query = `DELETE dbo.CJB_AGENT_LOAN_CORP
+                 WHERE AGENT_ID = @AGENT_ID
+                   AND LOAN_CORP_CD = @LOAN_CORP_CD
+          `;
+
+          await request.query(query);
+          return { success: true };
     }
 
-    await request.query(query);
-
   } catch (err) {
-    console.error("Error deleting car loan:", err);
+    console.error("Error deleting agent loan corp:", err);
     throw err;
   }
 };
