@@ -573,6 +573,7 @@ exports.getCompanyLoanLimit = async ({ agentId }) => {
 };
 
 // 상사정보관리 조회
+
 exports.getAgentInfo = async ({ agentId }) => {
   try {
     const request = pool.request();

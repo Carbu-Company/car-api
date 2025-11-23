@@ -58,11 +58,7 @@ router.get("/getCustomerList", carController.getCustomerList);
 // 상사 대출 업체 대출 한도
 router.get("/getCompanyLoanLimit", carController.getCompanyLoanLimit);
 
-// 상사정보관리 조회
-router.get("/getAgentInfo", carController.getAgentInfo);
 
-// 로그인 조회
-router.get("/getLoginInfo", carController.getLoginInfo);
 
 // 상사 매입비 기본값 조회
 router.get("/getAgentPurCst", carController.getAgentPurCst);
@@ -567,13 +563,25 @@ router.get("/updateRplBoard", carController.updateRplBoard);
 //***************************************************************************************** */
 
 // 상사정보관리 조회
-router.post("/getCompanyInfo", carController.getCompanyInfo);
+router.get("/getAgentInfo", carController.getAgentInfo);
 
-// 상사딜러관리 조회
-router.post("/getCompanyDealer", carController.getCompanyDealer);
+// 로그인 조회
+router.get("/getLoginInfo", carController.getLoginInfo);
 
-// 상사 조합 딜러 관리
-router.post("/getCompanySangsaDealer", carController.getCompanySangsaDealer);  
+// 로그인 정보 수정 (환경설정)
+router.post("/updateSettingLogin", carController.updateSettingLogin);
+
+
+
+// 상사 딜러 등록
+router.post("/insertSettingDealer", carController.insertSettingDealer);
+
+// 상사 딜러 수정
+router.post("/updateSettingDealer", carController.updateSettingDealer);
+
+// 상사 딜러 삭제
+router.get("/deleteSettingDealer", carController.deleteSettingDealer);
+
 
 // 매입비 설정 조회
 router.post("/getPurchaseCost", carController.getPurchaseCost);
@@ -584,8 +592,26 @@ router.post("/getSellCost", carController.getSellCost);
 // 지출항목설정 조회
 router.post("/getExpenseItem", carController.getExpenseItem);
 
+// 지출항목 등록
+router.post("/insertExpenseItem", carController.insertExpenseItem);
+
+// 지출항목 수정
+router.post("/updateExpenseItem", carController.updateExpenseItem);
+
+// 지출항목 삭제
+router.get("/deleteExpenseItem", carController.deleteExpenseItem);
+
 // 수입항목설정 조회
 router.post("/getIncomeItem", carController.getIncomeItem);
+
+// 수입항목 등록
+router.post("/insertIncomeItem", carController.insertIncomeItem);
+
+// 수입항목 수정
+router.post("/updateIncomeItem", carController.updateIncomeItem);
+
+// 수입항목 삭제
+router.get("/deleteIncomeItem", carController.deleteIncomeItem);
 
 // 상사지출항목설정 조회
 router.post("/getCompanyExpense", carController.getCompanyExpense);

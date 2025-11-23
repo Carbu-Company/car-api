@@ -16,7 +16,7 @@ const carSelModel = require("../../models/select/carSelModel");
 const carSystemModel = require("../../models/select/carSystemModel");
 const carTaxModel = require("../../models/select/carTaxModel");
 const carTradeItemModel = require("../../models/select/carTradeItemModel");
-const carUsrModal = require("../../models/select/carUsrModel");
+const carUsrModel = require("../../models/select/carUsrModel");
 const commonModel = require("../../models/select/commonModel");
 const usrReqModel = require("../../models/select/usrReqModel"); 
 
@@ -2491,12 +2491,73 @@ exports.getExpenseItem = async (req, res, next) => {
   }
 };
 
+// 지출항목 등록
+exports.insertExpenseItem = async (req, res, next) => {
+  try {
+    await carCostModel.insertExpenseItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 지출항목 수정
+exports.updateExpenseItem = async (req, res, next) => {
+  try {
+    await carCostModel.updateExpenseItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 지출항목 삭제
+exports.deleteExpenseItem = async (req, res, next) => {
+  try {
+    await carCostModel.deleteExpenseItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
+
 // 상사 수입항목 설정 조회
 exports.getIncomeItem = async (req, res, next) => {
   try {
     const { agentId } = req.body;
     const incomeItem = await carCostModel.getIncomeItem({ agentId });
     res.status(200).json(incomeItem);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 상사 수입항목 등록
+exports.insertIncomeItem = async (req, res, next) => {
+  try {
+    await carCostModel.insertIncomeItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 수입항목 수정
+exports.updateIncomeItem = async (req, res, next) => {
+  try {
+    await carCostModel.updateIncomeItem(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 수입항목 삭제
+exports.deleteIncomeItem = async (req, res, next) => {
+  try {
+    await carCostModel.deleteIncomeItem(req.body);
+    res.status(200).json({ success: true });
   } catch (err) {
     next(err);
   }
@@ -2666,6 +2727,50 @@ exports.getLoginInfo = async (req, res, next) => {
     next(err);
   }
 };
+
+
+// 로그인 정보 수정 (환경설정)
+exports.updateSettingLogin = async (req, res, next) => {
+  try {
+    await carUsrModel.updateSettingLogin(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// 상사 딜러 등록
+exports.insertSettingDealer = async (req, res, next) => {
+  try {
+    await carUsrModel.insertSettingDealer(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 딜러 수정
+
+exports.updateSettingDealer = async (req, res, next) => {
+  try {
+    await carUsrModel.updateSettingDealer(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 딜러 삭제
+exports.deleteSettingDealer = async (req, res, next) => {
+  try {
+    const { usrId, modrId } = req.query;
+    await carUsrModel.deleteSettingDealer({ usrId, modrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};  
 
 // 상사정보관리 조회
 exports.getAgentList = async (req, res, next) => {

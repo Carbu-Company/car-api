@@ -124,7 +124,7 @@ exports.getCarAgentList = async ({
   /**
    * 이 데이터 쿼리 말고 공통에 있는 쿼리로 변경해야 함
    */
-  /*
+/*
   exports.getAgentInfo = async ({ agentId }) => {
     try {
       const request = pool.request();
