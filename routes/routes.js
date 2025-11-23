@@ -356,8 +356,17 @@ router.post("/getCarAcctSummary", carController.getCarAcctSummary);
 // 계좌정보 상세 조회
 router.get("/getCarAcctDetail", carController.getCarAcctDetail);
 
-// 계좌정보 목록 조회
+// 계좌정보 목록 조회  (환경설정 외 )
 router.get("/getAgentAcctList", carController.getAgentAcctList);
+
+// 계좌 등록 (환경 설정)
+router.post("/insertAgentAcct", carController.insertAgentAcct);
+
+// 계좌 수정 (환경 설정)
+router.post("/updateAgentAcct", carController.updateAgentAcct);
+
+// 계좌 삭제 (환경 설정)
+router.get("/deleteAgentAcct", carController.deleteAgentAcct);
 
 // 계좌 상세 저장
 router.post("/insertCarAcctDetail", carController.insertCarAcctDetail);

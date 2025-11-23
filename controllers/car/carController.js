@@ -906,6 +906,36 @@ exports.getAgentAcctList = async (req, res, next) => {
 };
 
 
+// 계좌 등록 (환경 설정)
+exports.insertAgentAcct = async (req, res, next) => {
+  try {
+    await carAcctModel.insertAgentAcct(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 계좌 수정 (환경 설정)
+exports.updateAgentAcct = async (req, res, next) => {
+  try {
+    await carAcctModel.updateAgentAcct(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 계좌 삭제 (환경 설정)
+exports.deleteAgentAcct = async (req, res, next) => {
+  try {
+    await carAcctModel.deleteAgentAcct(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // 계좌정보 상세 저장
 exports.insertCarAcctDetail = async (req, res, next) => {
   try {

@@ -599,6 +599,10 @@ exports.getAgentInfo = async ({ agentId }) => {
                         , CMBT_AGENT_STAT_NM
                     FROM dbo.CJB_AGENT A
                     WHERE A.AGENT_ID = @AGENT_ID`;
+
+
+    console.log('query:', query);
+    
     const result = await request.query(query);
     return result.recordset;
   } catch (err) {

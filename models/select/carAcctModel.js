@@ -319,14 +319,135 @@ exports.getCarAcctList = async ({
                           , A.ACCT_NO
                           , A.ACCT_NM
                           , A.MAST_YN
+                          , A.MEMO
+                          , A.USE_YN
                         FROM dbo.CJB_ACCT A
-                        WHERE A.USE_YN = 'Y'   
+                        WHERE 1 = 1 --A.USE_YN = 'Y'   
                           AND A.AGENT_ID = @CAR_AGENT `;
 
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
       console.error("Error fetching agent acct list:", err);
+      throw err;
+    }
+  }
+
+
+  // 계좌 등록 
+  exports.insertAgentAcct = async ({ 
+    agentId, 
+    acctNo, 
+    acctNm, 
+    acctHldr, 
+    mastYn, 
+    memo, 
+    usrId
+  }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("ACCT_NO", sql.VarChar, acctNo);
+      request.input("ACCT_NM", sql.VarChar, acctNm);
+      request.input("ACCT_HLDR", sql.VarChar, acctHldr);
+      request.input("MAST_YN", sql.VarChar, mastYn);
+      request.input("MEMO", sql.VarChar, memo);
+      request.input("REGR_ID", sql.VarChar, usrId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `
+        INSERT INTO dbo.CJB_ACCT 
+          (ACCT_NO
+          , ACCT_NM
+          , ACCT_HLDR
+          , MAST_YN
+          , MEMO
+          , AGENT_ID
+          , REGR_ID
+          , MODR_ID
+          ) 
+        VALUES 
+          ( @ACCT_NO
+          , @ACCT_NO,
+          , @ACCT_NM
+          , @ACCT_HLDR
+          , @MAST_YN
+          , @MEMO
+          , @AGENT_ID
+          , @REGR_ID,
+          , @MODR_ID
+          );
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error inserting agent acct:", err);
+      throw err;
+    }
+  };
+
+  // 계좌 수정
+  exports.updateAgentAcct = async ({ 
+    agentId, 
+    acctNo, 
+    acctNm, 
+    acctHldr, 
+    mastYn, 
+    memo, 
+    usrId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("ACCT_NO", sql.VarChar, acctNo);
+      request.input("ACCT_NM", sql.VarChar, acctNm);
+      request.input("ACCT_HLDR", sql.VarChar, acctHldr);
+      request.input("MAST_YN", sql.VarChar, mastYn);
+      request.input("MEMO", sql.VarChar, memo);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `
+        UPDATE dbo.CJB_ACCT
+          SET ACCT_NM = @ACCT_NM,
+              ACCT_HLDR = @ACCT_HLDR,
+              MAST_YN = @MAST_YN,
+              MEMO = @MEMO,
+              MOD_DTIME = GETDATE(),
+              MODR_ID = @MODR_ID
+        WHERE 
+          ACCT_NO = @ACCT_NO
+          AND AGENT_ID = @AGENT_ID
+      `;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating agent acct:", err);
+      throw err;
+    }
+  }
+
+
+  // 계좌 삭제
+  exports.deleteAgentAcct = async ({ agentId, acctNo }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("ACCT_NO", sql.VarChar, acctNo);
+
+      const query = `
+        UPDATE dbo.CJB_ACCT
+          SET USE_YN = 'N'
+            , MOD_DTIME = GETDATE()
+            , MODR_ID = @MODR_ID
+        WHERE AGENT_ID = @AGENT_ID
+          AND ACCT_NO = @ACCT_NO
+      `;
+      
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error deleting agent acct:", err);
       throw err;
     }
   }
