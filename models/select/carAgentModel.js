@@ -284,6 +284,96 @@ exports.getCarAgentList = async ({
     }
   }
 
+
+
+  // 상사 수정 (관리자 상사정보수정)
+  exports.updateAdminAgent = async ({ 
+    agentId,
+    agentNm,
+    brno,
+    presNm,
+    phon,
+    email,
+    zip,
+    addr1,
+    addr2,
+    useEndDt,
+    presPhon,
+    memo,
+    feeSctCd,
+    feeAmt,    
+    useYn,
+    usrId
+  }) => {
+    try {
+      const request = pool.request();
+
+      console.log('agentId:', agentId);
+      console.log('agentNm:', agentNm);
+      console.log('brno:', brno);
+      console.log('presNm:', presNm);
+      console.log('phon:', phon);
+      console.log('email:', email);
+      console.log('zip:', zip);
+      console.log('addr1:', addr1);
+      console.log('addr2:', addr2);
+      console.log('useEndDt:', useEndDt);
+      console.log('presPhon:', presPhon);
+      console.log('memo:', memo);
+      console.log('feeSctCd:', feeSctCd);
+      console.log('feeAmt:', feeAmt);
+      console.log('useYn:', useYn);
+      console.log('usrId:', usrId);
+
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("AGENT_NM", sql.VarChar, agentNm);
+      request.input("BRNO", sql.VarChar, brno);
+      request.input("PRES_NM", sql.VarChar, presNm);
+      request.input("PHON", sql.VarChar, phon);
+      request.input("EMAIL", sql.VarChar, email);
+      request.input("ZIP", sql.VarChar, zip);
+      request.input("ADDR1", sql.VarChar, addr1);
+      request.input("ADDR2", sql.VarChar, addr2);
+      request.input("USE_END_DT", sql.VarChar, useEndDt);
+      request.input("PRES_PHON", sql.VarChar, presPhon);
+      request.input("MEMO", sql.VarChar, memo);
+      request.input("FEE_SCT_CD", sql.VarChar, feeSctCd);
+      request.input("FEE_AMT", sql.Int, feeAmt);
+      request.input("USE_YN", sql.VarChar, useYn);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `
+        UPDATE dbo.CJB_AGENT
+           SET AGENT_NM = @AGENT_NM,
+               BRNO = @BRNO,
+               PRES_NM = @PRES_NM,
+               PHON = @PHON,
+               EMAIL = @EMAIL,
+               ZIP = @ZIP,
+               ADDR1 = @ADDR1,
+               ADDR2 = @ADDR2,
+               PRES_PHON = @PRES_PHON,
+               MEMO = @MEMO,
+               FEE_SCT_CD = @FEE_SCT_CD,
+               FEE_AMT = @FEE_AMT,
+               USE_YN = @USE_YN,
+               USE_END_DT = @USE_END_DT,
+               MOD_DTIME = GETDATE(),
+               MODR_ID = @MODR_ID
+        WHERE AGENT_ID = @AGENT_ID
+      `;
+
+      await request.query(query);
+
+      return { success: true };
+    }
+    catch (err) {
+      console.error("Error updating admin agent:", err);
+      throw err;
+    }
+  }
+
+ 
   // 상사 수정  (환경설정)
   exports.updateCarAgent = async ({ 
     agentId,

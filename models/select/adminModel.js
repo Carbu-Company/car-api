@@ -45,7 +45,8 @@ exports.getAdminAgentList = async ({
 
       `;
   
-      const dataQuery = `SELECT AGENT_NM  AS COMNAME
+      const dataQuery = `SELECT AGENT_ID
+                          , AGENT_NM  AS COMNAME
                           , DBO.CJB_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
                           , BRNO
                           , PRES_NM 
@@ -68,6 +69,8 @@ exports.getAdminAgentList = async ({
                           , CMBT_NM
                           , CMBT_AGENT_CD
                           , CMBT_AGENT_STAT_NM
+                          , dbo.CJB_FN_PUR_CNT(A.AGENT_ID) AS PUR_CNT
+                          , dbo.CJB_FN_SEL_CNT(A.AGENT_ID) AS SEL_CNT
                       FROM dbo.CJB_AGENT A
                       WHERE 1 = 1
                       ${agentNm ? "AND A.AGENT_NM LIKE @AGENT_NM" : ""}

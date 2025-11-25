@@ -109,8 +109,6 @@ router.post("/getCarPurSummary", carController.getCarPurSummary);
 // 제시 차량 상세 조회
 router.get("/getCarPurInfo", carController.getCarPurInfo);    
 
-
-
 // 제시 등록
 router.post("/insertCarPur", carController.insertCarPur);
 
@@ -438,22 +436,25 @@ router.get("/deleteCarAdjDtl", carController.deleteCarAdjDtl);
 // 상사 2.0
 //***************************************************************************************** */
 
-// 상사 목록
+// 상사 목록 조회
 router.post("/getCarAgentList", carController.getCarAgentList);
 
-// 상사 목록
+// 상사 합계 조회
 router.post("/getCarAgentSummary", carController.getCarAgentSummary);
 
-// 상사 목록
+// 상사 상세 조회
 router.get("/getCarAgentInfo", carController.getCarAgentInfo);
 
-// 상사 목록
+// 상사 저장
 router.post("/insertCarAgent", carController.insertCarAgent);
 
-// 상사 목록
+// 상사 수정 
 router.post("/updateCarAgent", carController.updateCarAgent);
 
-// 상사 목록
+// 상사 수정 (관리자 상사정보수정)
+router.post("/updateAdminAgent", carController.updateAdminAgent);
+
+// 상사 삭제
 router.get("/deleteCarAgent", carController.deleteCarAgent);
 
 
@@ -571,8 +572,6 @@ router.get("/getLoginInfo", carController.getLoginInfo);
 // 로그인 정보 수정 (환경설정)
 router.post("/updateSettingLogin", carController.updateSettingLogin);
 
-
-
 // 상사 딜러 등록
 router.post("/insertSettingDealer", carController.insertSettingDealer);
 
@@ -581,7 +580,6 @@ router.post("/updateSettingDealer", carController.updateSettingDealer);
 
 // 상사 딜러 삭제
 router.get("/deleteSettingDealer", carController.deleteSettingDealer);
-
 
 // 매입비 설정 조회
 router.post("/getPurchaseCost", carController.getPurchaseCost);
@@ -618,8 +616,6 @@ router.post("/getCompanyExpense", carController.getCompanyExpense);
 
 // 상사수입항목설정 조회
 router.post("/getCompanyIncome", carController.getCompanyIncome);
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

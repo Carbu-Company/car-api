@@ -579,7 +579,9 @@ exports.getAgentInfo = async ({ agentId }) => {
     const request = pool.request();
     request.input("AGENT_ID", sql.VarChar, agentId);
 
-    const query = `SELECT AGENT_NM  AS COMNAME
+    const query = `SELECT A.AGENT_ID
+                        , A.AGENT_NM
+                        , AGENT_NM  AS COMNAME
                         , DBO.SMJ_FN_DATEFMT('D', A.REG_DTIME ) REGDATE
                         , BRNO
                         , PRES_NM 
@@ -595,17 +597,15 @@ exports.getAgentInfo = async ({ agentId }) => {
                         , ZIP
                         , ADDR1
                         , ADDR2
+                        , USE_YN
+                        , USE_END_DT                        
+                        , MEMO  
                         , FEE_SCT_CD
-                        , CMBT_AGENT_CD
-                        , CMBT_AGENT_STAT_NM
+                        , FEE_AMT
                     FROM dbo.CJB_AGENT A
                     WHERE A.AGENT_ID = @AGENT_ID`;
-
-
-    console.log('query:', query);
-    
     const result = await request.query(query);
-    return result.recordset;
+    return result.recordset[0];
   } catch (err) {
     console.error("Error fetching agent info:", err);
     throw err;

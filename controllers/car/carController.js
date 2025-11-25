@@ -1221,6 +1221,18 @@ exports.updateCarAgent = async (req, res, next) => {
   }
 };
 
+
+// 상사 수정 (관리자 상사정보수정)
+exports.updateAdminAgent = async (req, res, next) => {
+  try {
+    await carAgentModel.updateAdminAgent(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // 상사 삭제
 exports.deleteCarAgent = async (req, res, next) => {
   try {
