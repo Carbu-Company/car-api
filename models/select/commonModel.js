@@ -602,6 +602,11 @@ exports.getAgentInfo = async ({ agentId }) => {
                         , MEMO  
                         , FEE_SCT_CD
                         , FEE_AMT
+                        , CMBT_AGENT_CD
+                        , CMBT_AGENT_NM
+                        , CMBT_CD
+                        , CMBT_NM
+                        , CMBT_AGENT_STAT_NM
                     FROM dbo.CJB_AGENT A
                     WHERE A.AGENT_ID = @AGENT_ID`;
     const result = await request.query(query);

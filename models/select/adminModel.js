@@ -55,10 +55,11 @@ exports.getAdminAgentList = async ({
                           , AGRM_AGR_YN
                           , FIRM_YN
                           , AGENT_STAT_CD
+                          , CASE WHEN A.AGENT_STAT_CD = '승인' THEN '정상' ELSE '체험신청' END AS AGENT_STAT_CD_NM
                           , AEMP_ID
                           , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.AEMP_ID) AS AEMP_NM
                           , (SELECT USR_PHON FROM dbo.CJB_USR WHERE USR_ID = A.AEMP_ID) AS AEMP_PHON
-                          , CASE WHEN AGENT_STAT_CD = '1' THEN '정상' ELSE '비정상' END AS AGENT_STAT_CD_NM
+                          --, CASE WHEN AGENT_STAT_CD = '1' THEN '정상' ELSE '비정상' END AS AGENT_STAT_CD_NM
                           , PHON
                           , FAX
                           , ZIP
@@ -68,6 +69,7 @@ exports.getAdminAgentList = async ({
                           , CMBT_CD
                           , CMBT_NM
                           , CMBT_AGENT_CD
+                          , CMBT_AGENT_NM
                           , CMBT_AGENT_STAT_NM
                           , dbo.CJB_FN_PUR_CNT(A.AGENT_ID) AS PUR_CNT
                           , dbo.CJB_FN_SEL_CNT(A.AGENT_ID) AS SEL_CNT
