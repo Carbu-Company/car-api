@@ -19,6 +19,17 @@ const router = express.Router();
 // 관리자 2.0
 router.post("/getAdminAgentList", carController.getAdminAgentList);
 
+// 상사 체험승인 (7일 기간 제공, 상태 : 1)
+router.get("/updateAdminAgentConfirm", carController.updateAdminAgentConfirm);
+
+// POPBILL 등록 (상태 : 2)
+router.get("/updateAdminAgentPopbillConfirm", carController.updateAdminAgentPopbillConfirm);
+
+// 상사 사용 시작 (상태 : 3)
+router.get("/updateAdminAgentUseStart", carController.updateAdminAgentUseStart);
+
+// 상사 사용 종료 (상태 : 4)
+router.get("/updateAdminAgentUseEnd", carController.updateAdminAgentUseEnd);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -690,6 +701,25 @@ router.post("/popbill/v1/kakao/sendATS_one", KakaoController.sendATS_one);
 router.post("/popbill/v1/kakao/sendATS_multi", KakaoController.sendATS_multi);
 
 /* 문자 */
+/* 발신번호 등록여부 확인 */
+router.post(
+  "/popbill/v1/sms/checkSenderNumber",
+  SmsController.checkSenderNumber
+);
+
+/* 발신번호 등록 팝업 URL */
+router.post(
+  "/popbill/v1/sms/getSenderNumberMgtURL",
+  SmsController.getSenderNumberMgtURL
+);
+
+/* 발신번호 목록 확인 */
+router.post(
+  "/popbill/v1/sms/getSenderNumberList",
+  SmsController.getSenderNumberList
+);
+
+
 router.post(
   "/popbill/v1/sms/sendSMS",
   SmsController.sendSMS
@@ -704,25 +734,37 @@ router.post(
   "/popbill/v1/bizinfo/quitMember",
   BizInfoCheckController.QuitMember
 );
+
+/* 연동회원 잔여포인트 확인 (11월 26일에 추가)*/
+router.post(
+  "/popbill/v1/bizinfo/getBalance",
+  BizInfoCheckController.GetBalance 
+);
+
+/* 연동회원 포인트 환불신청 (11월 26일에 추가)*/
+router.post(
+  "/popbill/v1/bizinfo/refund",
+  BizInfoCheckController.Refund
+);
+
+/*  파트너 잔여포인트 확인 */
+/*
+router.post(
+  "/popbill/v1/bizinfo/getPartnerBalance",
+  BizInfoCheckController.getPartnerBalance
+);
+*/
+
+
+/* 회사정보 확인 */
 router.post(
   "/popbill/v1/bizinfo/getCorpInfo",
   BizInfoCheckController.GetCorpInfo
 );
 
-/* FAX */
-router.post(
-  "/popbill/v1/faxService/checkSenderNumber",
-  FaxServiceController.checkSenderNumber
-);
-router.post(
-  "/popbill/v1/faxService/getSenderNumberMgtURL",
-  FaxServiceController.getSenderNumberMgtURL
-);
-router.post(
-  "/popbill/v1/faxService/getSenderNumberList",
-  FaxServiceController.getSenderNumberList
-);
-router.post("/popbill/v1/faxService/sendOneFAX", FaxServiceController.sendOneFAX);
+
+router.post("/popbill/v1/faxService/sendOneFAX", 
+  FaxServiceController.sendOneFAX);
 
 
 /* 홈텍스 수집 */

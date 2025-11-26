@@ -55,11 +55,10 @@ exports.getAdminAgentList = async ({
                           , AGRM_AGR_YN
                           , FIRM_YN
                           , AGENT_STAT_CD
-                          , CASE WHEN A.AGENT_STAT_CD = '승인' THEN '정상' ELSE '체험신청' END AS AGENT_STAT_CD_NM
+                          , CASE WHEN A.AGENT_STAT_CD = '0' THEN '체험신청' WHEN A.AGENT_STAT_CD = '1' THEN '체험승인' WHEN A.AGENT_STAT_CD = '2' THEN 'POPBILL승인' ELSE '비정상' END AS AGENT_STAT_CD_NM
                           , AEMP_ID
                           , (SELECT USR_NM FROM dbo.CJB_USR WHERE USR_ID = A.AEMP_ID) AS AEMP_NM
                           , (SELECT USR_PHON FROM dbo.CJB_USR WHERE USR_ID = A.AEMP_ID) AS AEMP_PHON
-                          --, CASE WHEN AGENT_STAT_CD = '1' THEN '정상' ELSE '비정상' END AS AGENT_STAT_CD_NM
                           , PHON
                           , FAX
                           , ZIP
@@ -109,6 +108,94 @@ exports.getAdminAgentList = async ({
   
     } catch (err) {
       console.error("Error fetching admin agent list:", err);
+      throw err;
+    }
+  };
+
+
+  // 상사정보관리 조회
+  exports.updateAdminAgentConfirm = async ({ agentId, usrId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `UPDATE dbo.CJB_AGENT 
+                       SET AGENT_STAT_CD = '1'  -- 체험승인
+                         , USE_CONF_DT = CONVERT(VARCHAR(10), GETDATE(), 23)
+                         , USE_YN = 'Y'
+                         , USE_END_DT = CONVERT(VARCHAR(10), DATEADD(DAY, 7, GETDATE()), 23)
+                         , MOD_DTIME = GETDATE()
+                         , MODR_ID = @MODR_ID 
+                     WHERE AGENT_ID = @AGENT_ID`;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating admin agent confirm:", err);
+      throw err;
+    }
+  };
+
+  // POPBILL승인
+  exports.updateAdminAgentPopbillConfirm = async ({ agentId, usrId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `UPDATE dbo.CJB_AGENT 
+                       SET AGENT_STAT_CD = '2'  -- POPBILL 등록
+                         , POPBILL_REG_DT = CONVERT(VARCHAR(10), GETDATE(), 23)
+                         , MOD_DTIME = GETDATE()
+                         , MODR_ID = @MODR_ID 
+                     WHERE AGENT_ID = @AGENT_ID`;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating admin agent popbill confirm:", err);
+      throw err;
+    }
+  };
+
+  // 상사정보 사용 시작
+  exports.updateAdminAgentUseStart = async ({ agentId, usrId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `UPDATE dbo.CJB_AGENT 
+                        SET AGENT_STAT_CD = '3'  -- 사용 시작
+                          , USE_END_DT = '2099-12-31'
+                          , MOD_DTIME = GETDATE()
+                          , MODR_ID = @MODR_ID 
+                      WHERE AGENT_ID = @AGENT_ID`;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating admin agent use start:", err);
+      throw err;
+    }
+  };
+
+  // 상사정보 사용 종료
+  exports.updateAdminAgentUseEnd = async ({ agentId, useEndDt, usrId }) => {
+    try {
+      const request = pool.request();
+      request.input("AGENT_ID", sql.VarChar, agentId);
+      request.input("USE_END_DT", sql.VarChar, useEndDt);
+      request.input("MODR_ID", sql.VarChar, usrId);
+
+      const query = `UPDATE dbo.CJB_AGENT 
+                        SET AGENT_STAT_CD = '4'  -- 사용 종료
+                          , USE_END_DT = @USE_END_DT
+                          , MOD_DTIME = GETDATE()
+                          , MODR_ID = @MODR_ID 
+                      WHERE AGENT_ID = @AGENT_ID`;
+      await request.query(query);
+      return { success: true };
+    } catch (err) {
+      console.error("Error updating admin agent use end:", err);
       throw err;
     }
   };

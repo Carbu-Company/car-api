@@ -44,7 +44,7 @@ class BizInfoCheckController {
       } = req.body;
 
       // RevokeRegistIssue 호출
-      BizInfoCheckService.QuitMember(
+      BizInfoCheckService.quitMember(
               CorpNum || '',
               QuitReason || '',
               UserID || '',
@@ -74,6 +74,79 @@ class BizInfoCheckController {
       });
     }
   }
+  
+  static async GetBalance (req, res) {
+    try {
+      const {
+        CorpNum
+      } = req.body;
+
+      // 연동회원 잔여포인트 확인
+      BizInfoCheckService.getBalance(
+              CorpNum || '',
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '연동회원 잔여포인트 확인 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '연동회원 잔여포인트 확인 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+  
+  static async Refund(req, res) {
+    try {
+      const { CorpNum, RefundForm, UserID } = req.body;
+
+      // 연동회원 포인트 환불신청
+      BizInfoCheckService.refund(
+              CorpNum || '',
+              RefundForm,
+              UserID || '',
+              (result) => {
+                res.status(200).json({
+                  success: true,
+                  message: '연동회원 포인트 환불신청 성공',
+                  data: result,
+                });
+              },
+              (error) => {
+                res.status(500).json({
+                  success: false,
+                  message: '연동회원 포인트 환불신청 실패',
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                  },
+                });
+              }
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: '서버 오류 발생',
+        error: err.message,
+      });
+    }
+  }
+
 
   static async GetCorpInfo (req, res) {
     try {

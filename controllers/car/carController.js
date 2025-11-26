@@ -35,6 +35,50 @@ exports.getAdminAgentList = async (req, res, next) => {
   }
 };
 
+// 상사 체험승인 (7일 기간 제공, 상태 : 1)
+exports.updateAdminAgentConfirm = async (req, res, next) => {
+  try {
+    const { agentId, usrId } = req.query;
+    await adminModel.updateAdminAgentConfirm({ agentId, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POPBILL 등록 (상태 : 2)
+exports.updateAdminAgentPopbillConfirm = async (req, res, next) => {
+  try {
+    const { agentId, usrId } = req.query;
+    await adminModel.updateAdminAgentPopbillConfirm({ agentId, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 사용 시작 (상태 : 3)
+exports.updateAdminAgentUseStart = async (req, res, next) => {
+  try {
+    const { agentId, usrId } = req.query;
+    await adminModel.updateAdminAgentUseStart({ agentId, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 상사 사용 종료 (상태 : 4)
+exports.updateAdminAgentUseEnd = async (req, res, next) => {
+  try {
+    const { agentId, useEndDt, usrId } = req.query;
+    await adminModel.updateAdminAgentUseEnd({ agentId, useEndDt, usrId });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 제시 2.0
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
